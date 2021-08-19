@@ -1,15 +1,22 @@
-w1 <- read.csv(file="id_w1.csv",head=TRUE)
+##Reading in data and data cleaning----
+
+#read in all data
+{ w1 <- read.csv(file="id_w1.csv",head=TRUE)
 w2 <- read.csv(file="id_w2.csv",head=TRUE)
 w3 <- read.csv(file="id_w3.csv",head=TRUE)
 w4 <- read.csv(file="id_w4.csv",head=TRUE)
 e1 <- read.csv(file="id_e1.csv",head=TRUE)
 e2 <- read.csv(file="id_e2.csv",head=TRUE)
 e3 <- read.csv(file="id_e3.csv",head=TRUE)
-e4 <- read.csv(file="id_e4.csv",head=TRUE)
+e4 <- read.csv(file="id_e4.csv",head=TRUE) }
 
 #combine aggregated herbivory and chemistry datasets
 all.dat.w <- rbind(w1, w2, w3, w4)
 all.dat.e <- rbind(e1, e3, e3, e4)
+
+
+all.dat.w<-all.dat.w[all.dat.w$AUTO.ID. != "Noise", ]  
+all.dat.e<-all.dat.e[all.dat.e$AUTO.ID. != "Noise", ]  
 
 library(dplyr)
 
@@ -30,7 +37,8 @@ all.bat.e<-select(all.dat.e, DATE, TIME, HOUR, DATE.12, TIME.12, HOUR.12, AUTO.I
 	all.bat.e$HOUR.12<-as.numeric(all.bat.e$HOUR.12)
 }
 
-#EASTSIDE
+##EASTSIDE
+###creating treatment column
 all.bat.e$treatment <- NA
 for(i in 1:length(all.bat.e$DATE.12)){
 	if(all.bat.e$DATE.12[i]=="2021-07-17"){all.bat.e$treatment[i]="R"}
@@ -55,6 +63,7 @@ for(i in 1:length(all.bat.e$DATE.12)){
 	
 }
 
+#creating column trial
 all.bat.e$trial <- NA
 for(i in 1:length(all.bat.e$DATE.12)){
 	if(all.bat.e$DATE.12[i]=="2021-07-17"){all.bat.e$trial[i]="N/A"}
@@ -79,7 +88,14 @@ for(i in 1:length(all.bat.e$DATE.12)){
 	
 }
 
+#creating side column
+all.bat.e$side <- NA
+for(i in 1:length(all.bat.e$FILES)){
+	if(all.bat.e$FILES[i]==1){all.bat.e$side[i]="E"}
+}
+
 #WESTSIDE
+##creating treatment column
 all.bat.w$treatment <- NA
 for(i in 1:length(all.bat.w$DATE.12)){
 	if(all.bat.w$DATE.12[i]=="2021-07-17"){all.bat.w$treatment[i]="R"}
@@ -104,6 +120,7 @@ for(i in 1:length(all.bat.w$DATE.12)){
 	
 }
 
+##creating trial column
 all.bat.w$trial <- NA
 for(i in 1:length(all.bat.w$DATE.12)){
 	if(all.bat.w$DATE.12[i]=="2021-07-17"){all.bat.w$trial[i]="N/A"}
@@ -128,7 +145,24 @@ for(i in 1:length(all.bat.w$DATE.12)){
 	
 }
 
+#creating side column
+all.bat.w$side <- NA
+for(i in 1:length(all.bat.w$FILES)){
+	if(all.bat.w$FILES[i]==1){all.bat.w$side[i]="W"}
+}
+
+##ANALYSES----
+#combine the two datasets, east and west sides
+#all.bat=all data
 all.bat <- rbind(all.bat.e, all.bat.w)
+
+#create dataset with only experimental trials
+#all.bat.exp=dataset with only nights where experiment was running
+all.bat.exp <- all.bat[all.bat$trial != "N/A", ] 
+
+mod1<-glmer(FILES~treatment+AUTO.ID.+1|trial, dat = all.bat.exp)
+summary(mod1)
+shapiro.test(resid(mod1))
 
 bat1 <- read.csv(file="Trial 1.csv",head=TRUE)
 
