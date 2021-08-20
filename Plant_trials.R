@@ -1,4 +1,5 @@
-##Reading in data and data cleaning----
+# Data import and cleaning ------------------------------------------------
+
 
 #read in all data
 { w1 <- read.csv(file="id_w1.csv",head=TRUE)
@@ -155,15 +156,122 @@ for(i in 1:length(all.bat.w$FILES)){
 #combine the two datasets, east and west sides
 #all.bat=all data
 all.bat <- rbind(all.bat.e, all.bat.w)
+all.bat$treatment<-as.factor(all.bat$treatment)
+all.bat$trial<-as.factor(all.bat$trial)
+all.bat$FILES<-as.numeric(all.bat$FILES)
 
 #create dataset with only experimental trials
 #all.bat.exp=dataset with only nights where experiment was running
 all.bat.exp <- all.bat[all.bat$trial != "N/A", ] 
 
-mod1<-glmer(FILES~treatment+AUTO.ID.+1|trial, dat = all.bat.exp)
-summary(mod1)
-shapiro.test(resid(mod1))
+#mod1<-glmer(FILES~treatment*AUTO.ID.+1|trial, dat = all.bat.exp)
+#summary(mod1)
+#shapiro.test(resid(mod1))
+#printCoefmat(coef(summary(mod1)),digits=2)
 
+library(ggplot2)
+library(viridis)
+ggplot(data=all.bat.exp, aes(x=treatment, y=FILES))+ 
+	geom_boxplot(outlier.shape = NA)+
+	geom_point(position=position_jitter(width = 0.025), alpha=0.4, aes(color=AUTO.ID.), size=2.5)+
+	stat_summary(fun.data = "mean_se", colour="black", size=1.5, shape="diamond")+
+	theme_classic()+
+	labs(x=" ", y="Activity (No. recordings)")+
+	theme(text = element_text(size=18), legend.title = )+
+	scale_color_viridis(discrete = T, option = "D")+
+	guides(color=guide_legend(title="Bat spp."))
+
+all.bat.exp.agg<-aggregate(FILES ~ DATE.12 + treatment + side + trial + AUTO.ID., data=all.bat.exp, FUN=sum)
+all.bat.exp.agg$treatment<-as.factor(all.bat.exp.agg$treatment)
+
+ggplot(data=all.bat.exp.agg, aes(x=treatment, y=FILES))+ 
+	geom_boxplot(outlier.shape = NA)+
+	geom_point(position=position_jitter(width = 0.025), alpha=0.4, aes(color=AUTO.ID.), size=2.5)+
+	stat_summary(fun.data = "mean_se", colour="black", size=1.5, shape="diamond")+
+	theme_classic()+
+	labs(x=" ", y="Relative activity (no. nightly recordings)")+
+	theme(text = element_text(size=16), legend.title = )+
+	scale_color_viridis(discrete = T, option = "D")+
+	guides(color=guide_legend(title="Bat spp."))
+
+mod2<-lmer(FILES~treatment*AUTO.ID.+1|trial, dat = all.bat.exp.agg)
+summary(mod2)
+shapiro.test(resid(mod2))
+
+all.bat.exp.agg$AUTO.ID.<-as.factor(all.bat.exp.agg$AUTO.ID.)
+mod3<-lmer(FILES~treatment+AUTO.ID.+1|trial, dat = all.bat.exp.agg)
+summary(mod3)
+shapiro.test(resid(mod3))
+
+
+mod4<-lmer(FILES~treatment+1|trial, dat = all.bat.exp.agg)
+summary(mod4)
+shapiro.test(resid(mod4))
+
+library(multcomp)
+summary(glht(mod3, linfct=mcp(AUTO.ID.="Tukey")))
+
+mod5<-lm(FILES~treatment+AUTO.ID.+trial, dat=all.bat.exp.agg)
+summary(mod5)
+summary(glht(mod5, linfct=mcp(treatment="Tukey")))
+
+#create cld
+library(emmeans)
+library(multcomp)
+#with interactive model, treatment
+f1<-emmeans(mod5,pairwise~AUTO.ID., type="response")
+cld(f1$emmeans,  Letters ='abcde')
+
+f2<-emmeans(mod5,pairwise~trial, type="response")
+cld(f2$emmeans,  Letters ='abcde')
+
+ggplot(data=all.bat.exp.agg, aes(x=treatment, y=FILES))+ 
+	geom_boxplot(outlier.shape = NA)+
+	geom_point(position=position_jitter(width = 0.025), alpha=0.4, aes(color=AUTO.ID.), size=2.5)+
+	stat_summary(fun.data = "mean_se", colour="black", size=1.5, shape="diamond")+
+	theme_classic()+
+	labs(x=" ", y="Relative activity (no. nightly recordings)")+
+	theme(text = element_text(size=18), legend.title = )+
+	scale_color_viridis(discrete = T, option = "D")+
+	guides(color=guide_legend(title="Bat spp."))+
+	facet_wrap(~AUTO.ID.)
+	
+##BIG BROWNS ONLY ----
+bigbrown <- all.bat.exp.agg[which(all.bat.exp.agg$AUTO.ID.== 'EPTFUS'),]
+
+mod.bb<-lmer(FILES~treatment + 1|trial, data = bigbrown)
+summary(mod.bb)
+
+mod.bb1<-lm(FILES~treatment, data = bigbrown)
+summary(mod.bb1)
+
+ggplot(data=bigbrown, aes(x=treatment, y=FILES))+ 
+	geom_boxplot(outlier.shape = NA)+
+	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5)+
+	stat_summary(fun.data = "mean_se", colour="red", size=1.5, shape="diamond")+
+	theme_classic()+
+	labs(x=" ", y="Relative activity (no. nightly recordings)",
+		 title = "Big brown bats (EPTFUS)")+
+	theme(text = element_text(size=15), legend.title = )+
+	scale_color_viridis(discrete = T, option = "D")
+
+##EASTERN REDS ONLY ----
+reds <- all.bat.exp.agg[which(all.bat.exp.agg$AUTO.ID.== 'LASBOR'),]
+
+mod.red<-lm(FILES~treatment, data = reds)
+summary(mod.red)
+
+ggplot(data=reds, aes(x=treatment, y=FILES))+
+	geom_boxplot(outlier.shape = NA)+
+	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5)+
+	stat_summary(fun.data = "mean_se", colour="red", size=1.5, shape="diamond")+
+	theme_classic()+
+	labs(x=" ", y="Relative activity (no. nightly recordings)",
+		 title = "Eastern red bats (LASBOR)")+
+	theme(text = element_text(size=15))+
+	scale_color_viridis(discrete = T, option = "D")
+
+##OTHER STUFF----
 bat1 <- read.csv(file="Trial 1.csv",head=TRUE)
 
 library(lme4)
