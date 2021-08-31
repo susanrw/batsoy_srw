@@ -111,7 +111,10 @@ cv.bean.agg.h<-aggregate(FILES ~ DATE.12 + site + AUTO.ID. + HOUR.12, data=cv.be
 plot.w2<-wye.bean.agg.h %>%
 	ggplot(aes(x=HOUR.12,y=FILES))+
 	geom_point(aes(color=DATE.12))+
-	theme_classic()
+	theme_classic()+
+	labs(x="HOUR",
+		 y="Relative activity (no. nightly detections)",
+		 color="Date", title = "Wye")
 plot.w2
 plot.w2+geom_smooth(aes(group=DATE.12))
 plot.w2+geom_smooth()
@@ -122,12 +125,16 @@ plot.w2+geom_smooth()+
 plot.c2<-cv.bean.agg.h %>%
 	ggplot(aes(x=HOUR.12,y=FILES))+
 	geom_point(aes(color=DATE.12))+
-	theme_classic()
+	theme_classic()+
+	labs(x="HOUR",
+		 y="Relative activity (no. nightly detections)",
+		 color="Date", title = "Clarksville")
+	
 plot.c2
 plot.c2+geom_smooth(aes(group=DATE.12))
 plot.c2+geom_smooth()
-plot.c2+geom_smooth()+
-	facet_wrap(~AUTO.ID.)
+plot.c2+facet_wrap(~AUTO.ID.)
+plot.c2+facet_wrap(~AUTO.ID.)+geom_smooth()
 
 #combining into one dataset
 all.bean <- rbind(wye.bean, cv.bean)
@@ -150,7 +157,7 @@ plot.all1<-all.bean.agg %>%
 	geom_point()+
 	geom_smooth()+
 	labs(x="Date",
-		 y="Rlative activity (no. nightly detections)",
+		 y="Relative activity (no. nightly detections)",
 		 color="Site")+
 	theme_classic()
 plot.all1
@@ -162,13 +169,23 @@ all.bean.agg.h<-aggregate(FILES ~ DATE.12 + site + AUTO.ID. + HOUR.12, data=all.
 #All plot-night
 plot.all2<-all.bean.agg.h %>%
 	ggplot(aes(x=HOUR.12,y=FILES))+
-	geom_point(aes(color=DATE.12))+
-	theme_classic()
+	geom_point()+
+	theme_classic()+
+	labs(x="Hour", y="Relative activity (no. nightly recordings)")
 plot.all2
-plot.all2+geom_smooth(aes(group=site))
-plot.all2+geom_smooth(aes(group=site))+
+plot.all2+geom_smooth(aes(color=site))
+plot.all2+geom_smooth(aes(color=site))+
 	facet_wrap(~AUTO.ID.)
 plot.all2+geom_smooth()+
+	facet_wrap(~site)
+
+plot.all4<-all.bean.agg.h %>%
+	ggplot(aes(x=HOUR.12,y=FILES))+
+	geom_point(aes(color=AUTO.ID.))+
+	theme_classic()+
+	labs(x="Hour", y="Relative activity (no. nightly recordings)")
+plot.all4
+plot.all4+
 	facet_wrap(~site)
 
 #aggregating without species
@@ -178,7 +195,8 @@ all.bean.agg.h2<-aggregate(FILES ~ DATE.12 + site + HOUR.12, data=all.bean, FUN=
 plot.all3<-all.bean.agg.h2 %>%
 	ggplot(aes(x=HOUR.12,y=FILES))+
 	geom_point(aes(color=DATE.12))+
-	theme_classic()
+	theme_classic()+
+	labs(x="Hour", y="Relative activity (no. nightly recordings)")
 plot.all3
 plot.all3+geom_smooth(aes(group=site))
 plot.all3+geom_smooth()+
