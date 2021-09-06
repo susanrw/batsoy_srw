@@ -11,7 +11,7 @@ e2 <- read.csv(file="id_e2.csv",head=TRUE)
 e3 <- read.csv(file="id_e3.csv",head=TRUE)
 e4 <- read.csv(file="id_e4.csv",head=TRUE) }
 
-#combine aggregated herbivory and chemistry datasets
+#combine datasets
 all.dat.w <- rbind(w1, w2, w3, w4)
 all.dat.e <- rbind(e1, e3, e3, e4)
 
