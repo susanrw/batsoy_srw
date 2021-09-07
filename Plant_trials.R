@@ -255,6 +255,18 @@ ggplot(data=bigbrown, aes(x=treatment, y=FILES))+
 	theme(text = element_text(size=15), legend.title = )+
 	scale_color_viridis(discrete = T, option = "D")
 
+#barplot
+library(Rmisc)
+bat_agse <- summarySE(bigbrown, measurevar="FILES", groupvars=c("treatment"))
+ggplot(bat_agse,aes(x=treatment,y=FILES, fill=treatment))+
+	geom_bar(stat = "summary")+
+	theme_classic()+
+	labs(x=" ",y="Relative activity")+
+	theme(text = element_text(size = 20), legend.position = "none")+
+	geom_errorbar(aes(ymin=FILES-se, ymax=FILES+se), width=.1)+
+	scale_fill_manual(values = c("#1f968bff","#fde725ff"))
+
+
 ##EASTERN REDS ONLY ----
 reds <- all.bat.exp.agg[which(all.bat.exp.agg$AUTO.ID.== 'LASBOR'),]
 

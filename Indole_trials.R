@@ -144,6 +144,19 @@ ggplot(data=bigbrown.indole, aes(x=treatment, y=FILES))+
 	theme(text = element_text(size=15), legend.title = )+
 	scale_color_viridis(discrete = T, option = "D")
 
+#barplot
+library(Rmisc)
+bb_agse <- summarySE(bigbrown.indole, measurevar="FILES", groupvars=c("treatment"))
+ggplot(bb_agse,aes(x=treatment,y=FILES, fill=treatment))+
+	geom_bar(stat = "summary")+
+	theme_classic()+
+	labs(x=" ",y="Relative activity")+
+	theme(text = element_text(size = 20), legend.position = "none")+
+	geom_errorbar(aes(ymin=FILES-se, ymax=FILES+se), width=.1)+
+	scale_x_discrete(limits=c("Dispenser", "Control"))+
+	scale_fill_manual(values = c("#fde725ff", "#1f968bff"))
+
+
 indole.mod.bb<-lmer(FILES~treatment + 1|plot, data = bigbrown.indole)
 #warnings
 summary(indole.mod.bb)
