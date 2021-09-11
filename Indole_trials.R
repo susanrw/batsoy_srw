@@ -70,18 +70,18 @@ library(dplyr)
 indole.d<-select(indole.d, DATE, TIME, HOUR, DATE.12, TIME.12, HOUR.12, AUTO.ID., FILES, plot)
 indole.c<-select(indole.c, DATE, TIME, HOUR, DATE.12, TIME.12, HOUR.12, AUTO.ID., FILES, plot)
 
-{	indole.d$AUTO.ID.<-as.factor(indole.d$AUTO.ID.)
-	indole.d$DATE.12<-as.Date(indole.d$DATE.12,"%Y%m%d")
-	indole.d$HOUR<-as.numeric(indole.d$HOUR)
-	indole.d$DATE<-as.Date(indole.d$DATE,"%y%m%d")
-	indole.d$HOUR.12<-as.numeric(indole.d$HOUR.12)
-}
-
-{	indole.c$AUTO.ID.<-as.factor(indole.c$AUTO.ID.)
-	indole.c$DATE.12<-as.Date(indole.c$DATE.12,"%m/%d/%y")
-	indole.c$HOUR<-as.numeric(indole.c$HOUR)
-	indole.c$DATE<-as.Date(indole.c$DATE,"%m/%d/%y")
-	indole.c$HOUR.12<-as.numeric(indole.c$HOUR.12)
+#{	indole.d$AUTO.ID.<-as.factor(indole.d$AUTO.ID.)
+#	indole.d$DATE.12<-as.Date(indole.d$DATE.12,"%Y%m%d")
+#	indole.d$HOUR<-as.numeric(indole.d$HOUR)
+#	indole.d$DATE<-as.Date(indole.d$DATE,"%y%m%d")
+#	indole.d$HOUR.12<-as.numeric(indole.d$HOUR.12)
+#}
+#
+{#	indole.c$AUTO.ID.<-as.factor(indole.c$AUTO.ID.)
+#	indole.c$DATE.12<-as.Date(indole.c$DATE.12,"%m/%d/%y")
+#	indole.c$HOUR<-as.numeric(indole.c$HOUR)
+#	indole.c$DATE<-as.Date(indole.c$DATE,"%m/%d/%y")
+#	indole.c$HOUR.12<-as.numeric(indole.c$HOUR.12)
 }
 
 #creating treatment columns
