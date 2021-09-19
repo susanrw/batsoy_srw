@@ -26,15 +26,19 @@ bean %>%
 	wy2 <- read.csv(file="id_Wye2.csv",head=TRUE)
 	wy3 <- read.csv(file="id_Wye3.csv",head=TRUE)
 	wy4 <- read.csv(file="id_Wye4.csv",head=TRUE)
+	wy5 <- read.csv(file="id_Wye5.csv",head=TRUE)
+	wy6 <- read.csv(file="id_Wye6.csv",head=TRUE)
 	cv1 <- read.csv(file="id_Cv1.csv",head=TRUE)
 	cv2 <- read.csv(file="id_Cv2.csv",head=TRUE)
 	cv3 <- read.csv(file="id_Cv3.csv",head=TRUE)
-	cv4 <- read.csv(file="id_Cv4.csv",head=TRUE) }
+	cv4 <- read.csv(file="id_Cv4.csv",head=TRUE)
+	cv5 <- read.csv(file="id_Cv5.csv",head=TRUE)
+	cv6 <- read.csv(file="id_Cv6.csv",head=TRUE)}
 
 #Wye data
-wye.bean <- rbind(wy1, wy2, wy3, wy4)
+wye.bean <- rbind(wy1, wy2, wy3, wy4, wy5, wy6)
 #Cville data
-cv.bean <- rbind(cv1, cv2, cv3, cv4)
+cv.bean <- rbind(cv1, cv2, cv3, cv4, cv5, cv6)
 
 #creating site columns
 wye.bean$site <- NA
@@ -188,6 +192,7 @@ plot.all4
 plot.all4+
 	facet_wrap(~site)
 
+
 #aggregating without species
 all.bean.agg.h2<-aggregate(FILES ~ DATE.12 + site + HOUR.12, data=all.bean, FUN=sum)
 
@@ -201,3 +206,4 @@ plot.all3
 plot.all3+geom_smooth(aes(group=site))
 plot.all3+geom_smooth()+
 	facet_wrap(~site)
+
