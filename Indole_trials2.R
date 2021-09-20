@@ -1,14 +1,14 @@
 #read in all data
-{ c1.2 <- read.csv(file="indole_4672_c.csv",head=TRUE)
-c2.2 <- read.csv(file="indole_4614_c.csv",head=TRUE)
-c3.2 <- read.csv(file="indole_4604_c.csv",head=TRUE)
-c4.2 <- read.csv(file="indole_1676_c.csv",head=TRUE)
-c5.2 <- read.csv(file="indole_0505_c.csv",head=TRUE)
-d1.2 <- read.csv(file="indole_4655_d.csv",head=TRUE)
-d2.2 <- read.csv(file="indole_2198_d.csv",head=TRUE)
-d3.2 <- read.csv(file="indole_4608_d.csv",head=TRUE)
-d4.2 <- read.csv(file="indole_2207_d.csv",head=TRUE)
-d5.2 <- read.csv(file="indole_1708_d.csv",head=TRUE)
+{ c1.2 <- read.csv(file="indole_4672_c2.csv",head=TRUE)
+c2.2 <- read.csv(file="indole_4614_c2.csv",head=TRUE)
+c3.2 <- read.csv(file="indole_4604_c2.csv",head=TRUE)
+c4.2 <- read.csv(file="indole_1676_c2.csv",head=TRUE)
+c5.2 <- read.csv(file="indole_0505_c2.csv",head=TRUE)
+d1.2 <- read.csv(file="indole_4655_d2.csv",head=TRUE)
+d2.2 <- read.csv(file="indole_2198_d2.csv",head=TRUE)
+d3.2 <- read.csv(file="indole_4608_d2.csv",head=TRUE)
+d4.2 <- read.csv(file="indole_2207_d2.csv",head=TRUE)
+d5.2 <- read.csv(file="indole_1708_d2.csv",head=TRUE)
 }
 
 #addding plot column
@@ -112,8 +112,30 @@ indole.plot1<-ggplot(data=all.in.ag2, aes(x=treatment, y=FILES))+
 	scale_color_viridis(discrete = T, option = "D")+
 	guides(color=guide_legend(title="Bat spp."))
 indole.plot1
-
 indole.plot1+facet_wrap(~AUTO.ID.)
+
+indole.all<-rbind (all.in.ag2, all.in.ag)
+
+indole.plot10<-ggplot(data=indole.all, aes(x=treatment, y=FILES))+ 
+	geom_boxplot(outlier.shape = NA)+
+	geom_point(position=position_jitter(width = 0.025), alpha=0.4, aes(color=AUTO.ID.), size=2.5)+
+	stat_summary(fun.data = "mean_se", colour="black", size=1.5, shape="diamond")+
+	theme_classic()+
+	labs(x=" ", y="Relative activity (no. nightly recordings)", title="All indole trials")+
+	theme(text = element_text(size=16), legend.title = )+
+	scale_color_viridis(discrete = T, option = "D")+
+	guides(color=guide_legend(title="Bat spp."))
+indole.plot10
+indole.plot10+facet_wrap(~AUTO.ID.)
+
+#simple graph
+ggplot(data=indole.all, aes(x=treatment, y=FILES))+ 
+	stat_summary(fun.data = "mean_se", colour="black", size=1.5, shape="diamond")+
+	theme_classic()+
+	labs(x=" ", y="Relative activity (no. nightly recordings)", title="All indole trials")+
+	theme(text = element_text(size=16), legend.title = )+
+	scale_color_viridis(discrete = T, option = "D")+
+	guides(color=guide_legend(title="Bat spp."))
 
 ##BIG BROWNS ONLY ----
 bigbrown.indole2 <- all.in.ag2[which(all.in.ag2$AUTO.ID.== 'EPTFUS'),]
@@ -129,7 +151,7 @@ ggplot(data=bigbrown.indole2, aes(x=treatment, y=FILES))+
 	stat_summary(fun.data = "mean_se", colour="red", size=1.5, shape="diamond")+
 	theme_classic()+
 	labs(x=" ", y="Relative activity (no. nightly recordings)",
-		 title = "Big brown bats (EPTFUS)")+
+		 title = "Big brown bats (EPTFUS)-Round 2")+
 	theme(text = element_text(size=15), legend.title = )+
 	scale_color_viridis(discrete = T, option = "D")
 
@@ -142,6 +164,16 @@ ggplot(data=bb.indole.all, aes(x=treatment, y=FILES))+
 	stat_summary(fun.data = "mean_se", colour="red", size=1.5, shape="diamond")+
 	theme_classic()+
 	labs(x=" ", y="Relative activity (no. nightly recordings)",
-		 title = "Big brown bats (EPTFUS)")+
+		 title = "Big brown bats (EPTFUS)-all trials")+
 	theme(text = element_text(size=15), legend.title = )+
 	scale_color_viridis(discrete = T, option = "D")
+
+#simple graph
+ggplot(data=bb.indole.all, aes(x=treatment, y=FILES))+ 
+	stat_summary(fun.data = "mean_se", colour="red", size=1.5, shape="diamond")+
+	theme_classic()+
+	labs(x=" ", y="Relative activity (no. nightly recordings)",
+		 title = "Big brown bats (EPTFUS)-all trials")+
+	theme(text = element_text(size=15), legend.title = )+
+	scale_color_viridis(discrete = T, option = "D")
+

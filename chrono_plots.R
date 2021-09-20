@@ -86,9 +86,10 @@ plot.cr<-cr.agg %>%
 	ggplot(aes(x=age, 
 			   y=FILES))+
 	geom_point(aes(color=AUTO.ID.))+
-	geom_smooth()+
+	geom_smooth(method = "lm")+
 	labs(x="Stand age",
-		 y="Relative activity (no. nightly detections)")+
+		 y="Relative activity (no. nightly detections)",
+		 title="Chrono plots")+
 	theme_classic()+
 	scale_x_continuous(breaks = c(0, 50, 100, 150, 200, 250, 300))
 plot.cr

@@ -140,7 +140,7 @@ ggplot(data=bigbrown.indole, aes(x=treatment, y=FILES))+
 	stat_summary(fun.data = "mean_se", colour="red", size=1.5, shape="diamond")+
 	theme_classic()+
 	labs(x=" ", y="Relative activity (no. nightly recordings)",
-		 title = "Big brown bats (EPTFUS)")+
+		 title = "Big brown bats (EPTFUS)-Round 1")+
 	theme(text = element_text(size=15), legend.title = )+
 	scale_color_viridis(discrete = T, option = "D")
 
