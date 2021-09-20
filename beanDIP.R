@@ -87,11 +87,22 @@ plot.w1<-wye.bean.agg %>%
 	geom_point()+
 	geom_smooth()+
 	labs(x="Date",
-		 y="Rlative activity (no. nightly detections)",
-		 color="Site")+
+		 y="Relative activity (no. nightly detections)",
+		 color="Species",
+		 title = "Wye")+
 	theme_classic()
 plot.w1
 plot.w1+facet_wrap(~AUTO.ID.)
+
+wye.bean.agg %>%
+	ggplot(aes(x=DATE.12, 
+			   y=FILES))+
+	geom_point()+
+	geom_smooth()+
+	labs(x="Date",
+		 y="Relative activity (no. nightly detections)",
+		 title = "Wye")+
+	theme_classic()
 
 #Cville plot
 plot.c1<-cv.bean.agg %>%
@@ -101,11 +112,22 @@ plot.c1<-cv.bean.agg %>%
 	geom_point()+
 	geom_smooth()+
 	labs(x="Date",
-		 y="Rlative activity (no. nightly detections)",
-		 color="Site")+
+		 y="Relative activity (no. nightly detections)",
+		 color="Species",
+		 title = "Clarksville")+
 	theme_classic()
 plot.c1
 plot.c1+facet_wrap(~AUTO.ID.)
+
+cv.bean.agg %>%
+	ggplot(aes(x=DATE.12, 
+			   y=FILES))+
+	geom_point()+
+	geom_smooth()+
+	labs(x="Date",
+		 y="Relative activity (no. nightly detections)",
+		 color="Site")+
+	theme_classic()
 
 #aggregating data by night/hour
 wye.bean.agg.h<-aggregate(FILES ~ DATE.12 + site + AUTO.ID. + HOUR.12, data=wye.bean, FUN=sum)
