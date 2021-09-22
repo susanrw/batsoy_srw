@@ -229,3 +229,105 @@ plot.all3+geom_smooth(aes(group=site))
 plot.all3+geom_smooth()+
 	facet_wrap(~site)
 
+
+#HERBIVORY----
+chew <- read.csv(file="beanDIP_chew.csv",head=TRUE)
+
+chew$chew_pct<-as.numeric(chew$chew_pct)
+chew$chew_prop<-(chew$chew_pct)/100
+
+chew.ag<-aggregate(chew_prop ~ date + site, data=chew, FUN=mean)
+
+chew.ag$chew_prop<-as.numeric(chew.ag$chew_prop)
+chew.ag$date<-as.Date(chew.ag$date,"%Y-%m-%d")
+
+chew.ag %>%
+	ggplot(aes(x=date, 
+			   y=chew_prop,
+			   color=site))+
+	geom_point()+
+	geom_smooth()+
+	labs(x="Date",
+		 y="Proportion chew damage",
+		 color="Site")+
+	theme_classic()
+
+#Cville chew + bat
+cv.bean.agg$DATE.12<-as.Date(cv.bean.agg$DATE.12,"%Y-%m-%d")
+
+{cv.bat.chew1<- cv.bean.agg[cv.bean.agg$DATE.12 == c("2021-08-07"), ] 
+cv.bat.chew2<- cv.bean.agg[cv.bean.agg$DATE.12 == c("2021-08-28"), ]
+cv.bat.chew3<- cv.bean.agg[cv.bean.agg$DATE.12 == c("2021-09-03"), ]
+cv.bat.chew4<- cv.bean.agg[cv.bean.agg$DATE.12 == c("2021-07-28"), ]
+cv.bat.chew5<- cv.bean.agg[cv.bean.agg$DATE.12 == c("2021-07-08"), ]}
+
+#Combine
+cv.bat <- rbind(cv.bat.chew1, cv.bat.chew2, cv.bat.chew3, cv.bat.chew4, cv.bat.chew5)
+
+cv.bat$date<-cv.bat$DATE.12
+cv.bat$date<-as.Date(cv.bat$date,"%Y-%m-%d")
+chew.ag$date<-as.Date(chew.ag$date,"%Y-%m-%d")
+
+chew.ag<-chew.ag[order(chew.ag$site),]
+cv.chew.ag <- chew.ag[c(1:6),]
+wy.chew.ag <- chew.ag[c(7:12),]
+
+cv.bat.chew<-merge(cv.bat, cv.chew.ag, by="date", all = T)
+
+
+#Wye chew + bat
+wye.bean.agg$DATE.12<-as.Date(wye.bean.agg$DATE.12,"%Y-%m-%d")
+
+{wy.bat.chew1<- cv.bean.agg[cv.bean.agg$DATE.12 == c("2021-08-08"), ] 
+	wy.bat.chew2<- cv.bean.agg[cv.bean.agg$DATE.12 == c("2021-08-28"), ]
+	wy.bat.chew3<- cv.bean.agg[cv.bean.agg$DATE.12 == c("2021-09-03"), ]
+	wy.bat.chew4<- cv.bean.agg[cv.bean.agg$DATE.12 == c("2021-07-27"), ]
+	wy.bat.chew5<- cv.bean.agg[cv.bean.agg$DATE.12 == c("2021-07-06"), ]}
+
+#Combine
+wy.bat <- rbind(wy.bat.chew1, wy.bat.chew2, wy.bat.chew3, wy.bat.chew4, wy.bat.chew5)
+
+wy.bat$date<-wy.bat$DATE.12
+wy.bat$date<-as.Date(wy.bat$date,"%Y-%m-%d")
+
+wy.bat.chew<-merge(wy.bat, wy.chew.ag, by="date", all = T)
+
+all.bat.chew<-rbind(wy.bat.chew, cv.bat.chew)
+
+library(lme4)
+library(car)
+mod1<-glmer(FILES ~ chew_prop + 1|date, data = cv.bat.chew)
+summary(mod1)
+Anova(mod1)
+
+mod2<-lm(FILES~AUTO.ID. + chew_prop, data = cv.bat.chew)
+summary(mod2)
+
+cv.bat.chew %>%
+	ggplot(aes(x=chew_prop, 
+			   y=FILES,
+			   color=AUTO.ID.))+
+	geom_point()+
+	geom_smooth(method = "lm")+
+	labs(x="Chew damage",
+		 y="Bat activity",
+		 color="Species")+
+	theme_classic()
+
+mod3<-lmer(FILES ~ chew_prop + 1|date, data = wy.bat.chew)
+summary(mod3)
+Anova(mod3)
+
+mod4<-lm(FILES~AUTO.ID. + chew_prop, data = wy.bat.chew)
+summary(mod4)
+
+wy.bat.chew %>%
+	ggplot(aes(x=chew_prop, 
+			   y=FILES,
+			   color=AUTO.ID.))+
+	geom_point()+
+	labs(x="Chew damage",
+		 y="Bat activity",
+		 color="Species")+
+	theme_classic()+
+	scale_x_continuous(limits = c(0.02,0.1))
