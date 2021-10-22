@@ -164,7 +164,7 @@ farn.plot1<-ggplot(data=all.farn.ag, aes(x=treatment, y=FILES))+
 	geom_point(position=position_jitter(width = 0.025), alpha=0.4, aes(color=AUTO.ID.), size=2.5)+
 	stat_summary(fun.data = "mean_se", colour="black", size=1.5, shape="diamond")+
 	theme_classic()+
-	labs(x=" ", y="Relative activity (no. nightly recordings)")+
+	labs(x=" ", y="Relative activity (no. nightly recordings)", title = "Farnesene trials")+
 	theme(text = element_text(size=16), legend.title = )+
 	scale_color_viridis(discrete = T, option = "D")+
 	guides(color=guide_legend(title="Bat spp."))
@@ -179,3 +179,39 @@ ggplot(data=all.farn.ag, aes(x=treatment, y=FILES))+
 	theme(text = element_text(size=16), legend.title = )+
 	scale_color_viridis(discrete = T, option = "D")+
 	guides(color=guide_legend(title="Bat spp."))
+
+##Big browns----
+bb.farn <- all.farn.ag[which(all.farn.ag$AUTO.ID.== 'EPTFUS'),]
+
+bb.farn$FILES<-as.numeric(bb.farn$FILES)
+bb.farn$treatment<-as.character(bb.farn$treatment)
+bb.farn$plot<-as.factor(bb.farn$plot)
+
+#graph
+ggplot(data=bb.farn, aes(x=treatment, y=FILES))+ 
+	geom_boxplot(outlier.shape = NA)+
+	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5)+
+	stat_summary(fun.data = "mean_se", colour="red", size=1.5, shape="diamond")+
+	theme_classic()+
+	labs(x=" ", y="Relative activity (no. nightly recordings)",
+		 title = "Big brown bats, Farnesene")+
+	theme(text = element_text(size=15), legend.title = )+
+	scale_color_viridis(discrete = T, option = "D")
+
+#barplot
+library(Rmisc)
+bb_farn <- summarySE(bb.farn, measurevar="FILES", groupvars=c("treatment"))
+ggplot(bb_farn,aes(x=treatment,y=FILES, fill=treatment))+
+	geom_bar(stat = "summary")+
+	theme_classic()+
+	labs(x=" ",y="Relative activity")+
+	theme(text = element_text(size = 20), legend.position = "none")+
+	geom_errorbar(aes(ymin=FILES-se, ymax=FILES+se), width=.1)+
+	scale_fill_manual(values = c("#fde725ff", "#1f968bff"))
+
+farn.mod.bb<-glmer(FILES~treatment + 1|plot, data = bb.farn)
+summary(farn.mod.bb)
+Anova(farn.mod.bb)#can't get this to run
+shapiro.test(resid(farn.mod.bb))#not normal
+
+summary(glm(FILES~treatment, data = bb.farn))
