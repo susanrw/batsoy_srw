@@ -189,10 +189,19 @@ ggplot(data=all.bat.exp.agg, aes(x=treatment, y=FILES))+
 	geom_point(position=position_jitter(width = 0.025), alpha=0.4, aes(color=AUTO.ID.), size=2.5)+
 	stat_summary(fun.data = "mean_se", colour="black", size=1.5, shape="diamond")+
 	theme_classic()+
-	labs(x=" ", y="Relative activity (no. nightly recordings)")+
+	labs(x=" ", y="Relative activity (no. nightly recordings)", title="Plant trials")+
 	theme(text = element_text(size=16), legend.title = )+
 	scale_color_viridis(discrete = T, option = "D")+
-	guides(color=guide_legend(title="Bat spp."))
+	guides(color=guide_legend(title="Bat spp."))+
+	scale_x_discrete(labels=c("Damaged", "Undamaged"))
+
+#simple graph
+ggplot(data=all.bat.exp.agg, aes(x=treatment, y=FILES))+ 
+	stat_summary(fun.data = "mean_se", colour="black", size=1.5, shape="diamond")+
+	theme_classic()+
+	labs(x=" ", y="Relative activity (no. nightly recordings)", title="Plant trials")+
+	theme(text = element_text(size=16))+
+	scale_x_discrete(labels=c("Damaged", "Undamaged"))
 
 mod2<-lmer(FILES~treatment*AUTO.ID.+1|trial, dat = all.bat.exp.agg)
 summary(mod2)
@@ -230,7 +239,7 @@ ggplot(data=all.bat.exp.agg, aes(x=treatment, y=FILES))+
 	geom_point(position=position_jitter(width = 0.025), alpha=0.4, aes(color=AUTO.ID.), size=2.5)+
 	stat_summary(fun.data = "mean_se", colour="black", size=1.5, shape="diamond")+
 	theme_classic()+
-	labs(x=" ", y="Relative activity (no. nightly recordings)")+
+	labs(x=" ", y="Relative activity (no. nightly recordings)", title = "Plant trials")+
 	theme(text = element_text(size=18), legend.title = )+
 	scale_color_viridis(discrete = T, option = "D")+
 	guides(color=guide_legend(title="Bat spp."))+
@@ -251,7 +260,7 @@ ggplot(data=bigbrown, aes(x=treatment, y=FILES))+
 	stat_summary(fun.data = "mean_se", colour="red", size=1.5, shape="diamond")+
 	theme_classic()+
 	labs(x=" ", y="Relative activity (no. nightly recordings)",
-		 title = "Big brown bats (EPTFUS)")+
+		 title = "Big browns, plant trials")+
 	theme(text = element_text(size=15), legend.title = )+
 	scale_color_viridis(discrete = T, option = "D")
 
