@@ -1,5 +1,13 @@
-# Data import and cleaning ------------------------------------------------
+#Load libraries
+library(ggplot2)
+library(lme4)
+library(viridis)
+library(car)
+library(emmeans)
+library(multcomp)
+library(dplyr)
 
+# Data import and cleaning ------------------------------------------------
 
 #read in all data
 { w1 <- read.csv(file="id_w1.csv",head=TRUE)
@@ -19,7 +27,7 @@ all.dat.e <- rbind(e1, e3, e3, e4)
 all.dat.w<-all.dat.w[all.dat.w$AUTO.ID. != "Noise", ]  
 all.dat.e<-all.dat.e[all.dat.e$AUTO.ID. != "Noise", ]  
 
-library(dplyr)
+
 
 all.bat.w<-select(all.dat.w, DATE, TIME, HOUR, DATE.12, TIME.12, HOUR.12, AUTO.ID., FILES)
 all.bat.e<-select(all.dat.e, DATE, TIME, HOUR, DATE.12, TIME.12, HOUR.12, AUTO.ID., FILES)
@@ -169,8 +177,6 @@ all.bat.exp <- all.bat[all.bat$trial != "N/A", ]
 #shapiro.test(resid(mod1))
 #printCoefmat(coef(summary(mod1)),digits=2)
 
-library(ggplot2)
-library(viridis)
 ggplot(data=all.bat.exp, aes(x=treatment, y=FILES))+ 
 	geom_boxplot(outlier.shape = NA)+
 	geom_point(position=position_jitter(width = 0.025), alpha=0.4, aes(color=AUTO.ID.), size=2.5)+
@@ -203,24 +209,32 @@ ggplot(data=all.bat.exp.agg, aes(x=treatment, y=FILES))+
 	theme(text = element_text(size=16))+
 	scale_x_discrete(labels=c("Damaged", "Undamaged"))
 
-mod2<-lmer(FILES~treatment*AUTO.ID.+1|trial, dat = all.bat.exp.agg)
+mod2<-glmer.nb(FILES~treatment*AUTO.ID.+1|trial, dat = all.bat.exp.agg)
 summary(mod2)
-shapiro.test(resid(mod2))
+Anova(mod2)
+
 
 all.bat.exp.agg$AUTO.ID.<-as.factor(all.bat.exp.agg$AUTO.ID.)
-mod3<-lmer(FILES~treatment+AUTO.ID.+1|trial, dat = all.bat.exp.agg)
+mod3<-glmer.nb(FILES~treatment+AUTO.ID.+(1|trial), dat = all.bat.exp.agg)
 summary(mod3)
-shapiro.test(resid(mod3))
+shapiro.test(resid(mod3))#p-value = 0.0002487
+Anova(mod3)
 
+#contrasts
+f1<-emmeans(mod3,pairwise~AUTO.ID., type="response")
+cld(f1$emmeans,  Letters ='abcde')
 
-mod4<-lmer(FILES~treatment+1|trial, dat = all.bat.exp.agg)
+f2<-emmeans(mod3,pairwise~treatment, type="response")
+cld(f2$emmeans,  Letters ='abcde')
+
+mod4<-glmer.nb(FILES ~ treatment + (1|trial), dat = all.bat.exp.agg)
 summary(mod4)
+Anova(mod4)
 shapiro.test(resid(mod4))
 
-library(multcomp)
 summary(glht(mod3, linfct=mcp(AUTO.ID.="Tukey")))
 
-mod5<-lm(FILES~treatment+AUTO.ID.+trial, dat=all.bat.exp.agg)
+mod5<-glm(FILES~treatment+AUTO.ID.+trial, dat=all.bat.exp.agg)
 summary(mod5)
 summary(glht(mod5, linfct=mcp(treatment="Tukey")))
 
@@ -231,7 +245,7 @@ library(multcomp)
 f1<-emmeans(mod5,pairwise~AUTO.ID., type="response")
 cld(f1$emmeans,  Letters ='abcde')
 
-f2<-emmeans(mod5,pairwise~trial, type="response")
+f2<-emmeans(mod5,pairwise~treatment, type="response")
 cld(f2$emmeans,  Letters ='abcde')
 
 ggplot(data=all.bat.exp.agg, aes(x=treatment, y=FILES))+ 
@@ -244,6 +258,17 @@ ggplot(data=all.bat.exp.agg, aes(x=treatment, y=FILES))+
 	scale_color_viridis(discrete = T, option = "D")+
 	guides(color=guide_legend(title="Bat spp."))+
 	facet_wrap(~AUTO.ID.)
+
+ggplot(data=all.bat.exp.agg, aes(x=trial, y=FILES))+ 
+	geom_boxplot(outlier.shape = NA)+
+	geom_point(position=position_jitter(width = 0.025), alpha=0.4, aes(color=AUTO.ID.), size=2.5)+
+	stat_summary(fun.data = "mean_se", colour="black", size=1.5, shape="diamond")+
+	theme_classic()+
+	labs(x=" ", y="Relative activity (no. nightly recordings)", title = "Plant trials")+
+	theme(text = element_text(size=18), legend.title = )+
+	scale_color_viridis(discrete = T, option = "D")+
+	guides(color=guide_legend(title="Bat spp."))+
+	facet_wrap(~treatment)
 	
 ##BIG BROWNS ONLY ----
 bigbrown <- all.bat.exp.agg[which(all.bat.exp.agg$AUTO.ID.== 'EPTFUS'),]
