@@ -21,16 +21,14 @@ e4 <- read.csv(file="id_e4.csv",head=TRUE) }
 
 #combine datasets
 all.dat.w <- rbind(w1, w2, w3, w4)
-all.dat.e <- rbind(e1, e3, e3, e4)
+all.dat.e <- rbind(e1, e2, e3, e4)
 
 
 all.dat.w<-all.dat.w[all.dat.w$AUTO.ID. != "Noise", ]  
 all.dat.e<-all.dat.e[all.dat.e$AUTO.ID. != "Noise", ]  
 
-
-
-all.bat.w<-select(all.dat.w, DATE, TIME, HOUR, DATE.12, TIME.12, HOUR.12, AUTO.ID., FILES)
-all.bat.e<-select(all.dat.e, DATE, TIME, HOUR, DATE.12, TIME.12, HOUR.12, AUTO.ID., FILES)
+all.bat.w<-select(all.dat.w, DATE, TIME, HOUR, DATE.12, TIME.12, HOUR.12, AUTO.ID., FILES, Fmin)
+all.bat.e<-select(all.dat.e, DATE, TIME, HOUR, DATE.12, TIME.12, HOUR.12, AUTO.ID., FILES, Fmin)
 
 {	all.bat.w$AUTO.ID.<-as.factor(all.bat.w$AUTO.ID.)
 	all.bat.w$DATE.12<-as.Date(all.bat.w$DATE.12,"%m/%d/%y")
@@ -103,6 +101,8 @@ for(i in 1:length(all.bat.e$FILES)){
 	if(all.bat.e$FILES[i]==1){all.bat.e$side[i]="E"}
 }
 
+all.bat.e <- all.bat.e[order(all.bat.e$trial),]
+
 #WESTSIDE
 ##creating treatment column
 all.bat.w$treatment <- NA
@@ -160,7 +160,6 @@ for(i in 1:length(all.bat.w$FILES)){
 	if(all.bat.w$FILES[i]==1){all.bat.w$side[i]="W"}
 }
 
-##ANALYSES----
 #combine the two datasets, east and west sides
 #all.bat=all data
 all.bat <- rbind(all.bat.e, all.bat.w)
@@ -172,23 +171,12 @@ all.bat$FILES<-as.numeric(all.bat$FILES)
 #all.bat.exp=dataset with only nights where experiment was running
 all.bat.exp <- all.bat[all.bat$trial != "N/A", ] 
 
-#mod1<-glmer(FILES~treatment*AUTO.ID.+1|trial, dat = all.bat.exp)
-#summary(mod1)
-#shapiro.test(resid(mod1))
-#printCoefmat(coef(summary(mod1)),digits=2)
-
-ggplot(data=all.bat.exp, aes(x=treatment, y=FILES))+ 
-	geom_boxplot(outlier.shape = NA)+
-	geom_point(position=position_jitter(width = 0.025), alpha=0.4, aes(color=AUTO.ID.), size=2.5)+
-	stat_summary(fun.data = "mean_se", colour="black", size=1.5, shape="diamond")+
-	theme_classic()+
-	labs(x=" ", y="Activity (No. recordings)")+
-	theme(text = element_text(size=18), legend.title = )+
-	scale_color_viridis(discrete = T, option = "D")+
-	guides(color=guide_legend(title="Bat spp."))
-
-all.bat.exp.agg<-aggregate(FILES ~ DATE.12 + treatment + side + trial + AUTO.ID., data=all.bat.exp, FUN=sum)
+##ANALYSES----
+#aggregating data
+all.bat.exp.agg<-aggregate(FILES ~ treatment + side + trial + AUTO.ID., data=all.bat.exp, FUN=sum)
 all.bat.exp.agg$treatment<-as.factor(all.bat.exp.agg$treatment)
+all.bat.exp.agg$AUTO.ID.<-as.factor(all.bat.exp.agg$AUTO.ID.)
+all.bat.exp.agg <- all.bat.exp.agg[order(all.bat.exp.agg$trial),]
 
 ggplot(data=all.bat.exp.agg, aes(x=treatment, y=FILES))+ 
 	geom_boxplot(outlier.shape = NA)+
@@ -199,7 +187,10 @@ ggplot(data=all.bat.exp.agg, aes(x=treatment, y=FILES))+
 	theme(text = element_text(size=16), legend.title = )+
 	scale_color_viridis(discrete = T, option = "D")+
 	guides(color=guide_legend(title="Bat spp."))+
-	scale_x_discrete(labels=c("Damaged", "Undamaged"))
+	scale_x_discrete(labels=c("Damaged", "Undamaged"))+
+	stat_summary(geom = 'text', label = c("a","b"),
+				 fun = max, vjust = -0.8, size=5.5)+
+	scale_y_continuous(limits = c(0,800))
 
 #simple graph
 ggplot(data=all.bat.exp.agg, aes(x=treatment, y=FILES))+ 
@@ -209,43 +200,42 @@ ggplot(data=all.bat.exp.agg, aes(x=treatment, y=FILES))+
 	theme(text = element_text(size=16))+
 	scale_x_discrete(labels=c("Damaged", "Undamaged"))
 
-mod2<-glmer.nb(FILES~treatment*AUTO.ID.+1|trial, dat = all.bat.exp.agg)
-summary(mod2)
-Anova(mod2)
+mod1<-glmer.nb(FILES~treatment*AUTO.ID.+(1|trial), dat = all.bat.exp.agg)
+summary(mod1)
+Anova(mod1)
+#treatment chisq=6.8884 p=0.009, spp chisq=456.1526 p<0.0001, interaxn chisq=2.00 p=0.99
+
+#contrasts
+f1<-emmeans(mod1,pairwise~AUTO.ID., type="response")
+cld(f1$emmeans,  Letters ='abcdefghijklmn')
+
+f2<-emmeans(mod1,pairwise~treatment, type="response")
+cld(f2$emmeans,  Letters ='abcde')
+#high activity of unidentified bat species. The second most active species were big browns and 
+#free-tailed bats. The least active species was eastern reds.
+
+treatment.tab <- ddply(all.bat.exp.agg, c("treatment"), summarise,
+				  N    = length(FILES),
+				  mean = mean(FILES),
+				  sd   = sd(FILES),
+				  se   = sd / sqrt(N))
+treatment.tab
+#(undamaged-damaged)/damaged
+(83.52000-63.83673)/63.83673
+#0.3083377
+#Undamaged plots had 30.9% more activity compared to damaged plots
 
 
-all.bat.exp.agg$AUTO.ID.<-as.factor(all.bat.exp.agg$AUTO.ID.)
 mod3<-glmer.nb(FILES~treatment+AUTO.ID.+(1|trial), dat = all.bat.exp.agg)
 summary(mod3)
-shapiro.test(resid(mod3))#p-value = 0.0002487
+shapiro.test(resid(mod3))#p-value = 0.0004201
 Anova(mod3)
 
 #contrasts
-f1<-emmeans(mod3,pairwise~AUTO.ID., type="response")
+f3<-emmeans(mod3,pairwise~AUTO.ID., type="response")
 cld(f1$emmeans,  Letters ='abcde')
 
-f2<-emmeans(mod3,pairwise~treatment, type="response")
-cld(f2$emmeans,  Letters ='abcde')
-
-mod4<-glmer.nb(FILES ~ treatment + (1|trial), dat = all.bat.exp.agg)
-summary(mod4)
-Anova(mod4)
-shapiro.test(resid(mod4))
-
-summary(glht(mod3, linfct=mcp(AUTO.ID.="Tukey")))
-
-mod5<-glm(FILES~treatment+AUTO.ID.+trial, dat=all.bat.exp.agg)
-summary(mod5)
-summary(glht(mod5, linfct=mcp(treatment="Tukey")))
-
-#create cld
-library(emmeans)
-library(multcomp)
-#with interactive model, treatment
-f1<-emmeans(mod5,pairwise~AUTO.ID., type="response")
-cld(f1$emmeans,  Letters ='abcde')
-
-f2<-emmeans(mod5,pairwise~treatment, type="response")
+f4<-emmeans(mod3,pairwise~treatment, type="response")
 cld(f2$emmeans,  Letters ='abcde')
 
 ggplot(data=all.bat.exp.agg, aes(x=treatment, y=FILES))+ 
@@ -269,15 +259,24 @@ ggplot(data=all.bat.exp.agg, aes(x=trial, y=FILES))+
 	scale_color_viridis(discrete = T, option = "D")+
 	guides(color=guide_legend(title="Bat spp."))+
 	facet_wrap(~treatment)
+
+#species GRAPH
+ggplot(data=all.bat.exp.agg, aes(x=AUTO.ID., y=FILES))+ 
+	geom_boxplot(outlier.shape = NA)+
+	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5)+
+	stat_summary(fun.data = "mean_se", colour="black", size=1, shape="diamond")+
+	theme_classic()+
+	labs(x=" ", y="Relative activity (no. nightly recordings)", title="Plant trials")+
+	theme(text = element_text(size=16), axis.text.x = element_text(angle=20, hjust=0.9, size=12))+
+	stat_summary(geom = 'text', label = c("cd","a","ab","b", "c", "ab", "d","b", "ab","cd"),
+				 fun = max, vjust = -0.8, size=5.5)+
+	scale_y_continuous(limits = c(0,800))
 	
 ##BIG BROWNS ONLY ----
 bigbrown <- all.bat.exp.agg[which(all.bat.exp.agg$AUTO.ID.== 'EPTFUS'),]
 
-mod.bb<-lmer(FILES~treatment + 1|trial, data = bigbrown)
+mod.bb<-glmer.nb(FILES~treatment + (1|trial), data = bigbrown)
 summary(mod.bb)
-
-mod.bb1<-lm(FILES~treatment, data = bigbrown)
-summary(mod.bb1)
 
 ggplot(data=bigbrown, aes(x=treatment, y=FILES))+ 
 	geom_boxplot(outlier.shape = NA)+
@@ -300,191 +299,185 @@ ggplot(bat_agse,aes(x=treatment,y=FILES, fill=treatment))+
 	geom_errorbar(aes(ymin=FILES-se, ymax=FILES+se), width=.1)+
 	scale_fill_manual(values = c("#1f968bff","#fde725ff"))
 
+##GROUPING BY PHONIC GROUPS----
+{all.bat.exp.agg2<-all.bat.exp.agg
+all.bat.exp.agg2$AUTO.ID.=as.character(all.bat.exp.agg2$AUTO.ID.)
+all.bat.exp.agg2$AUTO.ID.[all.bat.exp.agg2$AUTO.ID.=="MYOLUC"]="High"
+all.bat.exp.agg2$AUTO.ID.[all.bat.exp.agg2$AUTO.ID.=="NYCHUM"]="Mid"
+all.bat.exp.agg2$AUTO.ID.[all.bat.exp.agg2$AUTO.ID.=="PERSUB"]="Mid"
+all.bat.exp.agg2$AUTO.ID.[all.bat.exp.agg2$AUTO.ID.=="LASBOR"]="Mid"
+all.bat.exp.agg2$AUTO.ID.[all.bat.exp.agg2$AUTO.ID.=="LASSEM"]="Mid"
+all.bat.exp.agg2$AUTO.ID.[all.bat.exp.agg2$AUTO.ID.=="EPTFUS"]="Low"
+all.bat.exp.agg2$AUTO.ID.[all.bat.exp.agg2$AUTO.ID.=="LASNOC"]="Low"
+all.bat.exp.agg2$AUTO.ID.[all.bat.exp.agg2$AUTO.ID.=="LASCIN"]="Low"
+all.bat.exp.agg2$AUTO.ID.[all.bat.exp.agg2$AUTO.ID.=="TADBRA"]="Low"
+}
 
-##EASTERN REDS ONLY ----
-reds <- all.bat.exp.agg[which(all.bat.exp.agg$AUTO.ID.== 'LASBOR'),]
+phonic<-aggregate(FILES ~ treatment + AUTO.ID. + trial, dat=all.bat.exp.agg2, FUN=sum)
 
-mod.red<-lm(FILES~treatment, data = reds)
-summary(mod.red)
+mod2<-glmer.nb(FILES~treatment*AUTO.ID.+(1|trial), dat = phonic)
+Anova(mod2)
+#treatment chisq=5.0552 p=0.02455, spp chisq=275.5260 p<0.0001, interaxn chisq=1.3061 p=0.72769
 
-ggplot(data=reds, aes(x=treatment, y=FILES))+
+#contrasts
+f10<-emmeans(mod2,pairwise~AUTO.ID., type="response")
+cld(f10$emmeans,  Letters ='abcde')
+
+f20<-emmeans(mod2,pairwise~treatment, type="response")
+cld(f2$emmeans,  Letters ='abcde')
+
+#INTERACTIVE GRAPH
+ggplot(data=phonic, aes(x=treatment, y=FILES))+ 
+	geom_boxplot(outlier.shape = NA)+
+	geom_point(position=position_jitter(width = 0.025), alpha=0.4, aes(color=AUTO.ID.), size=2.5)+
+	stat_summary(fun.data = "mean_se", colour="black", size=1.5, shape="diamond")+
+	theme_classic()+
+	labs(x=" ", y="Relative activity (no. nightly recordings)", title="Plant trials")+
+	theme(text = element_text(size=16), legend.title = )+
+	scale_color_viridis(discrete = T, option = "D")+
+	guides(color=guide_legend(title="Phonic group"))+
+	scale_x_discrete(labels=c("Damaged", "Undamaged"))+
+	stat_summary(geom = 'text', label = c("a","b"),
+				 fun = max, vjust = -0.8, size=5.5)+
+	ylim(NA,1000)
+
+#TREATMENT GRAPH
+ggplot(data=phonic, aes(x=treatment, y=FILES))+ 
 	geom_boxplot(outlier.shape = NA)+
 	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5)+
-	stat_summary(fun.data = "mean_se", colour="red", size=1.5, shape="diamond")+
+	stat_summary(fun.data = "mean_se", colour="black", size=1.5, shape="diamond")+
 	theme_classic()+
-	labs(x=" ", y="Relative activity (no. nightly recordings)",
-		 title = "Eastern red bats (LASBOR)")+
-	theme(text = element_text(size=15))+
-	scale_color_viridis(discrete = T, option = "D")
+	labs(x=" ", y="Relative activity (no. nightly recordings)", title="Plant trials")+
+	theme(text = element_text(size=16), legend.title = )+
+	scale_x_discrete(labels=c("Damaged", "Undamaged"))
 
-##OTHER STUFF----
-bat1 <- read.csv(file="Trial 1.csv",head=TRUE)
+#PHONIC GROUP GRAPH
+ggplot(data=phonic, aes(x=AUTO.ID., y=FILES))+ 
+	geom_boxplot(outlier.shape = NA)+
+	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5)+
+	stat_summary(fun.data = "mean_se", colour="black", size=1.5, shape="diamond")+
+	theme_classic()+
+	labs(x=" ", y="Relative activity (no. nightly recordings)", title="Plant trials")+
+	theme(text = element_text(size=16), legend.title = )+
+	stat_summary(geom = 'text', label = c("a","b","c","c"),
+				 fun = max, vjust = -0.8, size=5.5)+
+	scale_y_continuous(limits = c(0,1000))+
+	scale_x_discrete(limits=c("Low", "Mid", "High", "NoID"))
 
-library(lme4)
+#simple TREAT graph
+ggplot(data=phonic, aes(x=treatment, y=FILES))+ 
+	stat_summary(fun.data = "mean_se", colour="black", size=1.5, shape="diamond")+
+	theme_classic()+
+	labs(x=" ", y="Relative activity (no. nightly recordings)", title="Plant trials")+
+	theme(text = element_text(size=16))+
+	scale_x_discrete(labels=c("Damaged", "Undamaged"))
 
-bat1<-bat1[1:899,]
+phonic.tab <- ddply(phonic, c("treatment"), summarise,
+					   N    = length(FILES),
+					   mean = mean(FILES),
+					   sd   = sd(FILES),
+					   se   = sd / sqrt(N))
+phonic.tab
+#(undamaged-damaged)/damaged
+(208.8-156.4)/156.4
+#0.3350384
+#Undamaged plots averaged 33.5% more activity compared to damaged plots
 
-bat1 <- bat1[order(bat1$trial),]
+phonic.tab2 <- ddply(phonic, c("AUTO.ID."), summarise,
+					N    = length(FILES),
+					mean = mean(FILES),
+					sd   = sd(FILES),
+					se   = sd / sqrt(N))
+phonic.tab2
+#(undamaged-damaged)/damaged
+(208.8-156.4)/156.4
+#0.3350384
+#Undamaged plots averaged 33.5% more activity compared to damaged plots
 
-{
-bat1$AUTO.ID.<-as.factor(bat1$AUTO.ID.)
-bat1$DATE.12<-as.factor(bat1$DATE.12)
-bat1$Treatment<-as.factor(bat1$Treatment)
-bat1$Side<-as.factor(bat1$Side)
-bat1$HOUR<-as.numeric(bat1$HOUR)
-bat1$Pass<-as.numeric(bat1$Pass) }
+##GROUPING SPP WITH SIMILAR CALLS
+##GROUPING BY PHONIC GROUPS----
+{all.bat.exp.agg3<-all.bat.exp.agg
+all.bat.exp.agg3$AUTO.ID.=as.character(all.bat.exp.agg3$AUTO.ID.)
+all.bat.exp.agg3$AUTO.ID.[all.bat.exp.agg3$AUTO.ID.=="LASBOR"]="LABO/LASE"
+all.bat.exp.agg3$AUTO.ID.[all.bat.exp.agg3$AUTO.ID.=="LASSEM"]="LABO/LASE"
+all.bat.exp.agg3$AUTO.ID.[all.bat.exp.agg3$AUTO.ID.=="EPTFUS"]="EPFU/LANO"
+all.bat.exp.agg3$AUTO.ID.[all.bat.exp.agg3$AUTO.ID.=="LASNOC"]="EPFU/LANO"
+}
 
-bat2<-aggregate(Pass ~ AUTO.ID. + DATE.12 + Treatment + Side + HOUR, data=bat1, FUN=sum)
+group<-aggregate(FILES ~ treatment + AUTO.ID. + trial, dat=all.bat.exp.agg3, FUN=sum)
 
-bat2$Treatment <- factor(bat2$Treatment, levels=c("Reference", "Damaged", "Undamaged"))
+mod3<-glmer.nb(FILES~treatment*AUTO.ID.+(1|trial), dat = group)
+Anova(mod3)
+#treatment chisq=7.0682 p=0.007846, spp chisq=407.7986 p<0.0001, interaxn chisq=1.9812 p=0.960871
 
-mod1<-lmer(Pass~Treatment+AUTO.ID.+1|Side, dat = bat2)
-summary(mod1)
-shapiro.test(resid(mod1))
+#contrasts
+f30<-emmeans(mod3,pairwise~AUTO.ID., type="response")
+cld(f30$emmeans,  Letters ='abcde')
 
-hist(bat2$Pass)
-shapiro.test(bat2$Pass)
+f31<-emmeans(mod3,pairwise~treatment, type="response")
+cld(f31$emmeans,  Letters ='abcde')
 
-#squareroot transformation
-bat2$activity_sqrt<-sqrt(bat2$Pass)
-shapiro.test(bat2$activity_sqrt)#didn't help
-hist(bat2$activity_sqrt)
-
-#log transformation
-bat2$activity_log<-log(bat2$Pass)
-shapiro.test(bat2$activity_log)#didn't help
-hist(bat2$activity_log)
-
-#cuberoot transformation
-bat2$activity_cube<-(bat2$Pass)^(1/3)
-shapiro.test(bat2$activity_cube)#didn't help
-hist(bat2$activity_cube)
-
-mod2<-glm(Pass~Treatment+AUTO.ID.+HOUR+DATE.12+Side, dat = bat2)
-summary(mod2)
-shapiro.test(mod2$residuals)
-
-mod3<-glm(Pass~Treatment+AUTO.ID., dat=bat2)
-summary(mod3)
-shapiro.test(mod3$residuals)
-
-library(multcomp)
-summary(glht(mod3, linfct=mcp(Treatment="Tukey")))
-summary(glht(mod3, linfct=mcp(AUTO.ID.="Tukey")))
-#sig more big browns that LANO, LASE, MYLU, NYHU
-
-library(ggplot2)
-library(viridis)
-ggplot(data=bat2, aes(x=Treatment, y=Pass))+ 
+#INTERACTIVE GRAPH
+ggplot(data=group, aes(x=treatment, y=FILES))+ 
 	geom_boxplot(outlier.shape = NA)+
 	geom_point(position=position_jitter(width = 0.025), alpha=0.4, aes(color=AUTO.ID.), size=2.5)+
 	stat_summary(fun.data = "mean_se", colour="black", size=1.5, shape="diamond")+
 	theme_classic()+
-	labs(x=" ", y="Activity (No. recordings)")+
-	theme(text = element_text(size=18), legend.title = )+
+	labs(x=" ", y="Relative activity (no. nightly recordings)", title="Plant trials")+
+	theme(text = element_text(size=16), legend.title = )+
 	scale_color_viridis(discrete = T, option = "D")+
-	guides(color=guide_legend(title="Bat spp."))
+	guides(color=guide_legend(title="Species"))+
+	scale_x_discrete(labels=c("Damaged", "Undamaged"))+
+	stat_summary(geom = 'text', label = c("a","b"),
+				 fun = max, vjust = -0.8, size=5.5)+
+	ylim(NA,800)
 
-#removing reference treatment
-bat2 <- bat2[order(bat2$Treatment),]
-bat3<-bat2[-c(1:52),]
-
-mod4<-glm(Pass~Treatment+AUTO.ID., dat=bat3)
-summary(mod4)
-
-library(multcomp)
-summary(glht(mod4, linfct=mcp(AUTO.ID.="Tukey")))
-#sig more big browns than LASE, MYLU, NYHU
-
-ggplot(data=bat3, aes(x=Treatment, y=Pass))+ 
+#TREATMENT GRAPH
+ggplot(data=group, aes(x=treatment, y=FILES))+ 
 	geom_boxplot(outlier.shape = NA)+
-	geom_point(position=position_jitter(width = 0.025), alpha=0.4, aes(color=AUTO.ID.), size=2.5)+
+	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5)+
 	stat_summary(fun.data = "mean_se", colour="black", size=1.5, shape="diamond")+
 	theme_classic()+
-	labs(x=" ", y="Activity (No. recordings)")+
-	theme(text = element_text(size=18), legend.title = )+
-	scale_color_viridis(discrete = T, option = "D")+
-	guides(color=guide_legend(title="Bat spp."))
+	labs(x=" ", y="Relative activity (no. nightly recordings)", title="Plant trials")+
+	theme(text = element_text(size=16), legend.title = )+
+	scale_x_discrete(labels=c("Damaged", "Undamaged"))
 
-library(dplyr)
-bat4<-aggregate(Pass ~ DATE.12 + Treatment + Side, data=bat3, FUN=sum)
-
-bat4 %>%
-	ggplot(aes(Treatment,Pass)) +
-	geom_point(aes(fill=Treatment),size=3) +
-	geom_line(aes(group = DATE.12))
-
-bat5<-aggregate(Pass ~ Treatment + AUTO.ID., data=bat3, FUN=sum)
-
-bat5 %>%
-	ggplot(aes(Treatment,Pass,color=AUTO.ID.)) +
-	geom_point(aes(fill=Treatment),size=3) +
-	geom_line(aes(group = AUTO.ID.))
-
-t123 <- read.csv(file="Trials1_5.csv",head=TRUE)
-
-t123$Trial<-as.character(t123$Trial)
-
-t123 %>%
-	ggplot(aes(Treatment,Pass)) +
-	geom_point(aes(color=Side),size=3) +
-	geom_line(aes(group = DATE.12))+
-	theme_classic()
-
-t123 %>%
-	ggplot(aes(Treatment,Pass)) +
-	labs(x="",
-		 y="Activity (no. detections)")+
-	geom_boxplot()+
-	geom_point(aes(color=Trial),size=3)+
+#GROUP GRAPH
+ggplot(data=group, aes(x=AUTO.ID., y=FILES))+ 
+	geom_boxplot(outlier.shape = NA)+
+	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5)+
+	stat_summary(fun.data = "mean_se", colour="black", size=1, shape="diamond")+
 	theme_classic()+
-	theme(text = element_text(size=18))
-	
+	labs(x=" ", y="Relative activity (no. nightly recordings)", title="Plant trials")+
+	theme(text = element_text(size=16), axis.text.x = element_text(angle=20, hjust=0.9, size=12))+
+	stat_summary(geom = 'text', label = c("bc","b","a","a", "c", "a", "a","bc"),
+				 fun = max, vjust = -0.8, size=5.5)+
+	scale_y_continuous(limits = c(0,800))
 
-t123 %>%
-	ggplot(aes(Treatment,Pass)) +
-	geom_point(aes(color=Trial),size=3) +
-	geom_line(aes(group = DATE.12))+
+#simple TREAT graph
+ggplot(data=group, aes(x=treatment, y=FILES))+ 
+	stat_summary(fun.data = "mean_se", colour="black", size=1.5, shape="diamond")+
 	theme_classic()+
-	labs(x="",
-		 y="Activity (no. detections)")+
-	theme(text = element_text(size=18))
+	labs(x=" ", y="Relative activity (no. nightly recordings)", title="Plant trials")+
+	theme(text = element_text(size=16))+
+	scale_x_discrete(labels=c("Damaged", "Undamaged"))
 
-base <- read.csv(file="baseline_activity.csv",head=TRUE)
+group.tab <- ddply(group, c("treatment"), summarise,
+					N    = length(FILES),
+					mean = mean(FILES),
+					sd   = sd(FILES),
+					se   = sd / sqrt(N))
+group.tab
+#(undamaged-damaged)/damaged
+(104.4-78.2)/78.2
+#0.3350384
+#Undamaged plots averaged 33.5% more activity compared to damaged plots
 
-base$date<-as.Date.character(base$DATE.12,"%Y%m%d")
-base$exp<-as.character(base$exp)
+group.tab2 <- ddply(group, c("AUTO.ID."), summarise,
+					 N    = length(FILES),
+					 mean = mean(FILES),
+					 sd   = sd(FILES),
+					 se   = sd / sqrt(N))
+group.tab2
 
-base %>%
-	ggplot(aes(x=date, 
-			   y=Pass,
-			   color=Side
-			   ))+
-	geom_point(aes(shape=exp), size=3)+
-	geom_line()+
-	labs(x="",
-		 y="Total activity (no. detections)",
-		 color="Side",
-		 shape="Experiment")+
-	theme_classic()+
-	theme(text = element_text(size=15), legend.title = element_text(size = 12), 
-		  legend.text = element_text(size = 10), axis.text.x = element_text(angle=20, hjust=1))+
-	scale_x_date(date_breaks = "3 days", date_labels = "%b %d")
-	
 
-base %>%
-	ggplot(aes(x=date, 
-			   y=Pass,
-			   color=Side
-	))+
-	geom_point()+
-	geom_line()+
-	labs(x="",
-		 y="Total activity (no. detections)",
-		 color="Side")+
-	theme_classic()+
-	theme(text = element_text(size=15), legend.title = element_text(size = 12), 
-		  legend.text = element_text(size = 10), axis.text.x = element_text(angle=20, hjust=1))+
-	scale_x_date(date_breaks = "3 days", date_labels = "%b %d")	
-
-##
