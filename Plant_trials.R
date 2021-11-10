@@ -25,6 +25,42 @@ hist(plant1$activity)
 mod10<-glmer.nb(activity~treatment*sp+(1|trial), dat = plant1)
 Anova(mod10)
 #treatment chisq=9.95 p=0.0016, spp chisq=578.73 p<0.0001, interaxn chisq=2.86 p=0.97
+shapiro.test(resid(mod10))#not terribly non-normal. neg binomials don't need normally distributed zeros anyway
+
+##GROUPING SPP WITH SIMILAR CALLS----
+{plant2<-plant1
+plant2$sp=as.character(plant2$sp)
+plant2$sp[plant2$sp=="LASBOR"]="LABO/LASE"
+plant2$sp[plant2$sp=="LASSEM"]="LABO/LASE"
+plant2$sp[plant2$sp=="EPTFUS"]="EPFU/LANO"
+plant2$sp[plant2$sp=="LASNOC"]="EPFU/LANO"
+}
+
+group2<-aggregate(activity ~ treatment + sp + trial, dat=plant2, FUN=sum)
+
+mod30<-glmer.nb(activity~treatment*sp+(1|trial), dat = group2)
+Anova(mod30)
+#treatment chisq=7.16 p=0.00745, spp chisq=404.22 p<0.0001, interaxn chisq=2.33 p=0.94
+shapiro.test(resid(mod30))#p-value = 0.04885
+
+group2 <- group2[order(group2$sp),]
+#LACI 1-13, MYLU 1-15, pesu 3-16, nyhu 4-20
+
+#interactive graph, grouped species
+ggplot(data=group2, aes(x=treatment, y=activity))+ 
+	geom_boxplot(outlier.shape = NA)+
+	geom_point(position=position_jitter(width = 0.025), alpha=0.4, aes(color=sp), size=2.5)+
+	stat_summary(fun.data = "mean_se", colour="black", size=1.5, shape="diamond")+
+	theme_classic()+
+	labs(x=" ", y="Relative activity (no. nightly recordings)", title="Plant trials")+
+	theme(text = element_text(size=16), legend.title = )+
+	scale_color_viridis(discrete = T, option = "D")+
+	guides(color=guide_legend(title="Bat spp."))+
+	scale_x_discrete(labels=c("Damaged", "Undamaged"))+
+	stat_summary(geom = 'text', label = c("a","b"),
+				 fun = max, vjust = -0.8, size=5.5)+
+	scale_y_continuous(limits = c(0,800))
+
 
 
 ###BIG DATA----
