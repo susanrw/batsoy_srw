@@ -172,33 +172,13 @@ all.bat$FILES<-as.numeric(all.bat$FILES)
 all.bat.exp <- all.bat[all.bat$trial != "N/A", ] 
 
 ##ANALYSES----
-#aggregating data
+
+#All species----
+#aggregating data by species
 all.bat.exp.agg<-aggregate(FILES ~ treatment + side + trial + AUTO.ID., data=all.bat.exp, FUN=sum)
 all.bat.exp.agg$treatment<-as.factor(all.bat.exp.agg$treatment)
 all.bat.exp.agg$AUTO.ID.<-as.factor(all.bat.exp.agg$AUTO.ID.)
 all.bat.exp.agg <- all.bat.exp.agg[order(all.bat.exp.agg$trial),]
-
-ggplot(data=all.bat.exp.agg, aes(x=treatment, y=FILES))+ 
-	geom_boxplot(outlier.shape = NA)+
-	geom_point(position=position_jitter(width = 0.025), alpha=0.4, aes(color=AUTO.ID.), size=2.5)+
-	stat_summary(fun.data = "mean_se", colour="black", size=1.5, shape="diamond")+
-	theme_classic()+
-	labs(x=" ", y="Relative activity (no. nightly recordings)", title="Plant trials")+
-	theme(text = element_text(size=16), legend.title = )+
-	scale_color_viridis(discrete = T, option = "D")+
-	guides(color=guide_legend(title="Bat spp."))+
-	scale_x_discrete(labels=c("Damaged", "Undamaged"))+
-	stat_summary(geom = 'text', label = c("a","b"),
-				 fun = max, vjust = -0.8, size=5.5)+
-	scale_y_continuous(limits = c(0,800))
-
-#simple graph
-ggplot(data=all.bat.exp.agg, aes(x=treatment, y=FILES))+ 
-	stat_summary(fun.data = "mean_se", colour="black", size=1.5, shape="diamond")+
-	theme_classic()+
-	labs(x=" ", y="Relative activity (no. nightly recordings)", title="Plant trials")+
-	theme(text = element_text(size=16))+
-	scale_x_discrete(labels=c("Damaged", "Undamaged"))
 
 mod1<-glmer.nb(FILES~treatment*AUTO.ID.+(1|trial), dat = all.bat.exp.agg)
 summary(mod1)
@@ -226,78 +206,46 @@ treatment.tab
 #Undamaged plots had 30.9% more activity compared to damaged plots
 
 
-mod3<-glmer.nb(FILES~treatment+AUTO.ID.+(1|trial), dat = all.bat.exp.agg)
-summary(mod3)
-shapiro.test(resid(mod3))#p-value = 0.0004201
+##GROUPING SPP WITH SIMILAR CALLS----
+{all.bat.exp.agg3<-all.bat.exp.agg
+all.bat.exp.agg3$AUTO.ID.=as.character(all.bat.exp.agg3$AUTO.ID.)
+all.bat.exp.agg3$AUTO.ID.[all.bat.exp.agg3$AUTO.ID.=="LASBOR"]="LABO/LASE"
+all.bat.exp.agg3$AUTO.ID.[all.bat.exp.agg3$AUTO.ID.=="LASSEM"]="LABO/LASE"
+all.bat.exp.agg3$AUTO.ID.[all.bat.exp.agg3$AUTO.ID.=="EPTFUS"]="EPFU/LANO"
+all.bat.exp.agg3$AUTO.ID.[all.bat.exp.agg3$AUTO.ID.=="LASNOC"]="EPFU/LANO"
+}
+
+group<-aggregate(FILES ~ treatment + AUTO.ID. + trial, dat=all.bat.exp.agg3, FUN=sum)
+
+mod3<-glmer.nb(FILES~treatment*AUTO.ID.+(1|trial), dat = group)
 Anova(mod3)
+#treatment chisq=7.0682 p=0.007846, spp chisq=407.7986 p<0.0001, interaxn chisq=1.9812 p=0.960871
 
 #contrasts
-f3<-emmeans(mod3,pairwise~AUTO.ID., type="response")
-cld(f1$emmeans,  Letters ='abcde')
+f30<-emmeans(mod3,pairwise~AUTO.ID., type="response")
+cld(f30$emmeans,  Letters ='abcde')
 
-f4<-emmeans(mod3,pairwise~treatment, type="response")
-cld(f2$emmeans,  Letters ='abcde')
+f31<-emmeans(mod3,pairwise~treatment, type="response")
+cld(f31$emmeans,  Letters ='abcde')
 
-ggplot(data=all.bat.exp.agg, aes(x=treatment, y=FILES))+ 
-	geom_boxplot(outlier.shape = NA)+
-	geom_point(position=position_jitter(width = 0.025), alpha=0.4, aes(color=AUTO.ID.), size=2.5)+
-	stat_summary(fun.data = "mean_se", colour="black", size=1.5, shape="diamond")+
-	theme_classic()+
-	labs(x=" ", y="Relative activity (no. nightly recordings)", title = "Plant trials")+
-	theme(text = element_text(size=18), legend.title = )+
-	scale_color_viridis(discrete = T, option = "D")+
-	guides(color=guide_legend(title="Bat spp."))+
-	facet_wrap(~AUTO.ID.)
+group.tab <- ddply(group, c("treatment"), summarise,
+					N    = length(FILES),
+					mean = mean(FILES),
+					sd   = sd(FILES),
+					se   = sd / sqrt(N))
+group.tab
+#(undamaged-damaged)/damaged
+(104.4-78.2)/78.2
+#0.3350384
+#Undamaged plots averaged 33.5% more activity compared to damaged plots
 
-ggplot(data=all.bat.exp.agg, aes(x=trial, y=FILES))+ 
-	geom_boxplot(outlier.shape = NA)+
-	geom_point(position=position_jitter(width = 0.025), alpha=0.4, aes(color=AUTO.ID.), size=2.5)+
-	stat_summary(fun.data = "mean_se", colour="black", size=1.5, shape="diamond")+
-	theme_classic()+
-	labs(x=" ", y="Relative activity (no. nightly recordings)", title = "Plant trials")+
-	theme(text = element_text(size=18), legend.title = )+
-	scale_color_viridis(discrete = T, option = "D")+
-	guides(color=guide_legend(title="Bat spp."))+
-	facet_wrap(~treatment)
+group.tab2 <- ddply(group, c("AUTO.ID."), summarise,
+					 N    = length(FILES),
+					 mean = mean(FILES),
+					 sd   = sd(FILES),
+					 se   = sd / sqrt(N))
+group.tab2
 
-#species GRAPH
-ggplot(data=all.bat.exp.agg, aes(x=AUTO.ID., y=FILES))+ 
-	geom_boxplot(outlier.shape = NA)+
-	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5)+
-	stat_summary(fun.data = "mean_se", colour="black", size=1, shape="diamond")+
-	theme_classic()+
-	labs(x=" ", y="Relative activity (no. nightly recordings)", title="Plant trials")+
-	theme(text = element_text(size=16), axis.text.x = element_text(angle=20, hjust=0.9, size=12))+
-	stat_summary(geom = 'text', label = c("cd","a","ab","b", "c", "ab", "d","b", "ab","cd"),
-				 fun = max, vjust = -0.8, size=5.5)+
-	scale_y_continuous(limits = c(0,800))
-	
-##BIG BROWNS ONLY ----
-bigbrown <- all.bat.exp.agg[which(all.bat.exp.agg$AUTO.ID.== 'EPTFUS'),]
-
-mod.bb<-glmer.nb(FILES~treatment + (1|trial), data = bigbrown)
-summary(mod.bb)
-
-ggplot(data=bigbrown, aes(x=treatment, y=FILES))+ 
-	geom_boxplot(outlier.shape = NA)+
-	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5)+
-	stat_summary(fun.data = "mean_se", colour="red", size=1.5, shape="diamond")+
-	theme_classic()+
-	labs(x=" ", y="Relative activity (no. nightly recordings)",
-		 title = "Big browns, plant trials")+
-	theme(text = element_text(size=15), legend.title = )+
-	scale_color_viridis(discrete = T, option = "D")
-
-#barplot
-library(Rmisc)
-bat_agse <- summarySE(bigbrown, measurevar="FILES", groupvars=c("treatment"))
-ggplot(bat_agse,aes(x=treatment,y=FILES, fill=treatment))+
-	geom_bar(stat = "summary")+
-	theme_classic()+
-	labs(x=" ",y="Relative activity")+
-	theme(text = element_text(size = 20), legend.position = "none")+
-	geom_errorbar(aes(ymin=FILES-se, ymax=FILES+se), width=.1)+
-	scale_fill_manual(values = c("#1f968bff","#fde725ff"))
 
 ##GROUPING BY PHONIC GROUPS----
 {all.bat.exp.agg2<-all.bat.exp.agg
@@ -326,6 +274,157 @@ cld(f10$emmeans,  Letters ='abcde')
 f20<-emmeans(mod2,pairwise~treatment, type="response")
 cld(f2$emmeans,  Letters ='abcde')
 
+
+phonic.tab <- ddply(phonic, c("treatment"), summarise,
+					N    = length(FILES),
+					mean = mean(FILES),
+					sd   = sd(FILES),
+					se   = sd / sqrt(N))
+phonic.tab
+#(undamaged-damaged)/damaged
+(208.8-156.4)/156.4
+#0.3350384
+#Undamaged plots averaged 33.5% more activity compared to damaged plots
+
+phonic.tab2 <- ddply(phonic, c("AUTO.ID."), summarise,
+					 N    = length(FILES),
+					 mean = mean(FILES),
+					 sd   = sd(FILES),
+					 se   = sd / sqrt(N))
+phonic.tab2
+#(undamaged-damaged)/damaged
+(208.8-156.4)/156.4
+#0.3350384
+#Undamaged plots averaged 33.5% more activity compared to damaged plots
+
+##GRAPHS----
+#ALL SPECIES GRAPHS----
+#interactive graph, all species
+ggplot(data=all.bat.exp.agg, aes(x=treatment, y=FILES))+ 
+	geom_boxplot(outlier.shape = NA)+
+	geom_point(position=position_jitter(width = 0.025), alpha=0.4, aes(color=AUTO.ID.), size=2.5)+
+	stat_summary(fun.data = "mean_se", colour="black", size=1.5, shape="diamond")+
+	theme_classic()+
+	labs(x=" ", y="Relative activity (no. nightly recordings)", title="Plant trials")+
+	theme(text = element_text(size=16), legend.title = )+
+	scale_color_viridis(discrete = T, option = "D")+
+	guides(color=guide_legend(title="Bat spp."))+
+	scale_x_discrete(labels=c("Damaged", "Undamaged"))+
+	stat_summary(geom = 'text', label = c("a","b"),
+				 fun = max, vjust = -0.8, size=5.5)+
+	scale_y_continuous(limits = c(0,800))
+
+#simple graph, all species
+ggplot(data=all.bat.exp.agg, aes(x=treatment, y=FILES))+ 
+	stat_summary(fun.data = "mean_se", colour="black", size=1.5, shape="diamond")+
+	theme_classic()+
+	labs(x=" ", y="Relative activity (no. nightly recordings)", title="Plant trials")+
+	theme(text = element_text(size=16))+
+	scale_x_discrete(labels=c("Damaged", "Undamaged"))
+
+#interactive graph, all species, separated by species
+ggplot(data=all.bat.exp.agg, aes(x=treatment, y=FILES))+ 
+	geom_boxplot(outlier.shape = NA)+
+	geom_point(position=position_jitter(width = 0.025), alpha=0.4, aes(color=AUTO.ID.), size=2.5)+
+	stat_summary(fun.data = "mean_se", colour="black", size=1.5, shape="diamond")+
+	theme_classic()+
+	labs(x=" ", y="Relative activity (no. nightly recordings)", title = "Plant trials")+
+	theme(text = element_text(size=18), legend.title = )+
+	scale_color_viridis(discrete = T, option = "D")+
+	guides(color=guide_legend(title="Bat spp."))+
+	facet_wrap(~AUTO.ID.)
+
+#interactive graph, all species, separated by trial 
+ggplot(data=all.bat.exp.agg, aes(x=trial, y=FILES))+ 
+	geom_boxplot(outlier.shape = NA)+
+	geom_point(position=position_jitter(width = 0.025), alpha=0.4, aes(color=AUTO.ID.), size=2.5)+
+	stat_summary(fun.data = "mean_se", colour="black", size=1.5, shape="diamond")+
+	theme_classic()+
+	labs(x=" ", y="Relative activity (no. nightly recordings)", title = "Plant trials")+
+	theme(text = element_text(size=18), legend.title = )+
+	scale_color_viridis(discrete = T, option = "D")+
+	guides(color=guide_legend(title="Bat spp."))+
+	facet_wrap(~treatment)
+
+#species graph, all species
+ggplot(data=all.bat.exp.agg, aes(x=AUTO.ID., y=FILES))+ 
+	geom_boxplot(outlier.shape = NA)+
+	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5)+
+	stat_summary(fun.data = "mean_se", colour="black", size=1, shape="diamond")+
+	theme_classic()+
+	labs(x=" ", y="Relative activity (no. nightly recordings)", title="Plant trials")+
+	theme(text = element_text(size=16), axis.text.x = element_text(angle=20, hjust=0.9, size=12))+
+	stat_summary(geom = 'text', label = c("cd","a","ab","b", "c", "ab", "d","b", "ab","cd"),
+				 fun = max, vjust = -0.8, size=5.5)+
+	scale_y_continuous(limits = c(0,800))
+
+#TREATMENT graph, all species
+ggplot(data=all.bat.exp.agg, aes(x=treatment, y=FILES))+ 
+	geom_boxplot(outlier.shape = NA)+
+	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5)+
+	stat_summary(fun.data = "mean_se", colour="red", size=1.5, shape="diamond")+
+	theme_classic()+
+	labs(x=" ", y="Relative activity (no. nightly recordings)", title="Plant trials")+
+	theme(text = element_text(size=16), legend.title = )+
+	scale_color_viridis(discrete = T, option = "D")+
+	guides(color=guide_legend(title="Bat spp."))+
+	scale_x_discrete(labels=c("Damaged", "Undamaged"))+
+	stat_summary(geom = 'text', label = c("a","b"),
+				 fun = max, vjust = -0.8, size=5.5)+
+	scale_y_continuous(limits = c(0,800))
+
+
+#GROUPED SPECIES GRAPHS----
+#INTERACTIVE GRAPH
+ggplot(data=group, aes(x=treatment, y=FILES))+ 
+	geom_boxplot(outlier.shape = NA)+
+	geom_point(position=position_jitter(width = 0.025), alpha=0.4, aes(color=AUTO.ID.), size=2.5)+
+	stat_summary(fun.data = "mean_se", colour="black", size=1.5, shape="diamond")+
+	theme_classic()+
+	labs(x=" ", y="Relative activity (no. nightly recordings)", title="Plant trials")+
+	theme(text = element_text(size=16), legend.title = )+
+	scale_color_viridis(discrete = T, option = "D")+
+	guides(color=guide_legend(title="Species"))+
+	scale_x_discrete(labels=c("Damaged", "Undamaged"))+
+	stat_summary(geom = 'text', label = c("a","b"),
+				 fun = max, vjust = -0.8, size=5.5)+
+	ylim(NA,800)
+
+#TREATMENT GRAPH
+ggplot(data=group, aes(x=treatment, y=FILES))+ 
+	geom_boxplot(outlier.shape = NA)+
+	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5)+
+	stat_summary(fun.data = "mean_se", colour="red", size=1.5, shape="diamond")+
+	theme_classic()+
+	labs(x=" ", y="Relative activity (no. nightly recordings)", title="Plant trials")+
+	theme(text = element_text(size=16), legend.title = )+
+	scale_x_discrete(labels=c("Damaged", "Undamaged"))+
+	stat_summary(geom = 'text', label = c("a","b"),
+				 fun = max, vjust = -0.8, size=5.5)+
+	ylim(NA,800)
+
+#GROUP GRAPH
+ggplot(data=group, aes(x=AUTO.ID., y=FILES))+ 
+	geom_boxplot(outlier.shape = NA)+
+	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5)+
+	stat_summary(fun.data = "mean_se", colour="black", size=1, shape="diamond")+
+	theme_classic()+
+	labs(x=" ", y="Relative activity (no. nightly recordings)", title="Plant trials")+
+	theme(text = element_text(size=16), axis.text.x = element_text(angle=20, hjust=0.9, size=12))+
+	stat_summary(geom = 'text', label = c("bc","b","a","a", "c", "a", "a","bc"),
+				 fun = max, vjust = -0.8, size=5.5)+
+	scale_y_continuous(limits = c(0,800))
+
+#simple TREAT graph
+ggplot(data=group, aes(x=treatment, y=FILES))+ 
+	stat_summary(fun.data = "mean_se", colour="black", size=1.5, shape="diamond")+
+	theme_classic()+
+	labs(x=" ", y="Relative activity (no. nightly recordings)", title="Plant trials")+
+	theme(text = element_text(size=16))+
+	scale_x_discrete(labels=c("Damaged", "Undamaged"))
+
+
+##PHONIC GROUP GRAPHS----
 #INTERACTIVE GRAPH
 ggplot(data=phonic, aes(x=treatment, y=FILES))+ 
 	geom_boxplot(outlier.shape = NA)+
@@ -345,11 +444,14 @@ ggplot(data=phonic, aes(x=treatment, y=FILES))+
 ggplot(data=phonic, aes(x=treatment, y=FILES))+ 
 	geom_boxplot(outlier.shape = NA)+
 	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5)+
-	stat_summary(fun.data = "mean_se", colour="black", size=1.5, shape="diamond")+
+	stat_summary(fun.data = "mean_se", colour="red", size=1.5, shape="diamond")+
 	theme_classic()+
 	labs(x=" ", y="Relative activity (no. nightly recordings)", title="Plant trials")+
 	theme(text = element_text(size=16), legend.title = )+
-	scale_x_discrete(labels=c("Damaged", "Undamaged"))
+	scale_x_discrete(labels=c("Damaged", "Undamaged"))+
+	stat_summary(geom = 'text', label = c("a","b"),
+				 fun = max, vjust = -0.8, size=5.5)+
+	ylim(NA,1000)
 
 #PHONIC GROUP GRAPH
 ggplot(data=phonic, aes(x=AUTO.ID., y=FILES))+ 
@@ -372,112 +474,29 @@ ggplot(data=phonic, aes(x=treatment, y=FILES))+
 	theme(text = element_text(size=16))+
 	scale_x_discrete(labels=c("Damaged", "Undamaged"))
 
-phonic.tab <- ddply(phonic, c("treatment"), summarise,
-					   N    = length(FILES),
-					   mean = mean(FILES),
-					   sd   = sd(FILES),
-					   se   = sd / sqrt(N))
-phonic.tab
-#(undamaged-damaged)/damaged
-(208.8-156.4)/156.4
-#0.3350384
-#Undamaged plots averaged 33.5% more activity compared to damaged plots
+##BIG BROWNS ONLY ----
+bigbrown <- all.bat.exp.agg[which(all.bat.exp.agg$AUTO.ID.== 'EPTFUS'),]
 
-phonic.tab2 <- ddply(phonic, c("AUTO.ID."), summarise,
-					N    = length(FILES),
-					mean = mean(FILES),
-					sd   = sd(FILES),
-					se   = sd / sqrt(N))
-phonic.tab2
-#(undamaged-damaged)/damaged
-(208.8-156.4)/156.4
-#0.3350384
-#Undamaged plots averaged 33.5% more activity compared to damaged plots
+mod.bb<-glmer.nb(FILES~treatment + (1|trial), data = bigbrown)
+summary(mod.bb)
 
-##GROUPING SPP WITH SIMILAR CALLS
-##GROUPING BY PHONIC GROUPS----
-{all.bat.exp.agg3<-all.bat.exp.agg
-all.bat.exp.agg3$AUTO.ID.=as.character(all.bat.exp.agg3$AUTO.ID.)
-all.bat.exp.agg3$AUTO.ID.[all.bat.exp.agg3$AUTO.ID.=="LASBOR"]="LABO/LASE"
-all.bat.exp.agg3$AUTO.ID.[all.bat.exp.agg3$AUTO.ID.=="LASSEM"]="LABO/LASE"
-all.bat.exp.agg3$AUTO.ID.[all.bat.exp.agg3$AUTO.ID.=="EPTFUS"]="EPFU/LANO"
-all.bat.exp.agg3$AUTO.ID.[all.bat.exp.agg3$AUTO.ID.=="LASNOC"]="EPFU/LANO"
-}
-
-group<-aggregate(FILES ~ treatment + AUTO.ID. + trial, dat=all.bat.exp.agg3, FUN=sum)
-
-mod3<-glmer.nb(FILES~treatment*AUTO.ID.+(1|trial), dat = group)
-Anova(mod3)
-#treatment chisq=7.0682 p=0.007846, spp chisq=407.7986 p<0.0001, interaxn chisq=1.9812 p=0.960871
-
-#contrasts
-f30<-emmeans(mod3,pairwise~AUTO.ID., type="response")
-cld(f30$emmeans,  Letters ='abcde')
-
-f31<-emmeans(mod3,pairwise~treatment, type="response")
-cld(f31$emmeans,  Letters ='abcde')
-
-#INTERACTIVE GRAPH
-ggplot(data=group, aes(x=treatment, y=FILES))+ 
-	geom_boxplot(outlier.shape = NA)+
-	geom_point(position=position_jitter(width = 0.025), alpha=0.4, aes(color=AUTO.ID.), size=2.5)+
-	stat_summary(fun.data = "mean_se", colour="black", size=1.5, shape="diamond")+
-	theme_classic()+
-	labs(x=" ", y="Relative activity (no. nightly recordings)", title="Plant trials")+
-	theme(text = element_text(size=16), legend.title = )+
-	scale_color_viridis(discrete = T, option = "D")+
-	guides(color=guide_legend(title="Species"))+
-	scale_x_discrete(labels=c("Damaged", "Undamaged"))+
-	stat_summary(geom = 'text', label = c("a","b"),
-				 fun = max, vjust = -0.8, size=5.5)+
-	ylim(NA,800)
-
-#TREATMENT GRAPH
-ggplot(data=group, aes(x=treatment, y=FILES))+ 
+ggplot(data=bigbrown, aes(x=treatment, y=FILES))+ 
 	geom_boxplot(outlier.shape = NA)+
 	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5)+
-	stat_summary(fun.data = "mean_se", colour="black", size=1.5, shape="diamond")+
+	stat_summary(fun.data = "mean_se", colour="red", size=1.5, shape="diamond")+
 	theme_classic()+
-	labs(x=" ", y="Relative activity (no. nightly recordings)", title="Plant trials")+
-	theme(text = element_text(size=16), legend.title = )+
-	scale_x_discrete(labels=c("Damaged", "Undamaged"))
+	labs(x=" ", y="Relative activity (no. nightly recordings)",
+		 title = "Big browns, plant trials")+
+	theme(text = element_text(size=15), legend.title = )+
+	scale_color_viridis(discrete = T, option = "D")
 
-#GROUP GRAPH
-ggplot(data=group, aes(x=AUTO.ID., y=FILES))+ 
-	geom_boxplot(outlier.shape = NA)+
-	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5)+
-	stat_summary(fun.data = "mean_se", colour="black", size=1, shape="diamond")+
+#barplot
+library(Rmisc)
+bat_agse <- summarySE(bigbrown, measurevar="FILES", groupvars=c("treatment"))
+ggplot(bat_agse,aes(x=treatment,y=FILES, fill=treatment))+
+	geom_bar(stat = "summary")+
 	theme_classic()+
-	labs(x=" ", y="Relative activity (no. nightly recordings)", title="Plant trials")+
-	theme(text = element_text(size=16), axis.text.x = element_text(angle=20, hjust=0.9, size=12))+
-	stat_summary(geom = 'text', label = c("bc","b","a","a", "c", "a", "a","bc"),
-				 fun = max, vjust = -0.8, size=5.5)+
-	scale_y_continuous(limits = c(0,800))
-
-#simple TREAT graph
-ggplot(data=group, aes(x=treatment, y=FILES))+ 
-	stat_summary(fun.data = "mean_se", colour="black", size=1.5, shape="diamond")+
-	theme_classic()+
-	labs(x=" ", y="Relative activity (no. nightly recordings)", title="Plant trials")+
-	theme(text = element_text(size=16))+
-	scale_x_discrete(labels=c("Damaged", "Undamaged"))
-
-group.tab <- ddply(group, c("treatment"), summarise,
-					N    = length(FILES),
-					mean = mean(FILES),
-					sd   = sd(FILES),
-					se   = sd / sqrt(N))
-group.tab
-#(undamaged-damaged)/damaged
-(104.4-78.2)/78.2
-#0.3350384
-#Undamaged plots averaged 33.5% more activity compared to damaged plots
-
-group.tab2 <- ddply(group, c("AUTO.ID."), summarise,
-					 N    = length(FILES),
-					 mean = mean(FILES),
-					 sd   = sd(FILES),
-					 se   = sd / sqrt(N))
-group.tab2
-
-
+	labs(x=" ",y="Relative activity")+
+	theme(text = element_text(size = 20), legend.position = "none")+
+	geom_errorbar(aes(ymin=FILES-se, ymax=FILES+se), width=.1)+
+	scale_fill_manual(values = c("#1f968bff","#fde725ff"))
