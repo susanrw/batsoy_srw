@@ -6,9 +6,28 @@ library(car)
 library(emmeans)
 library(multcomp)
 library(dplyr)
+library(plyr)
+library(tidyr)
 
 # Data import and cleaning ------------------------------------------------
 
+#SUMMARY DATA----
+plant <- read.csv(file="plant_sum.csv",head=TRUE)
+
+##Gathering data — compounds from col to rows
+plant1<-plant %>% gather(sp, activity, EPTFUS:NOID)
+plant1 <- plant1[order(plant1$activity),]
+#only 12 zeros
+hist(plant1$activity)
+#but very right skewed
+
+
+mod10<-glmer.nb(activity~treatment*sp+(1|trial), dat = plant1)
+Anova(mod10)
+#treatment chisq=9.95 p=0.0016, spp chisq=578.73 p<0.0001, interaxn chisq=2.86 p=0.97
+
+
+###BIG DATA----
 #read in all data
 { w1 <- read.csv(file="id_w1.csv",head=TRUE)
 w2 <- read.csv(file="id_w2.csv",head=TRUE)
