@@ -127,9 +127,9 @@ farn.d<-select(farn.d, DATE, TIME, HOUR, DATE.12, TIME.12, HOUR.12, AUTO.ID., FI
 farn.c<-select(farn.c, DATE, TIME, HOUR, DATE.12, TIME.12, HOUR.12, AUTO.ID., FILES, plot)
 
 {	farn.d$AUTO.ID.<-as.factor(farn.d$AUTO.ID.)
-	farn.d$DATE.12<-as.Date(farn.d$DATE.12,"%Y%m%d")
+	farn.d$DATE.12<-as.Date(farn.d$DATE.12,"%Y/m/%d")
 	farn.d$HOUR<-as.numeric(farn.d$HOUR)
-	farn.d$DATE<-as.Date(farn.d$DATE,"%y%m%d")
+	farn.d$DATE<-as.Date(farn.d$DATE,"%m/%d/%y")
 	farn.d$HOUR.12<-as.numeric(farn.d$HOUR.12)
 }
 
@@ -156,6 +156,7 @@ all.farn <- rbind(farn.d, farn.c)
 
 all.farn.ag<-aggregate(FILES ~ DATE.12 + treatment + AUTO.ID. + plot, data=all.farn, FUN=sum)
 all.farn.ag$treatment<-as.factor(all.farn.ag$treatment)
+all.farn.ag <- all.farn.ag[order(all.farn.ag$AUTO.ID.),]
 
 ##Analyses----
 
