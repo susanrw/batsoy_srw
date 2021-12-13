@@ -36,7 +36,19 @@ indole2$sp[indole2$sp=="NYCHUM"]="Other bat spp."
 
 test.i<-glmer(activity~treatment*sp+(1|jdate), dat = indole2,family=poisson)
 summary(test.i)
-shapiro.test(resid(test.i))#non-normal, overdispersed
+shapiro.test(resid(test.i))#non-normal
+
+#Test for overdispersion function
+overdisp_fun <- function(model) {
+	rdf <- df.residual(model)
+	rp <- residuals(model,type="pearson")
+	Pearson.chisq <- sum(rp^2)
+	prat <- Pearson.chisq/rdf
+	pval <- pchisq(Pearson.chisq, df=rdf, lower.tail=FALSE)
+	c(chisq=Pearson.chisq,ratio=prat,rdf=rdf,p=pval)
+}
+
+overdisp_fun(test.i)#overdispersed
 
 mod.i<-glmer.nb(activity~treatment*sp+(1|jdate), dat = indole2)
 Anova(mod.i)
@@ -61,6 +73,7 @@ indole.tab
 (110.390511-7.044693)/7.044693
 #14.67, EPFU/LANO were 1467% more active than LABO/LASE
 
+#full plot
 ggplot(data=indole2, aes(x=treatment, y=activity))+ 
 	geom_boxplot(outlier.shape = NA)+
 	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5, aes(color=sp))+
@@ -69,11 +82,47 @@ ggplot(data=indole2, aes(x=treatment, y=activity))+
 		 title = "Indole trials")+
 	theme(text = element_text(size=15))
 
-ggplot(data=indole2, aes(x=treatment, y=activity))+ 
+#data plot w/o species color
+indole.plot1<-ggplot(data=indole2, aes(x=treatment, y=activity))+ 
+	geom_boxplot(outlier.shape = NA)+
+	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5)+
 	theme_classic()+
 	labs(x=" ", y="Relative activity",
 		 title = "Indole trials")+
+	theme(text = element_text(size=20))+
+	scale_y_continuous(limits = c(0,2400))
+indole.plot1
+
+#small plot
+indole.small<-ggplot(data=indole2, aes(x=treatment, y=activity))+ 
+	theme_classic()+
+	labs(x=" ", y="Relative activity")+
 	stat_summary(fun.data = "mean_se", size=1.5, shape="diamond")
+indole.small
+
+library(cowplot)
+indole.with.inset <-
+	ggdraw() +
+	draw_plot(indole.plot1) +
+	draw_plot(indole.small, x = 0.45, y = .6, width = .5, height = .4)
+indole.with.inset
+
+ggsave(filename = "indole.png", 
+	   plot = indole.with.inset,
+	   width = 17, 
+	   height = 12,
+	   units = "cm",
+	   dpi = 300)
+
+ggplot(data=indole2, aes(x=sp, y=activity))+ 
+	geom_boxplot(outlier.shape = NA)+
+	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5, aes(color=sp))+
+	theme_classic()+
+	labs(x=" ", y="Relative activity", title="Indole trials")+
+	theme(text = element_text(size=20), legend.position = "none")+
+	stat_summary(geom = 'text', label = c("c","a","b"),
+				 fun = max, vjust = -0.8, size=5.5)+
+	scale_y_continuous(limits = c(0,1800))
 
 ##INDOLE BIG BROWN ONLY----
 brown.ind <- indole2[which(indole2$sp== 'EPFU/LANO'),]
@@ -132,6 +181,8 @@ test.f<-glmer(activity~treatment*sp+(1|jdate), dat = farn2,family=poisson)
 summary(test.f)
 shapiro.test(resid(test.f))#non-normal, overdispersed
 
+overdisp_fun(test.f)#overdispersed
+
 mod.f<-glmer.nb(activity~treatment*sp+(1|jdate), dat = farn2)
 Anova(mod.f)
 #treatment p=0.35, sp p=0.00015, interaxn p=0.40
@@ -155,19 +206,44 @@ farn.tab
 (68.29371-16.53906)/16.53906
 #3.13, EPFU/LANO were 313% more active than LABO/LASE
 
-ggplot(data=farn2, aes(x=treatment, y=activity))+ 
+farn.plot1<-ggplot(data=farn2, aes(x=treatment, y=activity))+ 
+	geom_boxplot(outlier.shape = NA)+
+	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5)+
+	theme_classic()+
+	labs(x=" ", y="Relative activity",
+		 title = "Farnesene")+
+	theme(text = element_text(size=20))+
+	scale_y_continuous(limits = c(0,1400))
+farn.plot1
+
+farn.small<-ggplot(data=farn2, aes(x=treatment, y=activity))+ 
+	theme_classic()+
+	labs(x=" ", y="Relative activity")+
+	stat_summary(fun.data = "mean_se", size=1.5, shape="diamond")
+farn.small
+
+farn.with.inset <-
+	ggdraw() +
+	draw_plot(farn.plot1) +
+	draw_plot(farn.small, x = 0.45, y = .6, width = .5, height = .4)
+farn.with.inset
+
+ggsave(filename = "farnesene.png", 
+	   plot = farn.with.inset,
+	   width = 17, 
+	   height = 12,
+	   units = "cm",
+	   dpi = 300)
+
+ggplot(data=farn2, aes(x=sp, y=activity))+ 
 	geom_boxplot(outlier.shape = NA)+
 	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5, aes(color=sp))+
 	theme_classic()+
-	labs(x=" ", y="Relative activity",
-		 title = "Farnesene trials")+
-	theme(text = element_text(size=15))
-
-ggplot(data=farn2, aes(x=treatment, y=activity))+ 
-	theme_classic()+
-	labs(x=" ", y="Relative activity",
-		 title = "Farnesene trials")+
-	stat_summary(fun.data = "mean_se", size=1.5, shape="diamond")
+	labs(x=" ", y="Relative activity", title="Farnesene trials")+
+	theme(text = element_text(size=20), legend.position = "none")+
+	stat_summary(geom = 'text', label = c("b","a","b"),
+				 fun = max, vjust = -0.8, size=5.5)+
+	scale_y_continuous(limits = c(0,900))
 
 ##farn BIG BROWN ONLY----
 brown.farn <- farn2[which(farn2$sp== 'EPFU/LANO'),]

@@ -118,21 +118,43 @@ Anova(mod.brown)
 #treatment p=0.20
 
 #NOID GRAPH----
-ggplot(data=plant2, aes(x=treatment, y=activity))+ 
+plant.plot1<-ggplot(data=plant2, aes(x=treatment, y=activity))+ 
 	geom_boxplot(outlier.shape = NA)+
-	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5, aes(color=sp))+
+	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5)+
 	theme_classic()+
-	labs(x=" ", y="Relative activity",
-		 title = "Plant trials, including NoIDs")+
-	theme(text = element_text(size=15), legend.title = )+
-	scale_x_discrete(labels=c("Damaged", "Undamaged"))
+	labs(x=" ", y="Relative activity")+
+	theme(text = element_text(size=18))+
+	scale_x_discrete(limits=c("U", "D"),
+					 labels=c("Undamaged", "Damaged"))
+plant.plot1
+
+plant.small<-ggplot(data=plant2, aes(x=treatment, y=activity))+ 
+	theme_classic()+
+	labs(x=" ", y="Relative activity")+
+	stat_summary(fun.data = "mean_se", size=1.5, shape="diamond")+
+	scale_x_discrete(limits=c("U", "D"),
+					 labels=c("Undamaged", "Damaged"))
+plant.small
+
+plant.with.inset <-
+	ggdraw() +
+	draw_plot(plant.plot1) +
+	draw_plot(plant.small, x = 0.45, y = .6, width = .5, height = .4)
+plant.with.inset
+
+ggsave(filename = "plant.png", 
+	   plot = plant.with.inset,
+	   width = 17, 
+	   height = 12,
+	   units = "cm",
+	   dpi = 300)
 
 ggplot(data=plant2, aes(x=sp, y=activity))+ 
 	geom_boxplot(outlier.shape = NA)+
 	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5, aes(color=sp))+
 	theme_classic()+
-	labs(x=" ", y="Relative activity", title="Plant trials, including NoIDs")+
-	theme(text = element_text(size=16), legend.position = "none")+
+	labs(x=" ", y="Relative activity", title="Plant trials")+
+	theme(text = element_text(size=20), legend.position = "none")+
 	stat_summary(geom = 'text', label = c("b","a","a"),
 				 fun = max, vjust = -0.8, size=5.5)+
 	scale_y_continuous(limits = c(0,900))
