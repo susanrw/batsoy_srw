@@ -107,4 +107,17 @@ wy2 %>%
 		 title = "Wye")+
 	theme_classic()
 
-##Insect abundance data
+##Insect data
+chew <- read.csv(file="beanDIP_chew.csv",head=TRUE)
+chew$chew_pct<-as.numeric(chew$chew_pct)
+chew1<-aggregate(chew_pct ~ site + sampling.round, dat=chew, FUN=mean)
+
+chew1 %>%
+	ggplot(aes(x=sampling.round, 
+			   y=chew_pct))+
+	geom_point()+
+	geom_smooth()+
+	labs(x="Sampling round",
+		 y="Average chew damage")+
+	theme_classic()+
+	facet_wrap(~site)
