@@ -34,7 +34,11 @@ indole2$sp[indole2$sp=="NOID"]="Other bat spp."
 indole2$sp[indole2$sp=="NYCHUM"]="Other bat spp."
 }
 
-test.i<-glmer(activity~treatment*sp+(1|jdate), dat = indole2,family=poisson)
+indole3<-aggregate(activity ~ treatment + sp + jdate + site, dat=indole2, FUN=sum)
+
+#indole3<-indole3[order(indole3$sp),]
+
+test.i<-glmer(activity~treatment*sp+(1|jdate), dat = indole3,family=poisson)
 summary(test.i)
 shapiro.test(resid(test.i))#non-normal
 
@@ -50,7 +54,7 @@ overdisp_fun <- function(model) {
 
 overdisp_fun(test.i)#overdispersed
 
-mod.i<-glmer.nb(activity~treatment*sp+(1|jdate), dat = indole2)
+mod.i<-glmer.nb(activity~treatment*sp+(1|jdate), dat = indole3)
 Anova(mod.i)
 #treatment p=0.32, sp p<0.0001, interaxn p=0.45
 
@@ -59,7 +63,7 @@ i1<-emmeans(mod.i,pairwise~sp, type="response")
 cld(i1$emmeans,  Letters ='abcde')
 #LABO/LASE a, Other b, EPFU/LANO c
 
-indole.tab <- ddply(indole2, c("sp"), summarise,
+indole.tab <- ddply(indole3, c("sp"), summarise,
 					N    = length(activity),
 					mean = mean(activity),
 					sd   = sd(activity),
@@ -73,8 +77,15 @@ indole.tab
 (110.390511-7.044693)/7.044693
 #14.67, EPFU/LANO were 1467% more active than LABO/LASE
 
+indole.tab.treat <- ddply(indole3, c("treatment"), summarise,
+					N    = length(activity),
+					mean = mean(activity),
+					sd   = sd(activity),
+					se   = sd / sqrt(N))
+indole.tab.treat
+
 #full plot
-ggplot(data=indole2, aes(x=treatment, y=activity))+ 
+ggplot(data=indole3, aes(x=treatment, y=activity))+ 
 	geom_boxplot(outlier.shape = NA)+
 	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5, aes(color=sp))+
 	theme_classic()+
@@ -83,7 +94,7 @@ ggplot(data=indole2, aes(x=treatment, y=activity))+
 	theme(text = element_text(size=15))
 
 #data plot w/o species color
-indole.plot1<-ggplot(data=indole2, aes(x=treatment, y=activity))+ 
+indole.plot1<-ggplot(data=indole3, aes(x=treatment, y=activity))+ 
 	geom_boxplot(outlier.shape = NA)+
 	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5)+
 	theme_classic()+
@@ -94,7 +105,7 @@ indole.plot1<-ggplot(data=indole2, aes(x=treatment, y=activity))+
 indole.plot1
 
 #small plot
-indole.small<-ggplot(data=indole2, aes(x=treatment, y=activity))+ 
+indole.small<-ggplot(data=indole3, aes(x=treatment, y=activity))+ 
 	theme_classic()+
 	labs(x=" ", y="Relative activity")+
 	stat_summary(fun.data = "mean_se", size=1.5, shape="diamond")
@@ -177,13 +188,15 @@ farn2$sp[farn2$sp=="NOID"]="Other bat spp."
 farn2$sp[farn2$sp=="NYCHUM"]="Other bat spp."
 }
 
-test.f<-glmer(activity~treatment*sp+(1|jdate), dat = farn2,family=poisson)
+farn3<-aggregate(activity ~ treatment + sp + jdate + site, dat=farn2, FUN=sum)
+
+test.f<-glmer(activity~treatment*sp+(1|jdate), dat = farn3,family=poisson)
 summary(test.f)
 shapiro.test(resid(test.f))#non-normal, overdispersed
 
 overdisp_fun(test.f)#overdispersed
 
-mod.f<-glmer.nb(activity~treatment*sp+(1|jdate), dat = farn2)
+mod.f<-glmer.nb(activity~treatment*sp+(1|jdate), dat = farn3)
 Anova(mod.f)
 #treatment p=0.35, sp p=0.00015, interaxn p=0.40
 
@@ -192,7 +205,7 @@ f1<-emmeans(mod.f,pairwise~sp, type="response")
 cld(f1$emmeans,  Letters ='abcde')
 #LABO/LASE a & Other a, EPFU/LANO b
 
-farn.tab <- ddply(farn2, c("sp"), summarise,
+farn.tab <- ddply(farn3, c("sp"), summarise,
 					N    = length(activity),
 					mean = mean(activity),
 					sd   = sd(activity),

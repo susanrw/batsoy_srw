@@ -34,11 +34,13 @@ plant2$sp[plant2$sp=="NOID"]="Other bat spp."
 plant2$sp[plant2$sp=="NYCHUM"]="Other bat spp."
 }
 
-test1<-glmer(activity~treatment*sp+(1|trial), dat = plant2,family=poisson)
+plant3<-aggregate(activity ~ treatment + sp + trial, dat=plant2, FUN=sum)
+
+test1<-glmer(activity~treatment*sp+(1|trial), dat = plant3,family=poisson)
 summary(test1)
 shapiro.test(resid(test1))#non-normal, overdispersed
 
-mod.p<-glmer.nb(activity~treatment*sp+(1|trial), dat = plant2)
+mod.p<-glmer.nb(activity~treatment*sp+(1|trial), dat = plant3)
 Anova(mod.p)
 #treatment p=0.22, sp p=0.01, interaxn p=0.76
 
