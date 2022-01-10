@@ -18,7 +18,7 @@ cv <- read.csv(file="Cville_summary.csv",head=TRUE)
 cv1<-cv %>% gather(sp, activity, EPTFUS:NOID)
 cv1$sp<-as.factor(cv1$sp)
 levels(cv1$sp)
-cv1<-aggregate(activity ~ treatment + sp + jdate + site, dat=cv1, FUN=sum)
+cv1<-aggregate(activity ~ sp + jdate + site, dat=cv1, FUN=sum)
 
 ##GROUPING SPECIES
 {cv2<-cv1
@@ -34,8 +34,13 @@ cv2$sp[cv2$sp=="NOID"]="Other bat spp."
 cv2$sp[cv2$sp=="NYCHUM"]="Other bat spp."
 }
 
+cv3<-aggregate(activity ~ sp + jdate, dat=cv2, FUN=sum)
+cv3$log.act<-log(cv3$activity)
+#one night had 0 recordings of "other" so couldn't do the transformation
+cv3$log.act[which(!is.finite(cv3$log.act))] <- 0
+
 #Cville plot
-plot.cv<-cv2 %>%
+plot.cv<-cv3 %>%
 	ggplot(aes(x=jdate, 
 			   y=activity,
 			   color=sp))+
@@ -49,7 +54,31 @@ plot.cv<-cv2 %>%
 plot.cv
 plot.cv+facet_wrap(~sp)
 
-cv2 %>%
+plot.cv.log<-cv3 %>%
+	ggplot(aes(x=jdate, 
+			   y=log.act))+
+	geom_point()+
+	geom_smooth()+
+	labs(x="Date",
+		 y="Relative activity (log)",
+		 color="Species",
+		 title = "Clarksville")+
+	theme_classic()
+plot.cv.log
+
+cv1 %>%
+	ggplot(aes(x=jdate, 
+			   y=activity,
+			   color=sp))+
+	geom_point()+
+	geom_smooth()+
+	labs(x="Date",
+		 y="Relative activity (no. nightly detections)",
+		 color="Species",
+		 title = "Clarksville")+
+	theme_classic()
+
+cv3 %>%
 	ggplot(aes(x=jdate, 
 			   y=activity))+
 	geom_point()+
@@ -66,7 +95,7 @@ wy <- read.csv(file="Wye_summary.csv",head=TRUE)
 wy1<-wy %>% gather(sp, activity, EPTFUS:NOID)
 wy1$sp<-as.factor(wy1$sp)
 levels(wy1$sp)
-wy1<-aggregate(activity ~ treatment + sp + jdate + site, dat=wy1, FUN=sum)
+wy1<-aggregate(activity ~ sp + jdate, dat=wy1, FUN=sum)
 
 ##GROUPING SPECIES
 {wy2<-wy1
@@ -82,8 +111,10 @@ wy1<-aggregate(activity ~ treatment + sp + jdate + site, dat=wy1, FUN=sum)
 	wy2$sp[wy2$sp=="NYCHUM"]="Other bat spp."
 }
 
+wy3<-aggregate(activity ~ sp + jdate, dat=wy2, FUN=sum)
+
 #wyille plot
-plot.wy<-wy2 %>%
+plot.wy<-wy3 %>%
 	ggplot(aes(x=jdate, 
 			   y=activity,
 			   color=sp))+
@@ -97,7 +128,19 @@ plot.wy<-wy2 %>%
 plot.wy
 plot.wy+facet_wrap(~sp)
 
-wy2 %>%
+wy1 %>%
+	ggplot(aes(x=jdate, 
+			   y=activity,
+			   color=sp))+
+	geom_point()+
+	geom_smooth()+
+	labs(x="Date",
+		 y="Relative activity (no. nightly detections)",
+		 color="Species",
+		 title = "Wye")+
+	theme_classic()
+
+wy3 %>%
 	ggplot(aes(x=jdate, 
 			   y=activity))+
 	geom_point()+
