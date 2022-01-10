@@ -36,6 +36,7 @@ indole2$sp[indole2$sp=="NYCHUM"]="Other bat spp."
 }
 
 indole3<-aggregate(activity ~ treatment + sp + jdate + site, dat=indole2, FUN=sum)
+indole3$log.act<-log(indole3$activity)
 
 #indole3<-indole3[order(indole3$sp),]
 
@@ -85,7 +86,7 @@ indole.tab.treat <- ddply(indole3, c("treatment"), summarise,
 					se   = sd / sqrt(N))
 indole.tab.treat
 
-#full plot
+#full plot, grouped by species
 ggplot(data=indole3, aes(x=treatment, y=activity))+ 
 	geom_boxplot(outlier.shape = NA)+
 	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5, aes(color=sp))+
@@ -94,7 +95,7 @@ ggplot(data=indole3, aes(x=treatment, y=activity))+
 		 title = "Indole trials")+
 	theme(text = element_text(size=15))
 
-#data plot w/o species color
+#full plot, with boxplots
 indole.plot1<-ggplot(data=indole3, aes(x=treatment, y=activity))+ 
 	geom_boxplot(outlier.shape = NA)+
 	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5)+
@@ -105,19 +106,21 @@ indole.plot1<-ggplot(data=indole3, aes(x=treatment, y=activity))+
 	scale_y_continuous(limits = c(0,2400))
 indole.plot1
 
-#small plot
+#small plot (means and SEs)
 indole.small<-ggplot(data=indole3, aes(x=treatment, y=activity))+ 
 	theme_classic()+
 	labs(x=" ", y="Relative activity")+
 	stat_summary(fun.data = "mean_se", size=1.5, shape="diamond")
 indole.small
 
+#plots with inlay
 indole.with.inset <-
 	ggdraw() +
 	draw_plot(indole.plot1) +
 	draw_plot(indole.small, x = 0.45, y = .62, width = .5, height = .4)
 indole.with.inset
 
+#save plot
 ggsave(filename = "indole.png", 
 	   plot = indole.with.inset,
 	   width = 17, 
@@ -125,6 +128,7 @@ ggsave(filename = "indole.png",
 	   units = "cm",
 	   dpi = 300)
 
+#species plot
 ggplot(data=indole3, aes(x=sp, y=activity))+ 
 	geom_boxplot(outlier.shape = NA)+
 	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5, aes(color=sp))+
@@ -134,6 +138,16 @@ ggplot(data=indole3, aes(x=sp, y=activity))+
 	stat_summary(geom = 'text', label = c("c","a","b"),
 				 fun = max, vjust = -0.8, size=5.5)+
 	scale_y_continuous(limits = c(0,1600))
+
+#log-transformed full plot
+indole.plot.log<-ggplot(data=indole3, aes(x=treatment, y=log.act))+ 
+	geom_boxplot(outlier.shape = NA)+
+	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5)+
+	theme_classic()+
+	labs(x=" ", y="Relative activity (log)",
+		 title = "Indole trials")+
+	theme(text = element_text(size=20))
+indole.plot.log
 
 ##INDOLE BIG BROWN ONLY----
 brown.ind <- indole2[which(indole2$sp== 'EPFU/LANO'),]
@@ -189,6 +203,7 @@ farn2$sp[farn2$sp=="NYCHUM"]="Other bat spp."
 }
 
 farn3<-aggregate(activity ~ treatment + sp + jdate + site, dat=farn2, FUN=sum)
+farn3$log.act<-log(farn3$activity)
 
 test.f<-glmer(activity~treatment*sp+(1|jdate), dat = farn3,family=poisson)
 summary(test.f)
@@ -219,6 +234,7 @@ farn.tab
 (152.81250-28.22667)/28.22667
 #4.41
 
+#main graph (boxplots w/ data points)
 farn.plot1<-ggplot(data=farn3, aes(x=treatment, y=activity))+ 
 	geom_boxplot(outlier.shape = NA)+
 	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5)+
@@ -229,23 +245,21 @@ farn.plot1<-ggplot(data=farn3, aes(x=treatment, y=activity))+
 	scale_y_continuous(limits = c(0,1400))
 farn.plot1
 
+#small graph (means and SEs)
 farn.small<-ggplot(data=farn3, aes(x=treatment, y=activity))+ 
 	theme_classic()+
 	labs(x=" ", y="Relative activity")+
 	stat_summary(fun.data = "mean_se", size=1.5, shape="diamond")
 farn.small
 
-library(ggpubr)
-ggarrange(farn.plot1, farn.small,
-		  labels = c("a", "b"),heights = c(2,2),
-		  ncol = 1, nrow = 2)
-
+#plot with inlay
 farn.with.inset <-
 	ggdraw() +
 	draw_plot(farn.plot1) +
 	draw_plot(farn.small, x = 0.45, y = .6, width = .5, height = .4)
 farn.with.inset
 
+#save plot
 ggsave(filename = "farnesene.png", 
 	   plot = farn.with.inset,
 	   width = 17, 
@@ -253,6 +267,7 @@ ggsave(filename = "farnesene.png",
 	   units = "cm",
 	   dpi = 300)
 
+#species plot
 ggplot(data=farn3, aes(x=sp, y=activity))+ 
 	geom_boxplot(outlier.shape = NA)+
 	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5, aes(color=sp))+
@@ -262,6 +277,16 @@ ggplot(data=farn3, aes(x=sp, y=activity))+
 	stat_summary(geom = 'text', label = c("b","a","c"),
 				 fun = max, vjust = -0.8, size=5.5)+
 	scale_y_continuous(limits = c(0,900))
+
+#log-transformed plot, main graph
+farn.plot.log<-ggplot(data=farn3, aes(x=treatment, y=log.act))+ 
+	geom_boxplot(outlier.shape = NA)+
+	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5)+
+	theme_classic()+
+	labs(x=" ", y="Relative activity (log)",
+		 title = "Farnesene")+
+	theme(text = element_text(size=20))
+farn.plot.log
 
 ##farn BIG BROWN ONLY----
 brown.farn <- farn2[which(farn2$sp== 'EPFU/LANO'),]

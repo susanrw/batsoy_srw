@@ -36,6 +36,7 @@ plant2$sp[plant2$sp=="NYCHUM"]="Other bat spp."
 }
 
 plant3<-aggregate(activity ~ treatment + sp + trial, dat=plant2, FUN=sum)
+plant3$log.act<-log(plant3$activity)
 
 #Test for overdispersion function
 overdisp_fun <- function(model) {
@@ -133,7 +134,9 @@ mod.brown<-glmer.nb(activity~treatment+(1|trial), dat = brown)
 Anova(mod.brown)
 #treatment p=0.20
 
-#NOID GRAPH----
+#GRAPHS----
+
+#main graph (boxplots w/ data points)
 plant.plot1<-ggplot(data=plant3, aes(x=treatment, y=activity))+ 
 	geom_boxplot(outlier.shape = NA)+
 	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5)+
@@ -144,6 +147,7 @@ plant.plot1<-ggplot(data=plant3, aes(x=treatment, y=activity))+
 					 labels=c("Undamaged", "Damaged"))
 plant.plot1
 
+#small graph (means and SEs)
 plant.small<-ggplot(data=plant3, aes(x=treatment, y=activity))+ 
 	theme_classic()+
 	labs(x=" ", y="Relative activity")+
@@ -152,6 +156,7 @@ plant.small<-ggplot(data=plant3, aes(x=treatment, y=activity))+
 					 labels=c("Undamaged", "Damaged"))
 plant.small
 
+#graph with inlay
 plant.with.inset <-
 	ggdraw() +
 	draw_plot(plant.plot1) +
@@ -165,6 +170,7 @@ ggsave(filename = "plant.png",
 	   units = "cm",
 	   dpi = 300)
 
+#species graph
 ggplot(data=plant3, aes(x=sp, y=activity))+ 
 	geom_boxplot(outlier.shape = NA)+
 	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5, aes(color=sp))+
@@ -174,6 +180,17 @@ ggplot(data=plant3, aes(x=sp, y=activity))+
 	stat_summary(geom = 'text', label = c("b","a","b"),
 				 fun = max, vjust = -0.8, size=5.5)+
 	scale_y_continuous(limits = c(0,900))
+
+#log transformed main graph (boxplots w/ data points)
+plant.plot.log<-ggplot(data=plant3, aes(x=treatment, y=log.act))+ 
+	geom_boxplot(outlier.shape = NA)+
+	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5)+
+	theme_classic()+
+	labs(x=" ", y="Relative activity (log)")+
+	theme(text = element_text(size=18))+
+	scale_x_discrete(limits=c("U", "D"),
+					 labels=c("Undamaged", "Damaged"))
+plant.plot.log
 
 #NO NOID GRAPH----
 ggplot(data=plant4, aes(x=treatment, y=activity))+ 
