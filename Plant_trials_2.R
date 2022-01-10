@@ -8,6 +8,7 @@ library(multcomp)
 library(dplyr)
 library(plyr)
 library(tidyr)
+library(cowplot)
 
 # Data import and cleaning ------------------------------------------------
 
@@ -36,9 +37,20 @@ plant2$sp[plant2$sp=="NYCHUM"]="Other bat spp."
 
 plant3<-aggregate(activity ~ treatment + sp + trial, dat=plant2, FUN=sum)
 
+#Test for overdispersion function
+overdisp_fun <- function(model) {
+	rdf <- df.residual(model)
+	rp <- residuals(model,type="pearson")
+	Pearson.chisq <- sum(rp^2)
+	prat <- Pearson.chisq/rdf
+	pval <- pchisq(Pearson.chisq, df=rdf, lower.tail=FALSE)
+	c(chisq=Pearson.chisq,ratio=prat,rdf=rdf,p=pval)
+}
+
 test1<-glmer(activity~treatment*sp+(1|trial), dat = plant3,family=poisson)
 summary(test1)
-shapiro.test(resid(test1))#non-normal, overdispersed
+overdisp_fun(test1)#overdispersed
+shapiro.test(resid(test1))#non-normal
 
 mod.p<-glmer.nb(activity~treatment*sp+(1|trial), dat = plant3)
 Anova(mod.p)
@@ -49,25 +61,27 @@ p1<-emmeans(mod.p,pairwise~sp, type="response")
 cld(p1$emmeans,  Letters ='abcde')
 #LABO/LASE & Other a, EPFU/LANO b
 
-plant2.tab <- ddply(plant2, c("sp"), summarise,
+plant3.tab <- ddply(plant3, c("sp"), summarise,
 					   N    = length(activity),
 					   mean = mean(activity),
 					   sd   = sd(activity),
 					   se   = sd / sqrt(N))
-plant2.tab
-#(EPFU/LANO-Other)/other
-(131.25-56.72)/56.72
-#1.31, EPFU/LANO were 131% more active than Other spp.
+plant3.tab
+#(Other-LABO)/LABO
+(283.6-82.0)/82.0
+#2.46
 
 #(EPFU/LANO-LABO)/LABO
-(131.25-41)/41
-#2.2, EPFU/LANO were 220% more active than LABO/LASE
+(262.5-82.0)/82.0
+#2.2
+
+#LABO/LASE were 2.2 and 2.5 less active compared to EPFU/LANO and other bat species
 
 
 ##REMOVING NO IDS----
-plant3<-plant1[plant1$sp != "NOID", ]  
+plant5<-plant1[plant1$sp != "NOID", ]  
 
-{plant4<-plant3
+{plant4<-plant5
 	plant4$sp=as.character(plant4$sp)
 	plant4$sp[plant4$sp=="EPTFUS"]="EPFU/LANO"
 	plant4$sp[plant4$sp=="LASNOC"]="EPFU/LANO"
@@ -120,7 +134,7 @@ Anova(mod.brown)
 #treatment p=0.20
 
 #NOID GRAPH----
-plant.plot1<-ggplot(data=plant2, aes(x=treatment, y=activity))+ 
+plant.plot1<-ggplot(data=plant3, aes(x=treatment, y=activity))+ 
 	geom_boxplot(outlier.shape = NA)+
 	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5)+
 	theme_classic()+
@@ -130,7 +144,7 @@ plant.plot1<-ggplot(data=plant2, aes(x=treatment, y=activity))+
 					 labels=c("Undamaged", "Damaged"))
 plant.plot1
 
-plant.small<-ggplot(data=plant2, aes(x=treatment, y=activity))+ 
+plant.small<-ggplot(data=plant3, aes(x=treatment, y=activity))+ 
 	theme_classic()+
 	labs(x=" ", y="Relative activity")+
 	stat_summary(fun.data = "mean_se", size=1.5, shape="diamond")+
@@ -151,13 +165,13 @@ ggsave(filename = "plant.png",
 	   units = "cm",
 	   dpi = 300)
 
-ggplot(data=plant2, aes(x=sp, y=activity))+ 
+ggplot(data=plant3, aes(x=sp, y=activity))+ 
 	geom_boxplot(outlier.shape = NA)+
 	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5, aes(color=sp))+
 	theme_classic()+
 	labs(x=" ", y="Relative activity", title="Plant trials")+
 	theme(text = element_text(size=20), legend.position = "none")+
-	stat_summary(geom = 'text', label = c("b","a","a"),
+	stat_summary(geom = 'text', label = c("b","a","b"),
 				 fun = max, vjust = -0.8, size=5.5)+
 	scale_y_continuous(limits = c(0,900))
 
