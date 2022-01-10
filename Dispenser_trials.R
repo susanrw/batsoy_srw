@@ -8,6 +8,7 @@ library(multcomp)
 library(dplyr)
 library(plyr)
 library(tidyr)
+library(cowplot)
 
 # Indole data import and cleaning ------------------------------------------------
 
@@ -70,12 +71,12 @@ indole.tab <- ddply(indole3, c("sp"), summarise,
 					se   = sd / sqrt(N))
 indole.tab
 #(EPFU/LANO-Other)/other
-(110.390511-23.750000)/23.750000
-#3.65, EPFU/LANO were 365% more active than Other spp.
+(216.0500-101.0638)/101.0638
+#1.14, EPFU/LANO were 114% more active than Other spp.
 
 #(EPFU/LANO-LABO)/LABO
-(110.390511-7.044693)/7.044693
-#14.67, EPFU/LANO were 1467% more active than LABO/LASE
+(216.0500-9.7000)/9.7000
+#21.27, EPFU/LANO were 1467% more active than LABO/LASE
 
 indole.tab.treat <- ddply(indole3, c("treatment"), summarise,
 					N    = length(activity),
@@ -111,11 +112,10 @@ indole.small<-ggplot(data=indole3, aes(x=treatment, y=activity))+
 	stat_summary(fun.data = "mean_se", size=1.5, shape="diamond")
 indole.small
 
-library(cowplot)
 indole.with.inset <-
 	ggdraw() +
 	draw_plot(indole.plot1) +
-	draw_plot(indole.small, x = 0.45, y = .6, width = .5, height = .4)
+	draw_plot(indole.small, x = 0.45, y = .62, width = .5, height = .4)
 indole.with.inset
 
 ggsave(filename = "indole.png", 
@@ -125,7 +125,7 @@ ggsave(filename = "indole.png",
 	   units = "cm",
 	   dpi = 300)
 
-ggplot(data=indole2, aes(x=sp, y=activity))+ 
+ggplot(data=indole3, aes(x=sp, y=activity))+ 
 	geom_boxplot(outlier.shape = NA)+
 	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5, aes(color=sp))+
 	theme_classic()+
@@ -133,7 +133,7 @@ ggplot(data=indole2, aes(x=sp, y=activity))+
 	theme(text = element_text(size=20), legend.position = "none")+
 	stat_summary(geom = 'text', label = c("c","a","b"),
 				 fun = max, vjust = -0.8, size=5.5)+
-	scale_y_continuous(limits = c(0,1800))
+	scale_y_continuous(limits = c(0,1600))
 
 ##INDOLE BIG BROWN ONLY----
 brown.ind <- indole2[which(indole2$sp== 'EPFU/LANO'),]
@@ -198,12 +198,12 @@ overdisp_fun(test.f)#overdispersed
 
 mod.f<-glmer.nb(activity~treatment*sp+(1|jdate), dat = farn3)
 Anova(mod.f)
-#treatment p=0.35, sp p=0.00015, interaxn p=0.40
+#treatment p=0.3102, sp p<2e-16, interaxn p=0.2219
 
 #contrasts
 f1<-emmeans(mod.f,pairwise~sp, type="response")
 cld(f1$emmeans,  Letters ='abcde')
-#LABO/LASE a & Other a, EPFU/LANO b
+
 
 farn.tab <- ddply(farn3, c("sp"), summarise,
 					N    = length(activity),
@@ -211,15 +211,15 @@ farn.tab <- ddply(farn3, c("sp"), summarise,
 					sd   = sd(activity),
 					se   = sd / sqrt(N))
 farn.tab
-#(EPFU/LANO-Other)/other
-(68.29371-32.95148)/32.95148
-#1.07, EPFU/LANO were 107% more active than Other spp.
+#(Other-EPFU/LANO)/EPFU/LANO
+(152.81250-125.20513)/125.20513
+#.22
 
-#(EPFU/LANO-LABO)/LABO
-(68.29371-16.53906)/16.53906
-#3.13, EPFU/LANO were 313% more active than LABO/LASE
+#(Other-LABO)/LABO
+(152.81250-28.22667)/28.22667
+#4.41
 
-farn.plot1<-ggplot(data=farn2, aes(x=treatment, y=activity))+ 
+farn.plot1<-ggplot(data=farn3, aes(x=treatment, y=activity))+ 
 	geom_boxplot(outlier.shape = NA)+
 	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5)+
 	theme_classic()+
@@ -229,11 +229,16 @@ farn.plot1<-ggplot(data=farn2, aes(x=treatment, y=activity))+
 	scale_y_continuous(limits = c(0,1400))
 farn.plot1
 
-farn.small<-ggplot(data=farn2, aes(x=treatment, y=activity))+ 
+farn.small<-ggplot(data=farn3, aes(x=treatment, y=activity))+ 
 	theme_classic()+
 	labs(x=" ", y="Relative activity")+
 	stat_summary(fun.data = "mean_se", size=1.5, shape="diamond")
 farn.small
+
+library(ggpubr)
+ggarrange(farn.plot1, farn.small,
+		  labels = c("a", "b"),heights = c(2,2),
+		  ncol = 1, nrow = 2)
 
 farn.with.inset <-
 	ggdraw() +
@@ -248,13 +253,13 @@ ggsave(filename = "farnesene.png",
 	   units = "cm",
 	   dpi = 300)
 
-ggplot(data=farn2, aes(x=sp, y=activity))+ 
+ggplot(data=farn3, aes(x=sp, y=activity))+ 
 	geom_boxplot(outlier.shape = NA)+
 	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5, aes(color=sp))+
 	theme_classic()+
 	labs(x=" ", y="Relative activity", title="Farnesene trials")+
 	theme(text = element_text(size=20), legend.position = "none")+
-	stat_summary(geom = 'text', label = c("b","a","b"),
+	stat_summary(geom = 'text', label = c("b","a","c"),
 				 fun = max, vjust = -0.8, size=5.5)+
 	scale_y_continuous(limits = c(0,900))
 
