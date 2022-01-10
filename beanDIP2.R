@@ -47,7 +47,7 @@ plot.cv<-cv3 %>%
 	geom_point()+
 	geom_smooth()+
 	labs(x="Date",
-		 y="Relative activity (no. nightly detections)",
+		 y="Relative activity",
 		 color="Species",
 		 title = "Clarksville")+
 	theme_classic()
@@ -84,7 +84,7 @@ cv3 %>%
 	geom_point()+
 	geom_smooth()+
 	labs(x="Date",
-		 y="Relative activity (no. nightly detections)",
+		 y="Relative activity",
 		 title = "Clarksville")+
 	theme_classic()
 
@@ -112,6 +112,9 @@ wy1<-aggregate(activity ~ sp + jdate, dat=wy1, FUN=sum)
 }
 
 wy3<-aggregate(activity ~ sp + jdate, dat=wy2, FUN=sum)
+wy3$log.act<-log(wy3$activity)
+#one night had 0 recordings of "other" so couldn't do the transformation
+wy3$log.act[which(!is.finite(wy3$log.act))] <- 0
 
 #wyille plot
 plot.wy<-wy3 %>%
@@ -127,6 +130,18 @@ plot.wy<-wy3 %>%
 	theme_classic()
 plot.wy
 plot.wy+facet_wrap(~sp)
+
+plot.wy.log<-wy3 %>%
+	ggplot(aes(x=jdate, 
+			   y=log.act))+
+	geom_point()+
+	geom_smooth()+
+	labs(x="Date",
+		 y="Relative activity (log)",
+		 color="Species",
+		 title = "Wye")+
+	theme_classic()
+plot.wy.log
 
 wy1 %>%
 	ggplot(aes(x=jdate, 
@@ -150,7 +165,7 @@ wy3 %>%
 		 title = "Wye")+
 	theme_classic()
 
-##Insect data
+##Chew data
 chew <- read.csv(file="beanDIP_chew.csv",head=TRUE)
 chew$chew_pct<-as.numeric(chew$chew_pct)
 chew1<-aggregate(chew_pct ~ site + sampling.round, dat=chew, FUN=mean)
@@ -164,3 +179,40 @@ chew1 %>%
 		 y="Average chew damage")+
 	theme_classic()+
 	facet_wrap(~site)
+
+##Abundance data
+abun <- read.csv(file="beanDIP_ab_B.csv",head=TRUE)
+abun$chew_pct<-as.numeric(chew$chew_pct)
+abun1<-aggregate(insect.ab ~ site + round, dat=abun, FUN=mean)
+
+abun1 %>%
+	ggplot(aes(x=round, 
+			   y=insect.ab))+
+	geom_point()+
+	geom_smooth()+
+	labs(x="Sampling round",
+		 y="Average insect abundance")+
+	theme_classic()+
+	facet_wrap(~site)
+
+##Temperature data
+temp.wye <- read.csv(file="beanDIP_wye_temp.csv",head=TRUE)
+
+temp.wye<- temp.wye %>% filter(jdate > 170)
+temp.wye<- temp.wye %>% filter(jdate < 270)
+
+##Gathering data — compounds from col to rows
+temp.wye1<-temp.wye %>% gather(temp, C, max.temp.c:min.temp.c)
+
+temp.wye1 %>%
+	ggplot(aes(x=jdate, 
+			   y=C,
+			   color=temp))+
+	geom_point()+
+	geom_smooth()+
+	labs(x="Julian Date",
+		 y="Max temperature (C)",
+		 title="Wye")+
+	theme_classic()+
+	scale_x_continuous(limits = c(170, 270))
+
