@@ -14,6 +14,7 @@ library(cowplot)
 
 #SUMMARY DATA----
 indole <- read.csv(file="Maynard_etal_indole_sum.csv",head=TRUE)
+indole[, 3:11][is.na(indole[, 3:11])] <- 0
 
 ##Gathering data — compounds from col to rows
 indole1<-indole %>% gather(sp, activity, EPTFUS:NOID)
@@ -37,6 +38,7 @@ indole2$sp[indole2$sp=="NYCHUM"]="Other bat spp."
 
 indole3<-aggregate(activity ~ treatment + sp + jdate + site, dat=indole2, FUN=sum)
 indole3$log.act<-log(indole3$activity)
+indole3$log.act[which(!is.finite(indole3$log.act))] <- 0
 
 #indole3<-indole3[order(indole3$sp),]
 
@@ -58,7 +60,7 @@ overdisp_fun(test.i)#overdispersed
 
 mod.i<-glmer.nb(activity~treatment*sp+(1|jdate), dat = indole3)
 Anova(mod.i)
-#treatment p=0.32, sp p<0.0001, interaxn p=0.45
+#treatment chi=1.2276 p=0.2679, sp chi=583.6039 p<0.0001, interaxn chi=0.6611 p=0.7185
 
 #contrasts
 i1<-emmeans(mod.i,pairwise~sp, type="response")
@@ -72,12 +74,19 @@ indole.tab <- ddply(indole3, c("sp"), summarise,
 					se   = sd / sqrt(N))
 indole.tab
 #(EPFU/LANO-Other)/other
-(216.0500-101.0638)/101.0638
-#1.14, EPFU/LANO were 114% more active than Other spp.
+(214.517730-101.0638)/101.0638
+#1.12, EPFU/LANO were 114% more active than Other spp.
 
 #(EPFU/LANO-LABO)/LABO
-(216.0500-9.7000)/9.7000
-#21.27, EPFU/LANO were 1467% more active than LABO/LASE
+(214.517730-8.943262)/8.943262
+#22.9865, EPFU/LANO were 1467% more active than LABO/LASE
+
+indole.n <- ddply(indole3, c("site"), summarise,
+					N    = length(activity),
+					mean = mean(activity),
+					sd   = sd(activity),
+					se   = sd / sqrt(N))
+indole.n
 
 indole.tab.treat <- ddply(indole3, c("treatment"), summarise,
 					N    = length(activity),
@@ -137,7 +146,7 @@ ggplot(data=indole3, aes(x=sp, y=activity))+
 	theme(text = element_text(size=20), legend.position = "none")+
 	stat_summary(geom = 'text', label = c("c","a","b"),
 				 fun = max, vjust = -0.8, size=5.5)+
-	scale_y_continuous(limits = c(0,1600))
+	scale_y_continuous(limits = c(0,2000))
 
 #log-transformed full plot
 indole.plot.log<-ggplot(data=indole3, aes(x=treatment, y=log.act))+ 
@@ -181,6 +190,7 @@ ggplot(data=brown.ind, aes(x=treatment, y=activity))+
 
 #SUMMARY DATA----
 farn <- read.csv(file="Maynard_etal_farnesene_sum.csv",head=TRUE)
+farn[, 3:11][is.na(farn[, 3:11])] <- 0
 
 ##Gathering data — compounds from col to rows
 farn1<-farn %>% gather(sp, activity, EPTFUS:NOID)
@@ -204,6 +214,7 @@ farn2$sp[farn2$sp=="NYCHUM"]="Other bat spp."
 
 farn3<-aggregate(activity ~ treatment + sp + jdate + site, dat=farn2, FUN=sum)
 farn3$log.act<-log(farn3$activity)
+farn3$log.act[which(!is.finite(farn3$log.act))] <- 0
 
 test.f<-glmer(activity~treatment*sp+(1|jdate), dat = farn3,family=poisson)
 summary(test.f)
@@ -213,11 +224,12 @@ overdisp_fun(test.f)#overdispersed
 
 mod.f<-glmer.nb(activity~treatment*sp+(1|jdate), dat = farn3)
 Anova(mod.f)
-#treatment p=0.3102, sp p<2e-16, interaxn p=0.2219
+#treatment chi=2.0996 p=0.1473, sp chi=87.0666 p<2e-16, interaxn chi=2.6110  p=0.2710
 
 #contrasts
 f1<-emmeans(mod.f,pairwise~sp, type="response")
 cld(f1$emmeans,  Letters ='abcde')
+#LABO=A, EPFU=B, Other=C
 
 
 farn.tab <- ddply(farn3, c("sp"), summarise,
@@ -227,12 +239,19 @@ farn.tab <- ddply(farn3, c("sp"), summarise,
 					se   = sd / sqrt(N))
 farn.tab
 #(Other-EPFU/LANO)/EPFU/LANO
-(152.81250-125.20513)/125.20513
-#.22
+(152.81250-122.0750)/122.0750
+#.25
 
 #(Other-LABO)/LABO
-(152.81250-28.22667)/28.22667
-#4.41
+(152.81250-26.4625)/26.4625
+#4.77
+
+farn.n <- ddply(farn3, c("site"), summarise,
+				  N    = length(activity),
+				  mean = mean(activity),
+				  sd   = sd(activity),
+				  se   = sd / sqrt(N))
+farn.n
 
 #main graph (boxplots w/ data points)
 farn.plot1<-ggplot(data=farn3, aes(x=treatment, y=activity))+ 
@@ -242,7 +261,7 @@ farn.plot1<-ggplot(data=farn3, aes(x=treatment, y=activity))+
 	labs(x=" ", y="Relative activity",
 		 title = "Farnesene")+
 	theme(text = element_text(size=20))+
-	scale_y_continuous(limits = c(0,1400))
+	scale_y_continuous(limits = c(0,1500))
 farn.plot1
 
 #small graph (means and SEs)
@@ -276,7 +295,7 @@ ggplot(data=farn3, aes(x=sp, y=activity))+
 	theme(text = element_text(size=20), legend.position = "none")+
 	stat_summary(geom = 'text', label = c("b","a","c"),
 				 fun = max, vjust = -0.8, size=5.5)+
-	scale_y_continuous(limits = c(0,900))
+	scale_y_continuous(limits = c(0,1400))
 
 #log-transformed plot, main graph
 farn.plot.log<-ggplot(data=farn3, aes(x=treatment, y=log.act))+ 
