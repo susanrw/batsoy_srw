@@ -13,12 +13,14 @@ library(tidyr)
 
 #Clarksville----
 cv <- read.csv(file="Cville_summary.csv",head=TRUE)
+cv[, 3:11][is.na(cv[, 3:11])] <- 0
 
 ##Gathering data — compounds from col to rows
 cv1<-cv %>% gather(sp, activity, EPTFUS:NOID)
 cv1$sp<-as.factor(cv1$sp)
 levels(cv1$sp)
 cv1<-aggregate(activity ~ sp + jdate + site, dat=cv1, FUN=sum)
+cv1$activity[is.na(cv1$activity)] <- 0
 
 ##GROUPING SPECIES
 {cv2<-cv1
@@ -36,7 +38,7 @@ cv2$sp[cv2$sp=="NYCHUM"]="Other bat spp."
 
 cv3<-aggregate(activity ~ sp + jdate, dat=cv2, FUN=sum)
 cv3$log.act<-log(cv3$activity)
-#one night had 0 recordings of "other" so couldn't do the transformation
+#0 activity species/nights 
 cv3$log.act[which(!is.finite(cv3$log.act))] <- 0
 
 #Cville plot
@@ -73,7 +75,7 @@ cv1 %>%
 	geom_point()+
 	geom_smooth()+
 	labs(x="Date",
-		 y="Relative activity (no. nightly detections)",
+		 y="Relative activity",
 		 color="Species",
 		 title = "Clarksville")+
 	theme_classic()
@@ -90,6 +92,7 @@ cv3 %>%
 
 #Wye----
 wy <- read.csv(file="Wye_summary.csv",head=TRUE)
+wy[, 3:11][is.na(wy[, 3:11])] <- 0
 
 ##Gathering data — compounds from col to rows
 wy1<-wy %>% gather(sp, activity, EPTFUS:NOID)
@@ -113,7 +116,6 @@ wy1<-aggregate(activity ~ sp + jdate, dat=wy1, FUN=sum)
 
 wy3<-aggregate(activity ~ sp + jdate, dat=wy2, FUN=sum)
 wy3$log.act<-log(wy3$activity)
-#one night had 0 recordings of "other" so couldn't do the transformation
 wy3$log.act[which(!is.finite(wy3$log.act))] <- 0
 
 #wyille plot
@@ -150,7 +152,7 @@ wy1 %>%
 	geom_point()+
 	geom_smooth()+
 	labs(x="Date",
-		 y="Relative activity (no. nightly detections)",
+		 y="Relative activity",
 		 color="Species",
 		 title = "Wye")+
 	theme_classic()
@@ -167,8 +169,11 @@ wy3 %>%
 
 ##Chew data
 chew <- read.csv(file="beanDIP_chew.csv",head=TRUE)
+chew<-na.omit(chew)
 chew$chew_pct<-as.numeric(chew$chew_pct)
-chew1<-aggregate(chew_pct ~ site + sampling.round, dat=chew, FUN=mean)
+chew$jdate<-as.numeric(chew$jdate)
+
+chew1<-aggregate(chew_pct ~ site + sampling.round + jdate, dat=chew, FUN=mean)
 
 chew1 %>%
 	ggplot(aes(x=sampling.round, 
@@ -176,6 +181,16 @@ chew1 %>%
 	geom_point()+
 	geom_smooth()+
 	labs(x="Sampling round",
+		 y="Average chew damage")+
+	theme_classic()+
+	facet_wrap(~site)
+
+chew1 %>%
+	ggplot(aes(x=jdate, 
+			   y=chew_pct))+
+	geom_point()+
+	geom_smooth()+
+	labs(x="jdate",
 		 y="Average chew damage")+
 	theme_classic()+
 	facet_wrap(~site)
