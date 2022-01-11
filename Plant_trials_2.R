@@ -14,6 +14,7 @@ library(cowplot)
 
 #SUMMARY DATA----
 plant <- read.csv(file="plant_sum_noTABR.csv",head=TRUE)
+plant[, 3:11][is.na(plant[, 3:11])] <- 0
 
 ##Gathering data — compounds from col to rows
 plant1<-plant %>% gather(sp, activity, EPTFUS:NOID)
@@ -51,16 +52,16 @@ overdisp_fun <- function(model) {
 test1<-glmer(activity~treatment*sp+(1|trial), dat = plant3,family=poisson)
 summary(test1)
 overdisp_fun(test1)#overdispersed
-shapiro.test(resid(test1))#non-normal
+shapiro.test(resid(test1))#normal
 
 mod.p<-glmer.nb(activity~treatment*sp+(1|trial), dat = plant3)
 Anova(mod.p)
-#treatment p=0.22, sp p=0.01, interaxn p=0.76
+#treatment chi=2.9491 p=0.08592, sp chi=31.6798 p<0.0001, interaxn chi=1.0503 p=0.59146
 
 #contrasts
 p1<-emmeans(mod.p,pairwise~sp, type="response")
 cld(p1$emmeans,  Letters ='abcde')
-#LABO/LASE & Other a, EPFU/LANO b
+#LABO/LASE a, EPFU/LANO & Other b
 
 plant3.tab <- ddply(plant3, c("sp"), summarise,
 					   N    = length(activity),
@@ -78,6 +79,12 @@ plant3.tab
 
 #LABO/LASE were 2.2 and 2.5 less active compared to EPFU/LANO and other bat species
 
+plant3.n <- ddply(plant3, c("trial"), summarise,
+					N    = length(activity),
+					mean = mean(activity),
+					sd   = sd(activity),
+					se   = sd / sqrt(N))
+plant3.n
 
 ##REMOVING NO IDS----
 plant5<-plant1[plant1$sp != "NOID", ]  
