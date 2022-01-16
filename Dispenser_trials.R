@@ -158,32 +158,7 @@ indole.plot.log<-ggplot(data=indole3, aes(x=treatment, y=log.act))+
 	theme(text = element_text(size=20))
 indole.plot.log
 
-##INDOLE BIG BROWN ONLY----
-brown.ind <- indole2[which(indole2$sp== 'EPFU/LANO'),]
 
-test3.ind<-glmer(activity~treatment+(1|jdate), dat = brown.ind,family=poisson)
-shapiro.test(resid(test3.ind))#normal
-summary(test3.ind)#not normal
-
-mod.brown.ind<-glmer.nb(activity~treatment+(1|jdate), dat = brown.ind)
-Anova(mod.brown.ind)
-#treatment p=0.38
-
-ggplot(data=brown.ind, aes(x=treatment, y=activity))+ 
-	geom_boxplot(outlier.shape = NA)+
-	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5)+
-	stat_summary(fun.data = "mean_se", colour="red", size=1.5, shape="diamond")+
-	theme_classic()+
-	labs(x=" ", y="Relative activity",
-		 title = "EPFU/LANO only, indole trials")+
-	theme(text = element_text(size=15), legend.title = )+
-	scale_color_viridis(discrete = T, option = "D")
-
-ggplot(data=brown.ind, aes(x=treatment, y=activity))+ 
-	theme_classic()+
-	labs(x=" ", y="Relative activity",
-		 title = "EPFU/LANO only, indole trials")+
-	stat_summary(fun.data = "mean_se", size=1.5, shape="diamond")
 
 ##FARNESENE TRIALS----
 # Farnesene data import and cleaning ------------------------------------------------
@@ -252,6 +227,7 @@ farn.n <- ddply(farn3, c("site"), summarise,
 				  sd   = sd(activity),
 				  se   = sd / sqrt(N))
 farn.n
+#N=24/3 species=8 nights total,2 treatments at 10 sites, N=40
 
 #main graph (boxplots w/ data points)
 farn.plot1<-ggplot(data=farn3, aes(x=treatment, y=activity))+ 
@@ -307,6 +283,79 @@ farn.plot.log<-ggplot(data=farn3, aes(x=treatment, y=log.act))+
 	theme(text = element_text(size=20))
 farn.plot.log
 
+##COMBINING INDOLE AND FARNESENE TRIALS----
+indole3$compound<-NA
+indole3$compound<-"indole"
+
+farn3$compound<-NA
+farn3$compound<-"farnesene"
+
+dis.all <- rbind(farn3, indole3)
+
+#exclude treatment trials
+dis.all.control<-dis.all[dis.all$treatment != "Dispenser", ]  
+
+q1<-glmer.nb(activity~sp+(1|site), data = dis.all.control)
+Anova(q1)
+
+#contrasts
+q1c<-emmeans(q1,pairwise~sp, type="response")
+cld(q1c$emmeans,  Letters ='abcde')
+#LABO=A, EPFU=B, Other=B
+
+q1.tab <- ddply(dis.all.control, c("sp"), summarise,
+				  N    = length(activity),
+				  mean = mean(activity),
+				  sd   = sd(activity),
+				  se   = sd / sqrt(N))
+q1.tab
+#(EPFU/LANO-LABO)/LABO
+(192.12844-14.80734)/14.80734
+#11.98
+
+#(Other-LABO)/LABO
+(117.55046-14.80734)/14.80734
+#6.94
+
+#species plot
+ggplot(data=dis.all.control, aes(x=sp, y=activity))+ 
+	geom_boxplot(outlier.shape = NA)+
+	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5, aes(color=sp))+
+	theme_classic()+
+	labs(x=" ", y="Relative activity", title="All control trials")+
+	theme(text = element_text(size=20), legend.position = "none")+
+	stat_summary(geom = 'text', label = c("b","a","b"),
+				 fun = max, vjust = -0.8, size=5.5)+
+	scale_y_continuous(limits = c(0,2000))
+
+###BIG BROWN DATA----
+##INDOLE BIG BROWN ONLY----
+brown.ind <- indole2[which(indole2$sp== 'EPFU/LANO'),]
+
+test3.ind<-glmer(activity~treatment+(1|jdate), dat = brown.ind,family=poisson)
+shapiro.test(resid(test3.ind))#normal
+summary(test3.ind)#not normal
+
+mod.brown.ind<-glmer.nb(activity~treatment+(1|jdate), dat = brown.ind)
+Anova(mod.brown.ind)
+#treatment p=0.38
+
+ggplot(data=brown.ind, aes(x=treatment, y=activity))+ 
+	geom_boxplot(outlier.shape = NA)+
+	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5)+
+	stat_summary(fun.data = "mean_se", colour="red", size=1.5, shape="diamond")+
+	theme_classic()+
+	labs(x=" ", y="Relative activity",
+		 title = "EPFU/LANO only, indole trials")+
+	theme(text = element_text(size=15), legend.title = )+
+	scale_color_viridis(discrete = T, option = "D")
+
+ggplot(data=brown.ind, aes(x=treatment, y=activity))+ 
+	theme_classic()+
+	labs(x=" ", y="Relative activity",
+		 title = "EPFU/LANO only, indole trials")+
+	stat_summary(fun.data = "mean_se", size=1.5, shape="diamond")
+
 ##farn BIG BROWN ONLY----
 brown.farn <- farn2[which(farn2$sp== 'EPFU/LANO'),]
 
@@ -333,3 +382,5 @@ ggplot(data=brown.farn, aes(x=treatment, y=activity))+
 	labs(x=" ", y="Relative activity",
 		 title = "EPFU/LANO only, Farnesene trials")+
 	stat_summary(fun.data = "mean_se", size=1.5, shape="diamond")
+
+
