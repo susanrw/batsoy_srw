@@ -116,8 +116,36 @@ plot.cv.1.log+aes(color=sp)
 plot.cv.1.log+aes(color=sp)+facet_wrap(~sp)
 
 #filtering for insect/plant sampling dates at Cville
-#jdates=189,209,229,271
+#jdates=189,209,229,271(but last bat sampling date is 269)
+cv.bat.insect<-filter(cv1, jdate == "189" | jdate == "209"| jdate == "229"| jdate == "269")
 
+#Cville, no species grouping, log-transformed
+plot.cv.1.log.insect<-cv.bat.insect %>%
+	ggplot(aes(x=jdate, 
+			   y=log.act))+
+	geom_point()+
+	geom_smooth()+
+	labs(x="Date",
+		 y="Relative activity",
+		 color="Species",
+		 title = "Clarksville")+
+	theme_classic()
+plot.cv.1.log.insect
+#split by species
+plot.cv.1.log.insect+aes(color=sp)
+#faceted by species
+plot.cv.1.log.insect+aes(color=sp)+facet_wrap(~sp)
+
+cv.bat.sum<-summarySE(cv.bat.insect, measurevar="log.act", groupvars=c("jdate"))
+cv.bat.sum %>%
+	ggplot(aes(x=jdate, 
+			   y=log.act))+
+	geom_errorbar(aes(ymin=log.act-se, ymax=log.act+se), width=.1)+
+	geom_line()+
+	labs(x="Date",
+		 y="Average bat activity",
+		 title = "Clarksville")+
+	theme_classic()
 
 #Wye----
 wy <- read.csv(file="Wye_summary.csv",head=TRUE)
@@ -221,7 +249,39 @@ plot.wy.1.log+aes(color=sp)
 #faceted by species
 plot.wy.1.log+aes(color=sp)+facet_wrap(~sp)
 
-##Chew data
+#filtering for insect/plant sampling dates at Wye
+#jdates=187,208,228,265
+wy.bat.insect<-filter(wy1, jdate == "187" | jdate == "208"| jdate == "228"| jdate == "265")
+
+#Wye, no species grouping, log-transformed
+plot.wy.1.log.insect<-wy.bat.insect %>%
+	ggplot(aes(x=jdate, 
+			   y=log.act))+
+	geom_point()+
+	geom_smooth()+
+	labs(x="Date",
+		 y="Relative activity",
+		 color="Species",
+		 title = "Wye")+
+	theme_classic()
+plot.wy.1.log.insect
+#split by species
+plot.wy.1.log.insect+aes(color=sp)
+#faceted by species
+plot.wy.1.log.insect+aes(color=sp)+facet_wrap(~sp)
+
+wy.bat.sum<-summarySE(wy.bat.insect, measurevar="log.act", groupvars=c("jdate"))
+wy.bat.sum %>%
+	ggplot(aes(x=jdate, 
+			   y=log.act))+
+	geom_errorbar(aes(ymin=log.act-se, ymax=log.act+se), width=.1)+
+	geom_line()+
+	labs(x="Date",
+		 y="Average bat activity (log)",
+		 title="Wye")+
+	theme_classic()
+
+##Chew data----
 chew <- read.csv(file="beanDIP_chew.csv",head=TRUE)
 chew<-na.omit(chew)
 chew$chew_pct<-as.numeric(chew$chew_pct)
@@ -249,6 +309,18 @@ chew1 %>%
 	theme_classic()+
 	facet_wrap(~site)
 
+sum.chew<-summarySE(chew, measurevar="chew_pct", groupvars=c("site", "sampling.round", "jdate"))
+sum.chew %>%
+	ggplot(aes(x=jdate, 
+			   y=chew_pct))+
+	geom_point()+
+	geom_line()+
+	geom_errorbar(aes(ymin=chew_pct-se, ymax=chew_pct+se), width=.1)+
+	labs(x="Date (Julian)",
+		 y="Chew damage (%)")+
+	theme_classic()+
+	facet_wrap(~site)
+
 ##Abundance data
 insect <- read.csv(file="beanDIP_insects.csv",head=TRUE)
 insect$calc.ab<-as.numeric(insect$calc.ab)
@@ -262,11 +334,10 @@ library(Rmisc)
 sum.ab<-summarySE(insect, measurevar="calc.ab", groupvars=c("site", "round", "jdate"))
 sum.ab %>%
 	ggplot(aes(x=jdate, 
-			   y=calc.ab,
-			   color=site))+
+			   y=calc.ab))+
 	geom_errorbar(aes(ymin=calc.ab-se, ymax=calc.ab+se), width=.1)+
 	geom_line()+
-	labs(x="Sampling round",
+	labs(x="Date (Julian)",
 		 y="Average insect abundance")+
 	theme_classic()+
 	facet_wrap(~site)
@@ -278,7 +349,7 @@ sum.rich %>%
 	geom_point()+
 	geom_line()+
 	geom_errorbar(aes(ymin=insect.rich-se, ymax=insect.rich+se), width=.1)+
-	labs(x="Sampling round",
+	labs(x="Date (Julian)",
 		 y="Average insect richness")+
 	theme_classic()+
 	facet_wrap(~site)
@@ -297,30 +368,112 @@ herb.prop.sum %>%
 	geom_point()+
 	geom_line()+
 	geom_errorbar(aes(ymin=prop.herb-se, ymax=prop.herb+se), width=.1)+
-	labs(x="Sampling round",
-		 y="Average insect richness")+
+	labs(x="Date (Julian)",
+		 y="Proportion herbivores")+
 	theme_classic()+
 	facet_wrap(~site)
 
 
-##Temperature data
-temp.wye <- read.csv(file="beanDIP_wye_temp.csv",head=TRUE)
+##Temperature/RH hourly data----
+#Wye
+trh.wye <- read.csv(file="Wye_temp_rh.csv",head=TRUE)
+trh.wye$jdate<-NA
+trh.wye$jdate<-yday(trh.wye$date)
 
-temp.wye<- temp.wye %>% filter(jdate > 170)
-temp.wye<- temp.wye %>% filter(jdate < 270)
+trh.wye<- trh.wye %>% filter(jdate > 170)
+trh.wye<- trh.wye %>% filter(jdate < 270)
+
+trh.wye$jdate<-as.numeric(trh.wye$jdate)
+trh.wye$Temp.F<-as.numeric(trh.wye$Temp.F)
+
+trh.wye.temp<-summarySE(trh.wye, measurevar="Temp.F", groupvars=c("jdate"))
+trh.wye.rh<-summarySE(trh.wye, measurevar="Rh.pct", groupvars=c("jdate"))
+trh.wye.temp %>%
+	ggplot(aes(x=jdate, 
+			   y=Temp.F))+
+	geom_errorbar(aes(ymin=Temp.F-se, ymax=Temp.F+se), width=.1, color="red")+
+	geom_line()+
+	labs(x="Date (Julian)",
+		 y="Average Temp (F)",
+		 title="Wye")+
+	theme_classic()
+
+trh.wye.rh %>%
+	ggplot(aes(x=jdate, 
+			   y=Rh.pct))+
+	geom_errorbar(aes(ymin=Rh.pct-se, ymax=Rh.pct+se), width=.1, color="red")+
+	geom_line()+
+	labs(x="Date (Julian)",
+		 y="Relative humidity (%)",
+		 title="Wye")+
+	theme_classic()
+
+#Cville
+trh.cv <- read.csv(file="Cv_temp_rh.csv",head=TRUE)
+trh.cv$date<-as.Date(trh.cv$date)
+trh.cv$jdate<-NA
+trh.cv$jdate<-yday(trh.cv$date)
+
+trh.cv<- trh.cv %>% filter(jdate > 170)
+trh.cv<- trh.cv %>% filter(jdate < 270)
+
+trh.cv$jdate<-as.numeric(trh.cv$jdate)
+trh.cv$Temp.F<-as.numeric(trh.cv$Temp.F)
+
+trh.cv.temp<-summarySE(trh.cv, measurevar="Temp.F", groupvars=c("jdate"))
+trh.cv.rh<-summarySE(trh.cv, measurevar="RH.pct", groupvars=c("jdate"))
+trh.cv.temp %>%
+	ggplot(aes(x=jdate, 
+			   y=Temp.F))+
+	geom_errorbar(aes(ymin=Temp.F-se, ymax=Temp.F+se), width=.1, color="red")+
+	geom_line()+
+	labs(x="Date (Julian)",
+		 y="Average Temp (F)",
+		 title="Clarksville")+
+	theme_classic()
+
+trh.cv.rh %>%
+	ggplot(aes(x=jdate, 
+			   y=RH.pct))+
+	geom_errorbar(aes(ymin=RH.pct-se, ymax=RH.pct+se), width=.1, color="red")+
+	geom_line()+
+	labs(x="Date (Julian)",
+		 y="Relative humidity (%)",
+		 title="Clarksville")+
+	theme_classic()
+
+
+##Temp/precip daily data----
+#wye
+tp.wye <- read.csv(file="beanDIP_wye_temp_precip.csv",head=TRUE)
+
+tp.wye<- tp.wye %>% filter(jdate > 170)
+tp.wye<- tp.wye %>% filter(jdate < 270)
 
 ##Gathering data — compounds from col to rows
-temp.wye1<-temp.wye %>% gather(temp, C, max.temp.c:min.temp.c)
+tp.wye1<-tp.wye %>% gather(temp, C, max.temp.c:min.temp.c)
 
-temp.wye1 %>%
+#temp graph
+tp.wye1 %>%
 	ggplot(aes(x=jdate, 
 			   y=C,
 			   color=temp))+
 	geom_point()+
 	geom_smooth()+
 	labs(x="Julian Date",
-		 y="Max temperature (C)",
+		 y="Temperature (C)",
 		 title="Wye")+
 	theme_classic()+
 	scale_x_continuous(limits = c(170, 270))
 
+#precip graph
+tp.wye1 %>%
+	ggplot(aes(x=jdate, 
+			   y=precip))+
+	geom_point()+
+	geom_smooth()+
+	labs(x="Julian Date",
+		 y="Precipitation (in)",
+		 title="Wye")+
+	theme_classic()+
+	scale_x_continuous(limits = c(170, 270))
