@@ -21,6 +21,10 @@ cv1$sp<-as.factor(cv1$sp)
 levels(cv1$sp)
 cv1<-aggregate(activity ~ sp + jdate + site, dat=cv1, FUN=sum)
 cv1$activity[is.na(cv1$activity)] <- 0
+#log transformation
+cv1$log.act<-log(cv1$activity)
+#0 activity species/nights 
+cv1$log.act[which(!is.finite(cv1$log.act))] <- 0
 
 ##GROUPING SPECIES
 {cv2<-cv1
@@ -41,11 +45,10 @@ cv3$log.act<-log(cv3$activity)
 #0 activity species/nights 
 cv3$log.act[which(!is.finite(cv3$log.act))] <- 0
 
-#Cville plot
-plot.cv<-cv3 %>%
+#Cville plot, species groups, sum, raw numbers
+plot.cv.all<-cv3 %>%
 	ggplot(aes(x=jdate, 
-			   y=activity,
-			   color=sp))+
+			   y=activity))+
 	geom_point()+
 	geom_smooth()+
 	labs(x="Date",
@@ -53,9 +56,14 @@ plot.cv<-cv3 %>%
 		 color="Species",
 		 title = "Clarksville")+
 	theme_classic()
-plot.cv
-plot.cv+facet_wrap(~sp)
+plot.cv.all
+#split by species
+plot.cv.all+aes(color=sp)
+#faceted by species
+plot.cv.all+aes(color=sp)+facet_wrap(~sp)
 
+
+#Cville plot, species groups, log-transformed 
 plot.cv.log<-cv3 %>%
 	ggplot(aes(x=jdate, 
 			   y=log.act))+
@@ -67,11 +75,16 @@ plot.cv.log<-cv3 %>%
 		 title = "Clarksville")+
 	theme_classic()
 plot.cv.log
+#split by species
+plot.cv.log+aes(color=sp)
 
-cv1 %>%
+#faceted by species
+plot.cv.log+aes(color=sp)+facet_wrap(~sp)
+
+#Cville, no species grouping, raw
+plot.cv.1<-cv1 %>%
 	ggplot(aes(x=jdate, 
-			   y=activity,
-			   color=sp))+
+			   y=activity))+
 	geom_point()+
 	geom_smooth()+
 	labs(x="Date",
@@ -79,16 +92,28 @@ cv1 %>%
 		 color="Species",
 		 title = "Clarksville")+
 	theme_classic()
+plot.cv.1
+#split by species
+plot.cv.1+aes(color=sp)
+#faceted by species
+plot.cv.1+aes(color=sp)+facet_wrap(~sp)
 
-cv3 %>%
+#Cville, no species grouping, log-transformed
+plot.cv.1.log<-cv1 %>%
 	ggplot(aes(x=jdate, 
-			   y=activity))+
+			   y=log.act))+
 	geom_point()+
 	geom_smooth()+
 	labs(x="Date",
 		 y="Relative activity",
+		 color="Species",
 		 title = "Clarksville")+
 	theme_classic()
+plot.cv.1.log
+#split by species
+plot.cv.1.log+aes(color=sp)
+#faceted by species
+plot.cv.1.log+aes(color=sp)+facet_wrap(~sp)
 
 #Wye----
 wy <- read.csv(file="Wye_summary.csv",head=TRUE)
@@ -99,6 +124,10 @@ wy1<-wy %>% gather(sp, activity, EPTFUS:NOID)
 wy1$sp<-as.factor(wy1$sp)
 levels(wy1$sp)
 wy1<-aggregate(activity ~ sp + jdate, dat=wy1, FUN=sum)
+#log transformation
+wy1$log.act<-log(wy1$activity)
+#0 activity species/nights 
+wy1$log.act[which(!is.finite(wy1$log.act))] <- 0
 
 ##GROUPING SPECIES
 {wy2<-wy1
@@ -118,21 +147,25 @@ wy3<-aggregate(activity ~ sp + jdate, dat=wy2, FUN=sum)
 wy3$log.act<-log(wy3$activity)
 wy3$log.act[which(!is.finite(wy3$log.act))] <- 0
 
-#wyille plot
-plot.wy<-wy3 %>%
+#Wye plot, species groups, sum, raw numbers
+plot.wy.all<-wy3 %>%
 	ggplot(aes(x=jdate, 
-			   y=activity,
-			   color=sp))+
+			   y=activity))+
 	geom_point()+
 	geom_smooth()+
 	labs(x="Date",
-		 y="Relative activity (no. nightly detections)",
+		 y="Relative activity",
 		 color="Species",
 		 title = "Wye")+
 	theme_classic()
-plot.wy
-plot.wy+facet_wrap(~sp)
+plot.wy.all
+#split by species
+plot.wy.all+aes(color=sp)
+#faceted by species
+plot.wy.all+aes(color=sp)+facet_wrap(~sp)
 
+
+#Wye plot, species groups, log-transformed 
 plot.wy.log<-wy3 %>%
 	ggplot(aes(x=jdate, 
 			   y=log.act))+
@@ -144,11 +177,16 @@ plot.wy.log<-wy3 %>%
 		 title = "Wye")+
 	theme_classic()
 plot.wy.log
+#split by species
+plot.wy.log+aes(color=sp)
 
-wy1 %>%
+#faceted by species
+plot.cv.log+aes(color=sp)+facet_wrap(~sp)
+
+#Wye, no species grouping, raw
+plot.wy.1<-wy1 %>%
 	ggplot(aes(x=jdate, 
-			   y=activity,
-			   color=sp))+
+			   y=activity))+
 	geom_point()+
 	geom_smooth()+
 	labs(x="Date",
@@ -156,16 +194,28 @@ wy1 %>%
 		 color="Species",
 		 title = "Wye")+
 	theme_classic()
+plot.wy.1
+#split by species
+plot.wy.1+aes(color=sp)
+#faceted by species
+plot.wy.1+aes(color=sp)+facet_wrap(~sp)
 
-wy3 %>%
+#Wye, no species grouping, log-transformed
+plot.wy.1.log<-wy1 %>%
 	ggplot(aes(x=jdate, 
-			   y=activity))+
+			   y=log.act))+
 	geom_point()+
 	geom_smooth()+
 	labs(x="Date",
-		 y="Relative activity (no. nightly detections)",
+		 y="Relative activity",
+		 color="Species",
 		 title = "Wye")+
 	theme_classic()
+plot.wy.1.log
+#split by species
+plot.wy.1.log+aes(color=sp)
+#faceted by species
+plot.wy.1.log+aes(color=sp)+facet_wrap(~sp)
 
 ##Chew data
 chew <- read.csv(file="beanDIP_chew.csv",head=TRUE)
