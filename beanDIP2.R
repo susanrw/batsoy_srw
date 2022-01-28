@@ -115,6 +115,10 @@ plot.cv.1.log+aes(color=sp)
 #faceted by species
 plot.cv.1.log+aes(color=sp)+facet_wrap(~sp)
 
+#filtering for insect/plant sampling dates at Cville
+#jdates=189,209,229,271
+
+
 #Wye----
 wy <- read.csv(file="Wye_summary.csv",head=TRUE)
 wy[, 3:11][is.na(wy[, 3:11])] <- 0
@@ -246,19 +250,58 @@ chew1 %>%
 	facet_wrap(~site)
 
 ##Abundance data
-abun <- read.csv(file="beanDIP_ab_B.csv",head=TRUE)
-abun$chew_pct<-as.numeric(chew$chew_pct)
-abun1<-aggregate(insect.ab ~ site + round, dat=abun, FUN=mean)
+insect <- read.csv(file="beanDIP_insects.csv",head=TRUE)
+insect$calc.ab<-as.numeric(insect$calc.ab)
+insect<-na.omit(insect)#240 to 222 obs
+insect$calc.ab<-as.numeric(insect$calc.ab)
+insect$insect.rich<-as.numeric(insect$insect.rich)
+library(plotrix)
+insect1<-aggregate(insect.rich ~ site + round +jdate, dat=insect, FUN = mean)
 
-abun1 %>%
-	ggplot(aes(x=round, 
-			   y=insect.ab))+
-	geom_point()+
-	geom_smooth()+
+library(Rmisc)
+sum.ab<-summarySE(insect, measurevar="calc.ab", groupvars=c("site", "round", "jdate"))
+sum.ab %>%
+	ggplot(aes(x=jdate, 
+			   y=calc.ab,
+			   color=site))+
+	geom_errorbar(aes(ymin=calc.ab-se, ymax=calc.ab+se), width=.1)+
+	geom_line()+
 	labs(x="Sampling round",
 		 y="Average insect abundance")+
 	theme_classic()+
 	facet_wrap(~site)
+
+sum.rich<-summarySE(insect, measurevar="insect.rich", groupvars=c("site", "round", "jdate"))
+sum.rich %>%
+	ggplot(aes(x=jdate, 
+			   y=insect.rich))+
+	geom_point()+
+	geom_line()+
+	geom_errorbar(aes(ymin=insect.rich-se, ymax=insect.rich+se), width=.1)+
+	labs(x="Sampling round",
+		 y="Average insect richness")+
+	theme_classic()+
+	facet_wrap(~site)
+
+insect$no.chew<-as.numeric(insect$no.chew)
+insect$no.p_s<-as.numeric(insect$no.p_s)
+insect$no.n_e<-as.numeric(insect$no.n_e)
+insect$no.other<-as.numeric(insect$no.other)
+insect$prop.herb<-(insect$no.chew+insect$no.p_s)/(insect$calc.ab)
+insect<-na.omit(insect)#222 to 220
+
+herb.prop.sum<-summarySE(insect, measurevar="prop.herb", groupvars=c("site", "round", "jdate"))
+herb.prop.sum %>%
+	ggplot(aes(x=jdate, 
+			   y=prop.herb))+
+	geom_point()+
+	geom_line()+
+	geom_errorbar(aes(ymin=prop.herb-se, ymax=prop.herb+se), width=.1)+
+	labs(x="Sampling round",
+		 y="Average insect richness")+
+	theme_classic()+
+	facet_wrap(~site)
+
 
 ##Temperature data
 temp.wye <- read.csv(file="beanDIP_wye_temp.csv",head=TRUE)
