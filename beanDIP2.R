@@ -443,7 +443,7 @@ trh.cv.rh %>%
 	theme_classic()
 
 
-##Temp/precip daily data----
+ ##Temp/precip daily data----
 #wye
 tp.wye <- read.csv(file="beanDIP_wye_temp_precip.csv",head=TRUE)
 
@@ -475,5 +475,63 @@ tp.wye1 %>%
 	labs(x="Julian Date",
 		 y="Precipitation (in)",
 		 title="Wye")+
+	theme_classic()+
+	scale_x_continuous(limits = c(170, 270))
+
+#Clarksville
+tp.cv <- read.csv(file="Cv_temp_precip.csv",head=TRUE)
+
+tp.cv<- tp.cv %>% filter(jdate > 170)
+tp.cv<- tp.cv %>% filter(jdate < 270)
+
+##Gathering data — compounds from col to rows
+tp.cv1<-tp.cv %>% gather(temp, C, c(low,high))
+
+#temp graph
+tp.cv1 %>%
+	ggplot(aes(x=jdate, 
+			   y=C,
+			   color=temp))+
+	geom_point()+
+	geom_smooth()+
+	labs(x="Julian Date",
+		 y="Temperature (C)",
+		 title="Clarksville")+
+	theme_classic()+
+	scale_x_continuous(limits = c(170, 270))
+
+#precip graph
+tp.cv1 %>%
+	ggplot(aes(x=jdate, 
+			   y=rain))+
+	geom_point()+
+	geom_smooth()+
+	labs(x="Julian Date",
+		 y="Precipitation (in)",
+		 title="Clarksville")+
+	theme_classic()+
+	scale_x_continuous(limits = c(170, 270))
+
+#wind graph, avg
+tp.cv %>%
+	ggplot(aes(x=jdate, 
+			   y=avg.wind.speed))+
+	geom_point()+
+	geom_smooth()+
+	labs(x="Julian Date",
+		 y="Average wind speed (mph)",
+		 title="Clarksville")+
+	theme_classic()+
+	scale_x_continuous(limits = c(170, 270))
+
+#wind graph, high
+tp.cv %>%
+	ggplot(aes(x=jdate, 
+			   y=high.1))+
+	geom_point()+
+	geom_smooth()+
+	labs(x="Julian Date",
+		 y="Wind speed high (mph)",
+		 title="Clarksville")+
 	theme_classic()+
 	scale_x_continuous(limits = c(170, 270))
