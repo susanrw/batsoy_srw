@@ -8,6 +8,7 @@ library(multcomp)
 library(dplyr)
 library(plyr)
 library(tidyr)
+library(lubridate)
 
 # Data import and cleaning ------------------------------------------------
 
@@ -386,6 +387,32 @@ trh.wye<- trh.wye %>% filter(jdate < 270)
 trh.wye$jdate<-as.numeric(trh.wye$jdate)
 trh.wye$Temp.F<-as.numeric(trh.wye$Temp.F)
 
+#hourly temp graph
+trh.wye %>%
+	ggplot(aes(x=time,
+			   y=Temp.F))+
+	geom_smooth()+
+	geom_point(aes(color=jdate))+
+	theme_classic()+
+	labs(x="Time",
+		 y="Temperature (F)",
+		 title = "Wye",
+		 color="Date (Julian)")+
+	theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+#hourly rh graph
+trh.wye %>%
+	ggplot(aes(x=time,
+			   y=Rh.pct))+
+	geom_smooth()+
+	geom_point(aes(color=jdate))+
+	theme_classic()+
+	labs(x="Time",
+		 y="Relative humidity (%)",
+		 title = "Wye",
+		 color="Date (Julian)")+
+	theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
 trh.wye.temp<-summarySE(trh.wye, measurevar="Temp.F", groupvars=c("jdate"))
 trh.wye.rh<-summarySE(trh.wye, measurevar="Rh.pct", groupvars=c("jdate"))
 trh.wye.temp %>%
@@ -410,7 +437,7 @@ trh.wye.rh %>%
 
 #Cville
 trh.cv <- read.csv(file="Cv_temp_rh.csv",head=TRUE)
-trh.cv$date<-as.Date(trh.cv$date)
+trh.cv$date<-as.Date(trh.cv$date,)
 trh.cv$jdate<-NA
 trh.cv$jdate<-yday(trh.cv$date)
 
@@ -420,6 +447,33 @@ trh.cv<- trh.cv %>% filter(jdate < 270)
 trh.cv$jdate<-as.numeric(trh.cv$jdate)
 trh.cv$Temp.F<-as.numeric(trh.cv$Temp.F)
 
+#hourly temp graph
+trh.cv %>%
+	ggplot(aes(x=time,
+			   y=Temp.F))+
+	geom_smooth()+
+	geom_point(aes(color=jdate))+
+	theme_classic()+
+	labs(x="Time",
+		 y="Temperature (F)",
+		 title = "Clarksville",
+		 color="Date (Julian)")+
+	theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+#hourly rh graph
+trh.cv %>%
+	ggplot(aes(x=time,
+			   y=RH.pct))+
+	geom_smooth()+
+	geom_point(aes(color=jdate))+
+	theme_classic()+
+	labs(x="Time",
+		 y="Relative humidity (%)",
+		 title = "Clarksville",
+		 color="Date (Julian)")+
+	theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+#summarizing data
 trh.cv.temp<-summarySE(trh.cv, measurevar="Temp.F", groupvars=c("jdate"))
 trh.cv.rh<-summarySE(trh.cv, measurevar="RH.pct", groupvars=c("jdate"))
 trh.cv.temp %>%
