@@ -503,11 +503,13 @@ tp.wye <- read.csv(file="beanDIP_wye_temp_precip.csv",head=TRUE)
 
 tp.wye<- tp.wye %>% filter(jdate > 170)
 tp.wye<- tp.wye %>% filter(jdate < 270)
+tp.wye$mean.temp<-NA
+tp.wye$mean.temp<-rowMeans(tp.wye[,c('min.temp.c', 'max.temp.c')], na.rm=TRUE)
 
 ##Gathering data — compounds from col to rows
 tp.wye1<-tp.wye %>% gather(temp, C, max.temp.c:min.temp.c)
 
-#temp graph
+#temp graph (high low)
 tp.wye1 %>%
 	ggplot(aes(x=jdate, 
 			   y=C,
@@ -517,6 +519,30 @@ tp.wye1 %>%
 	labs(x="Julian Date",
 		 y="Temperature (C)",
 		 title="Wye")+
+	theme_classic()+
+	scale_x_continuous(limits = c(170, 270))
+
+#temp graph (mean)
+tp.wye1 %>%
+	ggplot(aes(x=jdate, 
+			   y=mean.temp))+
+	geom_point()+
+	geom_smooth()+
+	labs(x="Julian Date",
+		 y="Average Temperature (C)",
+		 title="Wye")+
+	theme_classic()+
+	scale_x_continuous(limits = c(170, 270))
+
+#temp graph
+tp.wy1 %>%
+	ggplot(aes(x=jdate, 
+			   y=mean.temp.C))+
+	geom_point()+
+	geom_smooth()+
+	labs(x="Julian Date",
+		 y="Mean Temperature (C)",
+		 title="Clarksville")+
 	theme_classic()+
 	scale_x_continuous(limits = c(170, 270))
 
@@ -539,9 +565,9 @@ tp.cv<- tp.cv %>% filter(jdate > 170)
 tp.cv<- tp.cv %>% filter(jdate < 270)
 
 ##Gathering data — compounds from col to rows
-tp.cv1<-tp.cv %>% gather(temp, C, c(low,high))
+tp.cv1<-tp.cv %>% gather(temp, C, c(low.C,high.C))
 
-#temp graph
+#temp graph (high low)
 tp.cv1 %>%
 	ggplot(aes(x=jdate, 
 			   y=C,
@@ -550,6 +576,18 @@ tp.cv1 %>%
 	geom_smooth()+
 	labs(x="Julian Date",
 		 y="Temperature (C)",
+		 title="Clarksville")+
+	theme_classic()+
+	scale_x_continuous(limits = c(170, 270))
+
+#temp graph
+tp.cv1 %>%
+	ggplot(aes(x=jdate, 
+			   y=mean.temp.C))+
+	geom_point()+
+	geom_smooth()+
+	labs(x="Julian Date",
+		 y="Mean Temperature (C)",
 		 title="Clarksville")+
 	theme_classic()+
 	scale_x_continuous(limits = c(170, 270))
