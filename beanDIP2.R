@@ -37,7 +37,7 @@ cv2$sp[cv2$sp=="LASSEM"]="LABO/LASE"
 cv2$sp[cv2$sp=="LASCIN"]="Other bat spp."
 cv2$sp[cv2$sp=="MYOLUC"]="Other bat spp."
 cv2$sp[cv2$sp=="PERSUB"]="Other bat spp."
-cv2$sp[cv2$sp=="NOID"]="Other bat spp."
+cv2$sp[cv2$sp=="NOID"]="No ID"
 cv2$sp[cv2$sp=="NYCHUM"]="Other bat spp."
 }
 
@@ -627,3 +627,17 @@ tp.cv %>%
 		 title="Clarksville")+
 	theme_classic()+
 	scale_x_continuous(limits = c(170, 270))
+
+##correlation matrix----
+library(corrplot)
+
+#filtering for insect/plant sampling dates at Wye over 3 days
+#jdates=187,208,228,265
+wy.bat.insect<-filter(wy1, jdate == "187" | jdate == "208"| jdate == "228"| jdate == "265")
+
+cor1<-all.dat100[,-c(1,2,4:9,11:13)]#cat vars
+
+L1 <- cor(samp1)#correlation matrix
+corrplot(L1, method = "circle")
+corrplot(L1, method = "number")
+#low colinearity
