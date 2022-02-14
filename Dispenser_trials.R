@@ -29,11 +29,11 @@ indole2$sp[indole2$sp=="EPTFUS"]="EPFU/LANO"
 indole2$sp[indole2$sp=="LASNOC"]="EPFU/LANO"
 indole2$sp[indole2$sp=="LASBOR"]="LABO/LASE"
 indole2$sp[indole2$sp=="LASSEM"]="LABO/LASE"
-indole2$sp[indole2$sp=="LASCIN"]="Other bat spp."
-indole2$sp[indole2$sp=="MYOLUC"]="Other bat spp."
-indole2$sp[indole2$sp=="PERSUB"]="Other bat spp."
-indole2$sp[indole2$sp=="NOID"]="Other bat spp."
-indole2$sp[indole2$sp=="NYCHUM"]="Other bat spp."
+indole2$sp[indole2$sp=="LASCIN"]="Other spp."
+indole2$sp[indole2$sp=="MYOLUC"]="Other spp."
+indole2$sp[indole2$sp=="PERSUB"]="Other spp."
+indole2$sp[indole2$sp=="NOID"]="No ID"
+indole2$sp[indole2$sp=="NYCHUM"]="Other spp."
 }
 
 indole3<-aggregate(activity ~ treatment + sp + jdate + site, dat=indole2, FUN=sum)
@@ -60,7 +60,7 @@ overdisp_fun(test.i)#overdispersed
 
 mod.i<-glmer.nb(activity~treatment*sp+(1|jdate), dat = indole3)
 Anova(mod.i)
-#treatment chi=1.2276 p=0.2679, sp chi=583.6039 p<0.0001, interaxn chi=0.6611 p=0.7185
+#treatment chi=2.7201 p=0.09909, sp chi=625.2476 p<0.0001, interaxn chi=1.1916 p=0.75502
 
 #contrasts
 i1<-emmeans(mod.i,pairwise~sp, type="response")
@@ -73,13 +73,18 @@ indole.tab <- ddply(indole3, c("sp"), summarise,
 					sd   = sd(activity),
 					se   = sd / sqrt(N))
 indole.tab
+
+#(EPFU/LANO-NoID)/NoID
+(214.517730-72.985816)/72.985816
+#1.94, EPFU/LANO were ~2x more active than Other spp.
+
 #(EPFU/LANO-Other)/other
-(214.517730-101.0638)/101.0638
-#1.12, EPFU/LANO were 114% more active than Other spp.
+(214.517730-28.078014)/28.078014
+#6.64, EPFU/LANO were 6.6x more active than Other spp.
 
 #(EPFU/LANO-LABO)/LABO
 (214.517730-8.943262)/8.943262
-#22.9865, EPFU/LANO were 1467% more active than LABO/LASE
+#22.9865, EPFU/LANO were ~23x more active than LABO/LASE
 
 indole.n <- ddply(indole3, c("site"), summarise,
 					N    = length(activity),
@@ -144,7 +149,7 @@ ggplot(data=indole3, aes(x=sp, y=activity))+
 	theme_classic()+
 	labs(x=" ", y="Relative activity", title="Indole trials")+
 	theme(text = element_text(size=20), legend.position = "none")+
-	stat_summary(geom = 'text', label = c("c","a","b"),
+	stat_summary(geom = 'text', label = c("d","a","c", "b"),
 				 fun = max, vjust = -0.8, size=5.5)+
 	scale_y_continuous(limits = c(0,2000))
 
@@ -157,6 +162,17 @@ indole.plot.log<-ggplot(data=indole3, aes(x=treatment, y=log.act))+
 		 title = "Indole trials")+
 	theme(text = element_text(size=20))
 indole.plot.log
+
+#log-transformed species plot
+ggplot(data=indole3, aes(x=sp, y=log.act))+ 
+	geom_boxplot(outlier.shape = NA)+
+	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5, aes(color=sp))+
+	theme_classic()+
+	labs(x=" ", y="Relative activity", title="Indole trials")+
+	theme(text = element_text(size=20), legend.position = "none")+
+	stat_summary(geom = 'text', label = c("d","a","c", "d"),
+				 fun = max, vjust = -0.8, size=5.5)+
+	scale_y_continuous(limits = c(0,8))
 
 
 
@@ -180,11 +196,11 @@ farn2$sp[farn2$sp=="EPTFUS"]="EPFU/LANO"
 farn2$sp[farn2$sp=="LASNOC"]="EPFU/LANO"
 farn2$sp[farn2$sp=="LASBOR"]="LABO/LASE"
 farn2$sp[farn2$sp=="LASSEM"]="LABO/LASE"
-farn2$sp[farn2$sp=="LASCIN"]="Other bat spp."
-farn2$sp[farn2$sp=="MYOLUC"]="Other bat spp."
-farn2$sp[farn2$sp=="PERSUB"]="Other bat spp."
-farn2$sp[farn2$sp=="NOID"]="Other bat spp."
-farn2$sp[farn2$sp=="NYCHUM"]="Other bat spp."
+farn2$sp[farn2$sp=="LASCIN"]="Other spp."
+farn2$sp[farn2$sp=="MYOLUC"]="Other spp."
+farn2$sp[farn2$sp=="PERSUB"]="Other spp."
+farn2$sp[farn2$sp=="NOID"]="No ID"
+farn2$sp[farn2$sp=="NYCHUM"]="Other spp."
 }
 
 farn3<-aggregate(activity ~ treatment + sp + jdate + site, dat=farn2, FUN=sum)
@@ -199,12 +215,12 @@ overdisp_fun(test.f)#overdispersed
 
 mod.f<-glmer.nb(activity~treatment*sp+(1|jdate), dat = farn3)
 Anova(mod.f)
-#treatment chi=2.0996 p=0.1473, sp chi=87.0666 p<2e-16, interaxn chi=2.6110  p=0.2710
+#treatment chi=2.7420 p=0.09774, sp chi=67.3332 p<0.001, interaxn chi=3.0187  p=0.38875
 
 #contrasts
 f1<-emmeans(mod.f,pairwise~sp, type="response")
 cld(f1$emmeans,  Letters ='abcde')
-#LABO=A, EPFU=B, Other=C
+#LABO=A, Other=A EPFU=B, NoID=B
 
 
 farn.tab <- ddply(farn3, c("sp"), summarise,
@@ -213,13 +229,13 @@ farn.tab <- ddply(farn3, c("sp"), summarise,
 					sd   = sd(activity),
 					se   = sd / sqrt(N))
 farn.tab
-#(Other-EPFU/LANO)/EPFU/LANO
-(152.81250-122.0750)/122.0750
-#.25
+#(EPFU/LANO-LABO/LASE)/LABO/LASE
+(122.0750-26.4625)/26.4625
+#3.6, EPFU/LANO are 3.6x more active than LABO/LASE
 
-#(Other-LABO)/LABO
-(152.81250-26.4625)/26.4625
-#4.77
+#(EPFU/LANO-OTHER)/OTHER
+(122.0750-40.1500)/40.1500
+#2.04, EPFU/LANO are over 2x more active than Other spp.
 
 farn.n <- ddply(farn3, c("site"), summarise,
 				  N    = length(activity),
@@ -269,7 +285,7 @@ ggplot(data=farn3, aes(x=sp, y=activity))+
 	theme_classic()+
 	labs(x=" ", y="Relative activity", title="Farnesene trials")+
 	theme(text = element_text(size=20), legend.position = "none")+
-	stat_summary(geom = 'text', label = c("b","a","c"),
+	stat_summary(geom = 'text', label = c("b","a","b","a"),
 				 fun = max, vjust = -0.8, size=5.5)+
 	scale_y_continuous(limits = c(0,1400))
 
@@ -282,6 +298,17 @@ farn.plot.log<-ggplot(data=farn3, aes(x=treatment, y=log.act))+
 		 title = "Farnesene")+
 	theme(text = element_text(size=20))
 farn.plot.log
+
+#log-transformed species plot
+ggplot(data=farn3, aes(x=sp, y=log.act))+ 
+	geom_boxplot(outlier.shape = NA)+
+	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5, aes(color=sp))+
+	theme_classic()+
+	labs(x=" ", y="Relative activity", title="Farnesene trials")+
+	theme(text = element_text(size=20), legend.position = "none")+
+	stat_summary(geom = 'text', label = c("b","a","b","a"),
+				 fun = max, vjust = -0.8, size=5.5)+
+	scale_y_continuous(limits = c(0,8))
 
 ##COMBINING INDOLE AND FARNESENE TRIALS----
 indole3$compound<-NA
