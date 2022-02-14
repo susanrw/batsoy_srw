@@ -328,7 +328,7 @@ Anova(q1)
 #contrasts
 q1c<-emmeans(q1,pairwise~sp, type="response")
 cld(q1c$emmeans,  Letters ='abcde')
-#LABO=A, EPFU=B, Other=B
+#LABO=A, Other=B, NoID=C, EPFU/LANO=D
 
 q1.tab <- ddply(dis.all.control, c("sp"), summarise,
 				  N    = length(activity),
@@ -340,9 +340,13 @@ q1.tab
 (192.12844-14.80734)/14.80734
 #11.98
 
-#(Other-LABO)/LABO
-(117.55046-14.80734)/14.80734
-#6.94
+#(EPFU/LANO-Other)/Other
+(192.12844-29.48624)/29.48624
+#5.5
+
+#(EPFU/LANO-NoID)/NoID
+(192.12844-88.06422)/88.06422
+#1.18
 
 #species plot
 ggplot(data=dis.all.control, aes(x=sp, y=activity))+ 
@@ -351,12 +355,23 @@ ggplot(data=dis.all.control, aes(x=sp, y=activity))+
 	theme_classic()+
 	labs(x=" ", y="Relative activity", title="All control trials")+
 	theme(text = element_text(size=20), legend.position = "none")+
-	stat_summary(geom = 'text', label = c("b","a","b"),
+	stat_summary(geom = 'text', label = c("d","a","c","b"),
 				 fun = max, vjust = -0.8, size=5.5)+
 	scale_y_continuous(limits = c(0,2000))
 
+#log-transformed species plot
+ggplot(data=dis.all.control, aes(x=sp, y=log.act))+ 
+	geom_boxplot(outlier.shape = NA)+
+	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5, aes(color=sp))+
+	theme_classic()+
+	labs(x=" ", y="Relative activity", title="Farnesene trials")+
+	theme(text = element_text(size=20), legend.position = "none")+
+	stat_summary(geom = 'text', label = c("d","a","c","b"),
+				 fun = max, vjust = -0.8, size=5.5)+
+	scale_y_continuous(limits = c(0,8))
+
 ###BIG BROWN DATA----
-##INDOLE BIG BROWN ONLY----
+##INDOLE BIG BROWN ONLY---
 brown.ind <- indole2[which(indole2$sp== 'EPFU/LANO'),]
 
 test3.ind<-glmer(activity~treatment+(1|jdate), dat = brown.ind,family=poisson)
@@ -383,7 +398,7 @@ ggplot(data=brown.ind, aes(x=treatment, y=activity))+
 		 title = "EPFU/LANO only, indole trials")+
 	stat_summary(fun.data = "mean_se", size=1.5, shape="diamond")
 
-##farn BIG BROWN ONLY----
+##farn BIG BROWN ONLY---
 brown.farn <- farn2[which(farn2$sp== 'EPFU/LANO'),]
 
 test3.farn<-glmer(activity~treatment+(1|jdate), dat = brown.farn,family=poisson)
