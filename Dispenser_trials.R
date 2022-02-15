@@ -564,6 +564,15 @@ met.wind.sum %>%
 		 y="Wind average (m/s)")+
 	theme_classic()
 
+met4 %>%
+	ggplot(aes(x=jdate, 
+			   y=Wind_speed_avg_m.s))+
+	geom_point()+
+	geom_smooth(method = "gam")+
+	labs(x="Date (Julian)",
+		 y="Wind average (m/s)")+
+	theme_classic()
+
 met.rainac.sum<-summarySE(met4, measurevar="Rain_Accumulation_mm", groupvars=c("jdate"))
 met.rainac.sum %>%
 	ggplot(aes(x=jdate, 
@@ -598,7 +607,7 @@ dis.all.control %>%
 	ggplot(aes(x=jdate, 
 			   y=log.act))+
 	geom_point(aes(color=sp))+
-	geom_smooth()+
+	geom_smooth(method = "gam")+
 	labs(x="Date (Julian)",
 		 y="Bat activity")+
 	theme_classic()
