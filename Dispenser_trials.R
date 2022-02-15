@@ -321,6 +321,10 @@ dis.all <- rbind(farn3, indole3)
 
 #exclude treatment trials
 dis.all.control<-dis.all[dis.all$treatment != "Dispenser", ]  
+dis.all.control <- dis.all.control[order(dis.all.control$jdate),]
+
+dis.all.treat<-dis.all[dis.all$treatment != "Control", ]  
+dis.all.treat <- dis.all.treat[order(dis.all.treat$jdate),]
 
 q1<-glmer.nb(activity~sp+(1|site), data = dis.all.control)
 Anova(q1)
@@ -519,7 +523,60 @@ allEffects(m4)  #this will give you a numerical interpretation, which is again s
 plot(allEffects(m4)) #This will give you a visual representation of your interactions, which is my preferred method. 
 
 ##SERC met data----
-indole <- read.csv(file="Maynard_etal_indole_sum.csv",head=TRUE)
+aug <- read.csv(file="SERC_TOWER_aug2021.csv",head=TRUE)
+sep <- read.csv(file="SERC_TOWER_sep2021.csv",head=TRUE)
+jun <- read.csv(file="SERC_TOWER_june2021.csv",head=TRUE)
+jul <- read.csv(file="SERC_TOWER_july2021.csv",head=TRUE)
+
+met<-rbind(aug,sep,jun,jul)
+
+met$date<-as.Date(met$date,)
+met$jdate<-NA
+library(lubridate)
+met$jdate<-yday(met$date)
+
+#control field trials 238-244, 255-270 (I have data for inbetween for failed indole, will need to work on extracting)
+met1 <- met%>% filter( between(jdate, 238, 244))
+met2 <- met%>% filter( between(jdate, 255, 270))
+met3<-rbind(met1,met2)
+
+met4 <- met%>% filter( between(jdate, 238, 270))
+
+#summarizing data
+library(Rmisc)
+met.gust.sum<-summarySE(met4, measurevar="Wind_speed_max_m.s", groupvars=c("jdate"))
+met.gust.sum %>%
+	ggplot(aes(x=jdate, 
+			   y=Wind_speed_max_m.s))+
+	geom_errorbar(aes(ymin=Wind_speed_max_m.s-se, ymax=Wind_speed_max_m.s+se), width=.1, color="red")+
+	geom_line()+
+	labs(x="Date (Julian)",
+		 y="Wind gust")+
+	theme_classic()
+
+met.rainac.sum<-summarySE(met4, measurevar="Rain_Accumulation_mm", groupvars=c("jdate"))
+met.rainac.sum %>%
+	ggplot(aes(x=jdate, 
+			   y=Rain_Accumulation_mm))+
+	geom_errorbar(aes(ymin=Rain_Accumulation_mm-se, ymax=Rain_Accumulation_mm+se), width=.1, color="red")+
+	geom_line()+
+	labs(x="Date (Julian)",
+		 y="Rain accumulation (mm)")+
+	theme_classic()
+
+met.raindur.sum<-summarySE(met4, measurevar="Rain_Duration_s", groupvars=c("jdate"))
+met.raindur.sum %>%
+	ggplot(aes(x=jdate, 
+			   y=Rain_Duration_s))+
+	geom_errorbar(aes(ymin=Rain_Duration_s-se, ymax=Rain_Duration_s+se), width=.1, color="red")+
+	geom_line()+
+	labs(x="Date (Julian)",
+		 y="Rain duration (sec)")+
+	theme_classic()
+
+
+#24-HOUR GRAPHS
+#need to summarize minute data to hourly data...
 
 ###BIG BROWN DATA----
 ##INDOLE BIG BROWN ONLY---
