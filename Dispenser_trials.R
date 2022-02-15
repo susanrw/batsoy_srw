@@ -542,6 +542,7 @@ met3<-rbind(met1,met2)
 
 met4 <- met%>% filter( between(jdate, 238, 270))
 
+
 #summarizing data
 library(Rmisc)
 met.gust.sum<-summarySE(met4, measurevar="Wind_speed_max_m.s", groupvars=c("jdate"))
@@ -603,6 +604,7 @@ met.dair.sum %>%
 		 y="Change in air pressure (Pascal)")+
 	theme_classic()
 
+
 dis.all.control %>%
 	ggplot(aes(x=jdate, 
 			   y=log.act))+
@@ -622,9 +624,63 @@ bat.sum.field %>%
 		 y="Bat activity")+
 	theme_classic()
 
+#aggregate data so it's hourly and not by minute
+met5<-aggregate(cbind(Wind_speed_max_m.s,Wind_speed_avg_m.s,Rain_Accumulation_mm,
+					  Rain_Duration_s,Wind_speed_max_m.s,delta.air,Air_Pressure_pascal)~jdate+hour, dat=met4, FUN=mean)
+met5$Wind_speed_avg_m.s<-as.numeric(met5$Wind_speed_avg_m.s)
+met5$hour<-as.numeric(met5$hour)
+
+#need to re-calculate change in air pressure
+met5<-met5[order(met5$jdate),]
+met5$change.air<-NA
+met5<-mutate(met5, change.air = Air_Pressure_pascal-lag(Air_Pressure_pascal))
+met5[is.na(met5)] <- 0
 
 #24-HOUR GRAPHS
-#need to summarize minute data to hourly data...
+met5 %>%
+	ggplot(aes(x=hour, 
+			   y=Wind_speed_avg_m.s))+
+	geom_point(aes(color=jdate))+
+	geom_smooth(method = "gam")+
+	labs(x="Time",
+		 y="Wind speed max")+
+	theme_classic()
+
+met5 %>%
+	ggplot(aes(x=hour, 
+			   y=Wind_speed_avg_m.s))+
+	geom_point(aes(color=jdate))+
+	geom_smooth(method = "gam")+
+	labs(x="Time",
+		 y="Wind speed average")+
+	theme_classic()
+
+met5 %>%
+	ggplot(aes(x=hour, 
+			   y=Rain_Accumulation_mm))+
+	geom_point(aes(color=jdate))+
+	geom_smooth(method = "gam")+
+	labs(x="Time",
+		 y="Rain_Accumulation_mm")+
+	theme_classic()
+
+met5 %>%
+	ggplot(aes(x=hour, 
+			   y=Rain_Duration_s))+
+	geom_point(aes(color=jdate))+
+	geom_smooth(method = "gam")+
+	labs(x="Time",
+		 y="Rain_Duration_s")+
+	theme_classic()
+
+met5 %>%
+	ggplot(aes(x=hour, 
+			   y=delta.air))+
+	geom_point(aes(color=jdate))+
+	geom_smooth(method = "gam")+
+	labs(x="Time",
+		 y="Change in air pressure")+
+	theme_classic()
 
 ###BIG BROWN DATA----
 ##INDOLE BIG BROWN ONLY---
