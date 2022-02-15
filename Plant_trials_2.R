@@ -29,11 +29,11 @@ plant2$sp[plant2$sp=="EPTFUS"]="EPFU/LANO"
 plant2$sp[plant2$sp=="LASNOC"]="EPFU/LANO"
 plant2$sp[plant2$sp=="LASBOR"]="LABO/LASE"
 plant2$sp[plant2$sp=="LASSEM"]="LABO/LASE"
-plant2$sp[plant2$sp=="LASCIN"]="Other bat spp."
-plant2$sp[plant2$sp=="MYOLUC"]="Other bat spp."
-plant2$sp[plant2$sp=="PERSUB"]="Other bat spp."
-plant2$sp[plant2$sp=="NOID"]="Other bat spp."
-plant2$sp[plant2$sp=="NYCHUM"]="Other bat spp."
+plant2$sp[plant2$sp=="LASCIN"]="Other spp."
+plant2$sp[plant2$sp=="MYOLUC"]="Other spp."
+plant2$sp[plant2$sp=="PERSUB"]="Other spp."
+plant2$sp[plant2$sp=="NOID"]="No ID"
+plant2$sp[plant2$sp=="NYCHUM"]="Other spp."
 }
 
 plant3<-aggregate(activity ~ treatment + sp + trial, dat=plant2, FUN=sum)
@@ -61,7 +61,7 @@ Anova(mod.p)
 #contrasts
 p1<-emmeans(mod.p,pairwise~sp, type="response")
 cld(p1$emmeans,  Letters ='abcde')
-#LABO/LASE a, EPFU/LANO & Other b
+#LABO/LASE & Other a, EPFU/LANO & NoID b
 
 plant3.tab <- ddply(plant3, c("sp"), summarise,
 					   N    = length(activity),
@@ -198,6 +198,17 @@ plant.plot.log<-ggplot(data=plant3, aes(x=treatment, y=log.act))+
 	scale_x_discrete(limits=c("U", "D"),
 					 labels=c("Undamaged", "Damaged"))
 plant.plot.log
+
+#log-transformed species plot
+ggplot(data=plant3, aes(x=sp, y=log.act))+ 
+	geom_boxplot(outlier.shape = NA)+
+	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5, aes(color=sp))+
+	theme_classic()+
+	labs(x=" ", y="Relative activity", title="Plant trials")+
+	theme(text = element_text(size=20), legend.position = "none")+
+	stat_summary(geom = 'text', label = c("b","a","b","a"),
+				 fun = max, vjust = -0.8, size=5.5)+
+	scale_y_continuous(limits = c(4,8))
 
 #NO NOID GRAPH----
 ggplot(data=plant4, aes(x=treatment, y=activity))+ 

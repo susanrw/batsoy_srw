@@ -368,7 +368,7 @@ ggplot(data=dis.all.control, aes(x=sp, y=log.act))+
 	geom_boxplot(outlier.shape = NA)+
 	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5, aes(color=sp))+
 	theme_classic()+
-	labs(x=" ", y="Relative activity", title="Farnesene trials")+
+	labs(x=" ", y="Relative activity", title="All control trials")+
 	theme(text = element_text(size=20), legend.position = "none")+
 	stat_summary(geom = 'text', label = c("d","a","c","b"),
 				 fun = max, vjust = -0.8, size=5.5)+
