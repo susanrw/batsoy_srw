@@ -539,7 +539,63 @@ met$jdate<-yday(met$date)
 met1 <- met%>% filter( between(jdate, 238, 244))
 met2 <- met%>% filter( between(jdate, 255, 270))
 met3<-rbind(met1,met2)
+#aggregate data so it's daily
+met6<-aggregate(cbind(Wind_speed_max_m.s,Wind_speed_avg_m.s,Rain_Accumulation_mm,
+					  Rain_Duration_s,delta.air,Air_Pressure_pascal)~jdate, dat=met3, FUN=mean)
 
+field.control<-aggregate(activity ~ jdate, dat=dis.all.control, FUN=sum)
+bat2<-cbind(met6,field.control)
+#removing second jdate col
+bat2 <- subset(bat2, select = -c(1))
+
+#figure this out
+library(BBmisc)
+bat2<-normalize(cbind(Wind_speed_max_m.s,Wind_speed_avg_m.s,Rain_Accumulation_mm,
+					  Rain_Duration_s,delta.air,Air_Pressure_pascal), method = "standardize", 
+				range = c(0, 1))
+
+#analysis?
+mod.a<-glmer.nb(activity~Wind_speed_max_m.s+Wind_speed_avg_m.s+Rain_Accumulation_mm+
+				Rain_Duration_s+delta.air+(1|jdate), dat = bat2)
+Anova(mod.a)
+
+#graphs
+bat2 %>%
+	ggplot(aes(x=delta.air, 
+			   y=activity))+
+	geom_point(aes(color=jdate))+
+	geom_smooth(method = "gam")+
+	theme_classic()
+
+bat2 %>%
+	ggplot(aes(x=Wind_speed_avg_m.s, 
+			   y=activity))+
+	geom_point(aes(color=jdate))+
+	geom_smooth(method = "gam")+
+	theme_classic()
+
+bat2 %>%
+	ggplot(aes(x=Rain_Accumulation_mm, 
+			   y=activity))+
+	geom_point(aes(color=jdate))+
+	geom_smooth(method = "gam")+
+	theme_classic()
+
+bat2 %>%
+	ggplot(aes(x=Rain_Duration_s, 
+			   y=activity))+
+	geom_point(aes(color=jdate))+
+	geom_smooth(method = "gam")+
+	theme_classic()
+
+bat2 %>%
+	ggplot(aes(x=Wind_speed_max_m.s, 
+			   y=activity))+
+	geom_point(aes(color=jdate))+
+	geom_smooth(method = "gam")+
+	theme_classic()
+
+###start here---
 met4 <- met%>% filter( between(jdate, 238, 270))
 
 
