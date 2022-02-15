@@ -551,7 +551,17 @@ met.gust.sum %>%
 	geom_errorbar(aes(ymin=Wind_speed_max_m.s-se, ymax=Wind_speed_max_m.s+se), width=.1, color="red")+
 	geom_line()+
 	labs(x="Date (Julian)",
-		 y="Wind gust")+
+		 y="Wind gust (m/s)")+
+	theme_classic()
+
+met.wind.sum<-summarySE(met4, measurevar="Wind_speed_avg_m.s", groupvars=c("jdate"))
+met.wind.sum %>%
+	ggplot(aes(x=jdate, 
+			   y=Wind_speed_avg_m.s))+
+	geom_errorbar(aes(ymin=Wind_speed_avg_m.s-se, ymax=Wind_speed_avg_m.s+se), width=.1, color="red")+
+	geom_line()+
+	labs(x="Date (Julian)",
+		 y="Wind average (m/s)")+
 	theme_classic()
 
 met.rainac.sum<-summarySE(met4, measurevar="Rain_Accumulation_mm", groupvars=c("jdate"))
@@ -572,6 +582,35 @@ met.raindur.sum %>%
 	geom_line()+
 	labs(x="Date (Julian)",
 		 y="Rain duration (sec)")+
+	theme_classic()
+
+met.dair.sum<-summarySE(met4, measurevar="delta.air", groupvars=c("jdate"))
+met.dair.sum %>%
+	ggplot(aes(x=jdate, 
+			   y=delta.air))+
+	geom_errorbar(aes(ymin=delta.air-se, ymax=delta.air+se), width=.1, color="red")+
+	geom_line()+
+	labs(x="Date (Julian)",
+		 y="Change in air pressure (Pascal)")+
+	theme_classic()
+
+dis.all.control %>%
+	ggplot(aes(x=jdate, 
+			   y=log.act))+
+	geom_point(aes(color=sp))+
+	geom_smooth()+
+	labs(x="Date (Julian)",
+		 y="Bat activity")+
+	theme_classic()
+
+bat.sum.field<-summarySE(dis.all.control, measurevar="activity", groupvars=c("jdate"))
+bat.sum.field %>%
+	ggplot(aes(x=jdate, 
+			   y=activity))+
+	geom_errorbar(aes(ymin=activity-se, ymax=activity+se), width=.1, color="red")+
+	geom_line()+
+	labs(x="Date (Julian)",
+		 y="Bat activity")+
 	theme_classic()
 
 
