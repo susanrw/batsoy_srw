@@ -1,3 +1,123 @@
+# Hourly bat data import and cleaning ------------------------------------------------
+
+
+#read in all data
+{ind1 <- read.csv(file="indole1_id_1708_c.csv",head=TRUE)
+ind2 <- read.csv(file="indole1_id_2198_c.csv",head=TRUE)
+ind3 <- read.csv(file="indole1_id_2207_c.csv",head=TRUE)
+ind4 <- read.csv(file="indole1_id_4655_c.csv",head=TRUE)
+ind5 <- read.csv(file="indole1_id_4608_c.csv",head=TRUE)
+ind6 <- read.csv(file="indole2_id_c_0505.csv",head=TRUE)
+ind7 <- read.csv(file="indole3_id_0505_c.csv",head=TRUE)
+ind8 <- read.csv(file="indole2_id_c_1676.csv",head=TRUE)
+ind9 <- read.csv(file="indole3_id_1676_c.csv",head=TRUE)
+ind10 <- read.csv(file="indole2_id_c_4604.csv",head=TRUE)
+ind11 <- read.csv(file="indole3_id_4604_c.csv",head=TRUE)
+ind12 <- read.csv(file="indole2_id_c_4614.csv",head=TRUE)
+ind13 <- read.csv(file="indole3_id_4614_c.csv",head=TRUE)
+ind14 <- read.csv(file="indole2_id_c_4672.csv",head=TRUE)
+ind15 <- read.csv(file="indole3_id_4672_c.csv",head=TRUE)
+far1 <- read.csv(file="farn1_id_0505_c.csv",head=TRUE)
+far2 <- read.csv(file="farn1_id_1676_c.csv",head=TRUE)
+far3 <- read.csv(file="farn1_id_2207_c.csv",head=TRUE)
+far4 <- read.csv(file="farn1_id_4604_c.csv",head=TRUE)
+far5 <- read.csv(file="farn1_id_4655_c.csv",head=TRUE)
+far6 <- read.csv(file="farn2_id_1708_c.csv",head=TRUE)
+far7 <- read.csv(file="farn2_id_2198_c.csv",head=TRUE)
+far8 <- read.csv(file="farn2_id_4608_c.csv",head=TRUE)
+far9 <- read.csv(file="farn2_id_4614_c.csv",head=TRUE)
+far10 <- read.csv(file="farn2_id_4672_c.csv",head=TRUE)
+}
+
+#creating plot columns
+{ind1$site<-NA
+ind2$site<-NA
+ind3$site<-NA
+ind4$site<-NA
+ind5$site<-NA
+ind6$site<-NA
+ind7$site<-NA
+ind8$site<-NA
+ind9$site<-NA
+ind10$site<-NA
+ind11$site<-NA
+ind12$site<-NA
+ind13$site<-NA
+ind14$site<-NA
+ind15$site<-NA
+far1$site<-NA
+far2$site<-NA
+far3$site<-NA
+far4$site<-NA
+far5$site<-NA
+far6$site<-NA
+far7$site<-NA
+far8$site<-NA
+far9$site<-NA
+far10$site<-NA
+}
+
+#populating plot columns
+{ind1$site<-"1708"
+	ind2$site<-'2198'
+	ind3$site<-'2207'
+	ind4$site<-'4655'
+	ind5$site<-'4608'
+	ind6$site<-'0505'
+	ind7$site<-'1676'
+	ind8$site<-'4604'
+	ind9$site<-'4614'
+	ind10$site<-'4672'
+	ind11$site<-'0505'
+	ind12$site<-'1676'
+	ind13$site<-'4604'
+	ind14$site<-'4614'
+	ind15$site<-'4672'
+	far1$site<-'0505'
+	far2$site<-'1676'
+	far3$site<-'2207'
+	far4$site<-'4604'
+	far5$site<-'4655'
+	far6$site<-'1708'
+	far7$site<-'2198'
+	far8$site<-'4608'
+	far9$site<-'4614'
+	far10$site<-'4672'
+}
+
+#combine datasets
+bat.hour <- rbind(ind1,ind2,ind3,ind4,ind5,ind6,ind7,ind8,ind9,ind10,
+				  ind11,ind12,ind13,ind14,ind15,far1,far2,far3,far4,far5,
+				  far6,far7,far8,far9,far10)
+
+#remove noise files
+bat.hour<-bat.hour[bat.hour$AUTO.ID. != "Noise", ]  
+
+#select columns
+bat.hour<-select(bat.hour, TIME, HOUR, DATE.12, AUTO.ID., FILES, site)
+
+#bat.hour$DATE.12 <- format(as.Date(bat.hour$DATE.12, format = "%m/%d/%y"), "%m-%d-%y")
+
+#insert jdate
+bat.hour$jdate<-NA
+library(lubridate)
+bat.hour$jdate<-yday(bat.hour$DATE.12)
+
+##GROUPING SPECIES----
+{bat.hour2<-bat.hour
+bat.hour2$sp=as.character(bat.hour2$sp)
+bat.hour2$sp[bat.hour2$sp=="EPTFUS"]="EPFU/LANO"
+bat.hour2$sp[bat.hour2$sp=="LASNOC"]="EPFU/LANO"
+bat.hour2$sp[bat.hour2$sp=="LASBOR"]="LABO/LASE"
+bat.hour2$sp[bat.hour2$sp=="LASSEM"]="LABO/LASE"
+bat.hour2$sp[bat.hour2$sp=="LASCIN"]="Other spp."
+bat.hour2$sp[bat.hour2$sp=="MYOLUC"]="Other spp."
+bat.hour2$sp[bat.hour2$sp=="PERSUB"]="Other spp."
+bat.hour2$sp[bat.hour2$sp=="NOID"]="No ID"
+bat.hour2$sp[bat.hour2$sp=="NYCHUM"]="Other spp."
+}
+
+
 
 ##SERC met data----
 aug <- read.csv(file="SERC_TOWER_aug2021.csv",head=TRUE)
