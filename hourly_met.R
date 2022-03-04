@@ -103,6 +103,9 @@ bat.hour$jdate<-NA
 library(lubridate)
 bat.hour$jdate<-yday(bat.hour$DATE.12)
 
+#renaming species column
+colnames(bat.hour)[4] <- "sp"
+
 ##GROUPING SPECIES----
 {bat.hour2<-bat.hour
 bat.hour2$sp=as.character(bat.hour2$sp)
@@ -115,9 +118,14 @@ bat.hour2$sp[bat.hour2$sp=="MYOLUC"]="Other spp."
 bat.hour2$sp[bat.hour2$sp=="PERSUB"]="Other spp."
 bat.hour2$sp[bat.hour2$sp=="NOID"]="No ID"
 bat.hour2$sp[bat.hour2$sp=="NYCHUM"]="Other spp."
+bat.hour2$sp[bat.hour2$sp=="MYOSEP"]="Other spp."
+bat.hour2$sp[bat.hour2$sp=="MYOSOD"]="Other spp."
 }
 
+bat.hour3<-aggregate(FILES ~ jdate + sp + site + HOUR, data=bat.hour2, FUN=sum)
 
+#renaming activity column
+colnames(bat.hour3)[4] <- "activity"
 
 ##SERC met data----
 aug <- read.csv(file="SERC_TOWER_aug2021.csv",head=TRUE)
