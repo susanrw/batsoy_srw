@@ -127,6 +127,12 @@ bat.hour3<-aggregate(FILES ~ jdate + sp + site + HOUR, data=bat.hour2, FUN=sum)
 #renaming activity column
 colnames(bat.hour3)[4] <- "activity"
 
+ddply(bat.hour3, c("jdate"), summarise,
+	  N    = length(activity),
+	  mean = mean(activity),
+	  sd   = sd(activity),
+	  se   = sd / sqrt(N))
+
 ##SERC met data----
 aug <- read.csv(file="SERC_TOWER_aug2021.csv",head=TRUE)
 sep <- read.csv(file="SERC_TOWER_sep2021.csv",head=TRUE)
@@ -141,7 +147,7 @@ library(lubridate)
 met$jdate<-yday(met$date)
 
 #control field trials 238-244, 255-270 (I have data for inbetween for failed indole, will need to work on extracting)
-met1 <- met%>% filter( between(jdate, 238, 244))
+met1 <- met%>% filter( between(jdate, 238, 252))
 met2 <- met%>% filter( between(jdate, 255, 270))
 met3<-rbind(met1,met2)
 #aggregate data so it's daily
