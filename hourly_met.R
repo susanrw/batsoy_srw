@@ -125,9 +125,9 @@ bat.hour2$sp[bat.hour2$sp=="MYOSOD"]="Other spp."
 bat.hour3<-aggregate(FILES ~ jdate + sp + site + HOUR, data=bat.hour2, FUN=sum)
 
 #renaming activity column
-colnames(bat.hour3)[4] <- "activity"
+colnames(bat.hour3)[5] <- "activity"
 
-ddply(bat.hour3, c("jdate"), summarise,
+ddply(bat.hour3, c("HOUR"), summarise,
 	  N    = length(activity),
 	  mean = mean(activity),
 	  sd   = sd(activity),
@@ -146,12 +146,18 @@ met$jdate<-NA
 library(lubridate)
 met$jdate<-yday(met$date)
 
-#control field trials 238-244, 255-270 (I have data for inbetween for failed indole, will need to work on extracting)
+#control field trials 238-252, 255-270 (no detectors out nights of 253&254)
 met1 <- met%>% filter( between(jdate, 238, 252))
 met2 <- met%>% filter( between(jdate, 255, 270))
 met3<-rbind(met1,met2)
+
+met4<-met3%>%filter(between(hour, 0,7))
+met5<-met3%>%filter(between(hour, 18,23))
+
+met.hour<-rbind(met4,met5)
+
 #aggregate data so it's daily
-met6<-aggregate(cbind(Wind_speed_max_m.s,Wind_speed_avg_m.s,Rain_Accumulation_mm,
+met.day<-aggregate(cbind(Wind_speed_max_m.s,Wind_speed_avg_m.s,Rain_Accumulation_mm,
 					  Rain_Duration_s,delta.air,Air_Pressure_pascal)~jdate, dat=met3, FUN=mean)
 
 field.control<-aggregate(activity ~ jdate, dat=dis.all.control, FUN=sum)
