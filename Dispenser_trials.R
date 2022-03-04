@@ -135,14 +135,14 @@ indole.with.inset <-
 indole.with.inset
 
 #save plot
-ggsave(filename = "indole.png", 
-	   plot = indole.with.inset,
-	   width = 17, 
-	   height = 12,
-	   units = "cm",
-	   dpi = 300)
+#ggsave(filename = "indole.png", 
+	   #plot = indole.with.inset,
+	   #width = 17, 
+	   #height = 12,
+	   #units = "cm",
+	   #dpi = 300)
 
-#species plot
+#species plot (raw data)
 ggplot(data=indole3, aes(x=sp, y=activity))+ 
 	geom_boxplot(outlier.shape = NA)+
 	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5, aes(color=sp))+
@@ -311,19 +311,51 @@ ggplot(data=farn3, aes(x=sp, y=log.act))+
 	scale_y_continuous(limits = c(0,8))
 
 ##COMBINING INDOLE AND FARNESENE TRIALS----
-indole3$compound<-NA
-indole3$compound<-"indole"
+#importing "failed" indole trial (only control plots)
+indole0 <- read.csv(file="Maynard_etal_indole2_control.csv",head=TRUE)
+indole0[, 3:11][is.na(indole0[, 3:11])] <- 0
 
-farn3$compound<-NA
-farn3$compound<-"farnesene"
+##Gathering data — compounds from col to rows
+indole01<-indole0 %>% gather(sp, activity, EPTFUS:NOID)
+indole01$sp<-as.factor(indole01$sp)
+levels(indole01$sp)
+indole01<-aggregate(activity ~ treatment + sp + jdate + site, dat=indole01, FUN=sum)
 
-dis.all <- rbind(farn3, indole3)
+indole1$compound<-NA
+indole1$compound<-"indole"
+
+indole01$compound<-NA
+indole01$compound<-"indole"
+
+farn1$compound<-NA
+farn1$compound<-"farnesene"
+
+dis.all1 <- rbind(farn1, indole1, indole01)
+
+##GROUPING SPECIES----
+{dis.all<-dis.all1
+dis.all$sp=as.character(dis.all$sp)
+dis.all$sp[dis.all$sp=="EPTFUS"]="EPFU/LANO"
+dis.all$sp[dis.all$sp=="LASNOC"]="EPFU/LANO"
+dis.all$sp[dis.all$sp=="LASBOR"]="LABO/LASE"
+dis.all$sp[dis.all$sp=="LASSEM"]="LABO/LASE"
+dis.all$sp[dis.all$sp=="NOID"]="No ID"
+dis.all$sp[dis.all$sp=="MYOLUC"]="MYLU"
+dis.all$sp[dis.all$sp=="LASCIN"]="LACI"
+dis.all$sp[dis.all$sp=="NYCHUM"]="NYHU"
+dis.all$sp[dis.all$sp=="PERSUB"]="PESU"
+dis.all$sp[dis.all$sp=="MYOSOD"]="No ID"
+}
+
+dis.all2<-aggregate(activity ~ treatment + sp + jdate + site, dat=dis.all, FUN=sum)
+dis.all2$log.act<-log(dis.all2$activity)
+dis.all2$log.act[which(!is.finite(dis.all2$log.act))] <- 0
 
 #exclude treatment trials
-dis.all.control<-dis.all[dis.all$treatment != "Dispenser", ]  
+dis.all.control<-dis.all2[dis.all2$treatment != "Dispenser", ]  
 dis.all.control <- dis.all.control[order(dis.all.control$jdate),]
 
-dis.all.treat<-dis.all[dis.all$treatment != "Control", ]  
+dis.all.treat<-dis.all2[dis.all2$treatment != "Control", ]  
 dis.all.treat <- dis.all.treat[order(dis.all.treat$jdate),]
 
 q1<-glmer.nb(activity~sp+(1|site), data = dis.all.control)
@@ -331,8 +363,8 @@ Anova(q1)
 
 #contrasts
 q1c<-emmeans(q1,pairwise~sp, type="response")
-cld(q1c$emmeans,  Letters ='abcde')
-#LABO=A, Other=B, NoID=C, EPFU/LANO=D
+cld(q1c$emmeans,  Letters ='abcdefg')
+#MYLU=A, NYHU=B, PESU=C, LABO/LASE+LACI=D, NOID=E, EPFU/LANO=f
 
 q1.tab <- ddply(dis.all.control, c("sp"), summarise,
 				  N    = length(activity),
@@ -340,401 +372,49 @@ q1.tab <- ddply(dis.all.control, c("sp"), summarise,
 				  sd   = sd(activity),
 				  se   = sd / sqrt(N))
 q1.tab
-#(EPFU/LANO-LABO)/LABO
-(192.12844-14.80734)/14.80734
-#11.98
 
-#(EPFU/LANO-Other)/Other
-(192.12844-29.48624)/29.48624
-#5.5
-
-#(EPFU/LANO-NoID)/NoID
-(192.12844-88.06422)/88.06422
-#1.18
 
 #species plot
-ggplot(data=dis.all.control, aes(x=sp, y=activity))+ 
+all.plot<-ggplot(data=dis.all.control, aes(x=sp, y=activity))+ 
 	geom_boxplot(outlier.shape = NA)+
 	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5, aes(color=sp))+
 	theme_classic()+
-	labs(x=" ", y="Relative activity", title="All control trials")+
-	theme(text = element_text(size=20), legend.position = "none")+
-	stat_summary(geom = 'text', label = c("d","a","c","b"),
+	labs(x=" ", y="Relative activity")+
+	theme(text = element_text(size=20), legend.position = "none", 
+		  axis.text.x = element_text(angle = 20, vjust = 0.5, hjust=.9))+
+	stat_summary(geom = 'text', label = c("f","d","d","a","e","b","c"),
 				 fun = max, vjust = -0.8, size=5.5)+
-	scale_y_continuous(limits = c(0,2000))
+	scale_y_continuous(limits = c(0,1600))
+all.plot
+
+#small plot (means and SEs)
+all.small<-ggplot(data=dis.all.control, aes(x=sp, y=activity))+ 
+	theme_classic()+
+	labs(x=" ", y="Relative activity")+
+	stat_summary(fun.data = "mean_se", size=1.5, shape="diamond")+
+	theme(axis.text.x = element_text(angle = 20, vjust = 0.5, hjust=.9))
+all.small
+
+#plot with inlay
+all.with.inset <-
+	ggdraw() +
+	draw_plot(all.plot) +
+	draw_plot(all.small, x = 0.45, y = .6, width = .5, height = .4)
+all.with.inset
 
 #log-transformed species plot
 ggplot(data=dis.all.control, aes(x=sp, y=log.act))+ 
 	geom_boxplot(outlier.shape = NA)+
 	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5, aes(color=sp))+
 	theme_classic()+
-	labs(x=" ", y="Relative activity", title="All control trials")+
-	theme(text = element_text(size=20), legend.position = "none")+
-	stat_summary(geom = 'text', label = c("d","a","c","b"),
+	labs(x=" ", y="Relative activity (log-transformed)", title="All control trials")+
+	theme(text = element_text(size=20), legend.position = "none", 
+		  axis.text.x = element_text(angle = 20, vjust = 0.5, hjust=.9))+
+	stat_summary(geom = 'text', label = c("f","d","d","a","e","b","c"),
 				 fun = max, vjust = -0.8, size=5.5)+
 	scale_y_continuous(limits = c(0,8))
 
-##CHORNO PLOT DATA----
-#SUMMARY DATA----
-forest <- read.csv(file="Maynard_etal_forest_sum.csv",head=TRUE)
-forest[, 3:11][is.na(forest[, 3:11])] <- 0
 
-#removing MYOSEP col (all zeros)
-forest <- subset(forest, select = -c(9))
-
-##Gathering data — compounds from col to rows
-forest1<-forest %>% gather(sp, activity, EPTFUS:NOID)
-forest1$sp<-as.factor(forest1$sp)
-levels(forest1$sp)
-forest1<-aggregate(activity ~ sp + jdate + site + age.class + stand.age, dat=forest1, FUN=sum)
-
-##GROUPING SPECIES----
-{forest2<-forest1
-forest2$sp=as.character(forest2$sp)
-forest2$sp[forest2$sp=="EPTFUS"]="EPFU/LANO"
-forest2$sp[forest2$sp=="LASNOC"]="EPFU/LANO"
-forest2$sp[forest2$sp=="LASBOR"]="LABO/LASE"
-forest2$sp[forest2$sp=="LASSEM"]="LABO/LASE"
-forest2$sp[forest2$sp=="LASCIN"]="Other spp."
-forest2$sp[forest2$sp=="MYOLUC"]="Other spp."
-forest2$sp[forest2$sp=="PERSUB"]="Other spp."
-forest2$sp[forest2$sp=="NOID"]="No ID"
-forest2$sp[forest2$sp=="NYCHUM"]="Other spp."
-forest2$sp[forest2$sp=="MYOSOD"]="Other spp."
-}
-
-#one plot had 1 MYOSOD detection, so adding a new species
-#Lumping MYOSOD with "Other" 
-
-forest3<-aggregate(activity ~ sp + jdate + site + age.class + stand.age, dat=forest2, FUN=sum)
-forest3$log.act<-log(forest3$activity)
-forest3$log.act[which(!is.finite(forest3$log.act))] <- 0
-
-for.tab <- ddply(forest3, c("sp"), summarise,
-				N    = length(activity),
-				mean = mean(activity),
-				sd   = sd(activity),
-				se   = sd / sqrt(N))
-for.tab
-
-#zero-inflated negative binomial
-library(glmmTMB)
-m1 <- glmmTMB(activity~stand.age*sp+(1|jdate),
-			   zi=~stand.age,
-			   family=nbinom2, data=forest3)
-Anova(m1)
-#only species significant
-
-m2 <- glmmTMB(activity~age.class*sp+(1|jdate),
-			  zi=~age.class,
-			  family=nbinom2, data=forest3)
-Anova(m2)
-#only species significant
-
-#contrasts
-for.con<-emmeans(m2,pairwise~sp, type="response")
-cld(for.con$emmeans,  Letters ='abcde')
-#LABO=A, Other=B, NoID=B, EPFU/LANO=B
-#same results with both models
-
-#species plot
-ggplot(data=forest3, aes(x=sp, y=activity))+ 
-	geom_boxplot(outlier.shape = NA)+
-	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5, aes(color=sp))+
-	theme_classic()+
-	labs(x=" ", y="Relative activity", title="Forest plots")+
-	theme(text = element_text(size=20), legend.position = "none",
-		  axis.text.x = element_text(angle = 20, vjust = 0.8, hjust = 1))+
-	stat_summary(geom = 'text', label = c("b","a","b","b"),
-				 fun = max, vjust = -0.8, size=5.5)+
-	scale_y_continuous(limits = c(0,20))
-
-##Comparing field and forest----
-dis.all.control <- dis.all.control[order(dis.all.control$jdate),]
-#fitering control field dates 
-for.field<-filter(dis.all.control, jdate == "255"|jdate=="256"|jdate=="257"|jdate=="258")
-#removing treatment and compound columns
-for.field <- subset(for.field, select = -c(1,7))
-
-forest4<-filter(forest3, jdate == "255"|jdate=="256"|jdate=="257"|jdate=="258")
-#removing age columns
-forest4 <- subset(forest4, select = -c(4:5))
-
-for.field$habitat<-NA
-for.field$habitat<-"field"
-
-forest4$habitat<-NA
-forest4$habitat<-"forest"
-
-for.field.all <- rbind(for.field, forest4)
-
-#zero-inflated neg binom
-m3 <- glmmTMB(activity~habitat*sp+(1|jdate),
-			  zi=~sp,
-			  family=nbinom2, data=for.field.all)
-Anova(m3)
-#all significant
-
-m4 <- glmer.nb(activity~habitat*sp+(1|jdate), data=for.field.all)
-Anova(m4)
-#all significant
-
-#species plot
-plot.ff<-ggplot(data=for.field.all, aes(x=habitat, y=log.act))+ 
-	geom_boxplot(outlier.shape = NA)+
-	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5, aes(color=sp))+
-	theme_classic()+
-	labs(x=" ", y="Relative activity (log)")+
-	theme(text = element_text(size=20), legend.position = "none",
-		  axis.text.x = element_text(angle = 20, vjust = 0.8, hjust = 1))
-plot.ff
-plot.ff+facet_wrap(~sp)
-
-plot.ff2<-ggplot(data=for.field.all, aes(x=sp, y=log.act))+ 
-	geom_boxplot(outlier.shape = NA)+
-	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5, aes(color=habitat))+
-	theme_classic()+
-	labs(x=" ", y="Relative activity (log)")+
-	theme(text = element_text(size=20), legend.position = "none",
-		  axis.text.x = element_text(angle = 20, vjust = 0.8, hjust = 1))
-plot.ff2
-plot.ff2+facet_wrap(~habitat)
-
-ff.sum<-ggplot(data=for.field.all, aes(x=habitat, y=activity))+ 
-	theme_classic()+
-	labs(x=" ", y="Relative activity")+
-	stat_summary(fun.data = "mean_se", size=1.5, shape="diamond")+
-	theme(text = element_text(size=20))
-ff.sum
-
-ff.tab <- ddply(for.field.all, c("habitat"), summarise,
-				 N    = length(activity),
-				 mean = mean(activity),
-				 sd   = sd(activity),
-				 se   = sd / sqrt(N))
-ff.tab
-#forest mean=1.67, field=215.41
-(215.41-1.67)/1.67
-
-#I think these are only coming out as significant because the activity levels were so diff
-
-library(effects)
-allEffects(m4)  #this will give you a numerical interpretation, which is again sometimes funky to understand
-plot(allEffects(m4)) #This will give you a visual representation of your interactions, which is my preferred method. 
-
-##SERC met data----
-aug <- read.csv(file="SERC_TOWER_aug2021.csv",head=TRUE)
-sep <- read.csv(file="SERC_TOWER_sep2021.csv",head=TRUE)
-jun <- read.csv(file="SERC_TOWER_june2021.csv",head=TRUE)
-jul <- read.csv(file="SERC_TOWER_july2021.csv",head=TRUE)
-
-met<-rbind(aug,sep,jun,jul)
-
-met$date<-as.Date(met$date,)
-met$jdate<-NA
-library(lubridate)
-met$jdate<-yday(met$date)
-
-#control field trials 238-244, 255-270 (I have data for inbetween for failed indole, will need to work on extracting)
-met1 <- met%>% filter( between(jdate, 238, 244))
-met2 <- met%>% filter( between(jdate, 255, 270))
-met3<-rbind(met1,met2)
-#aggregate data so it's daily
-met6<-aggregate(cbind(Wind_speed_max_m.s,Wind_speed_avg_m.s,Rain_Accumulation_mm,
-					  Rain_Duration_s,delta.air,Air_Pressure_pascal)~jdate, dat=met3, FUN=mean)
-
-field.control<-aggregate(activity ~ jdate, dat=dis.all.control, FUN=sum)
-bat2<-cbind(met6,field.control)
-#removing second jdate col
-bat2 <- subset(bat2, select = -c(1))
-
-#figure this out
-library(BBmisc)
-bat2<-normalize(cbind(Wind_speed_max_m.s,Wind_speed_avg_m.s,Rain_Accumulation_mm,
-					  Rain_Duration_s,delta.air,Air_Pressure_pascal), method = "standardize", 
-				range = c(0, 1))
-
-#analysis?
-mod.a<-glmer.nb(activity~Wind_speed_max_m.s+Wind_speed_avg_m.s+Rain_Accumulation_mm+
-				Rain_Duration_s+delta.air+(1|jdate), dat = bat2)
-Anova(mod.a)
-
-#graphs
-bat2 %>%
-	ggplot(aes(x=delta.air, 
-			   y=activity))+
-	geom_point(aes(color=jdate))+
-	geom_smooth(method = "gam")+
-	theme_classic()
-
-bat2 %>%
-	ggplot(aes(x=Wind_speed_avg_m.s, 
-			   y=activity))+
-	geom_point(aes(color=jdate))+
-	geom_smooth(method = "gam")+
-	theme_classic()
-
-bat2 %>%
-	ggplot(aes(x=Rain_Accumulation_mm, 
-			   y=activity))+
-	geom_point(aes(color=jdate))+
-	geom_smooth(method = "gam")+
-	theme_classic()
-
-bat2 %>%
-	ggplot(aes(x=Rain_Duration_s, 
-			   y=activity))+
-	geom_point(aes(color=jdate))+
-	geom_smooth(method = "gam")+
-	theme_classic()
-
-bat2 %>%
-	ggplot(aes(x=Wind_speed_max_m.s, 
-			   y=activity))+
-	geom_point(aes(color=jdate))+
-	geom_smooth(method = "gam")+
-	theme_classic()
-
-###start here---
-met4 <- met%>% filter( between(jdate, 238, 270))
-
-
-#summarizing data
-library(Rmisc)
-met.gust.sum<-summarySE(met4, measurevar="Wind_speed_max_m.s", groupvars=c("jdate"))
-met.gust.sum %>%
-	ggplot(aes(x=jdate, 
-			   y=Wind_speed_max_m.s))+
-	geom_errorbar(aes(ymin=Wind_speed_max_m.s-se, ymax=Wind_speed_max_m.s+se), width=.1, color="red")+
-	geom_line()+
-	labs(x="Date (Julian)",
-		 y="Wind gust (m/s)")+
-	theme_classic()
-
-met.wind.sum<-summarySE(met4, measurevar="Wind_speed_avg_m.s", groupvars=c("jdate"))
-met.wind.sum %>%
-	ggplot(aes(x=jdate, 
-			   y=Wind_speed_avg_m.s))+
-	geom_errorbar(aes(ymin=Wind_speed_avg_m.s-se, ymax=Wind_speed_avg_m.s+se), width=.1, color="red")+
-	geom_line()+
-	labs(x="Date (Julian)",
-		 y="Wind average (m/s)")+
-	theme_classic()
-
-met4 %>%
-	ggplot(aes(x=jdate, 
-			   y=Wind_speed_avg_m.s))+
-	geom_point()+
-	geom_smooth(method = "gam")+
-	labs(x="Date (Julian)",
-		 y="Wind average (m/s)")+
-	theme_classic()
-
-met.rainac.sum<-summarySE(met4, measurevar="Rain_Accumulation_mm", groupvars=c("jdate"))
-met.rainac.sum %>%
-	ggplot(aes(x=jdate, 
-			   y=Rain_Accumulation_mm))+
-	geom_errorbar(aes(ymin=Rain_Accumulation_mm-se, ymax=Rain_Accumulation_mm+se), width=.1, color="red")+
-	geom_line()+
-	labs(x="Date (Julian)",
-		 y="Rain accumulation (mm)")+
-	theme_classic()
-
-met.raindur.sum<-summarySE(met4, measurevar="Rain_Duration_s", groupvars=c("jdate"))
-met.raindur.sum %>%
-	ggplot(aes(x=jdate, 
-			   y=Rain_Duration_s))+
-	geom_errorbar(aes(ymin=Rain_Duration_s-se, ymax=Rain_Duration_s+se), width=.1, color="red")+
-	geom_line()+
-	labs(x="Date (Julian)",
-		 y="Rain duration (sec)")+
-	theme_classic()
-
-met.dair.sum<-summarySE(met4, measurevar="delta.air", groupvars=c("jdate"))
-met.dair.sum %>%
-	ggplot(aes(x=jdate, 
-			   y=delta.air))+
-	geom_errorbar(aes(ymin=delta.air-se, ymax=delta.air+se), width=.1, color="red")+
-	geom_line()+
-	labs(x="Date (Julian)",
-		 y="Change in air pressure (Pascal)")+
-	theme_classic()
-
-
-dis.all.control %>%
-	ggplot(aes(x=jdate, 
-			   y=log.act))+
-	geom_point(aes(color=sp))+
-	geom_smooth(method = "gam")+
-	labs(x="Date (Julian)",
-		 y="Bat activity")+
-	theme_classic()
-
-bat.sum.field<-summarySE(dis.all.control, measurevar="activity", groupvars=c("jdate"))
-bat.sum.field %>%
-	ggplot(aes(x=jdate, 
-			   y=activity))+
-	geom_errorbar(aes(ymin=activity-se, ymax=activity+se), width=.1, color="red")+
-	geom_line()+
-	labs(x="Date (Julian)",
-		 y="Bat activity")+
-	theme_classic()
-
-#aggregate data so it's hourly and not by minute
-met5<-aggregate(cbind(Wind_speed_max_m.s,Wind_speed_avg_m.s,Rain_Accumulation_mm,
-					  Rain_Duration_s,delta.air,Air_Pressure_pascal)~jdate+hour, dat=met4, FUN=mean)
-
-#need to re-calculate change in air pressure
-met5<-met5[order(met5$jdate),]
-met5$change.air<-NA
-met5<-mutate(met5, change.air = Air_Pressure_pascal-lag(Air_Pressure_pascal))
-met5[is.na(met5)] <- 0
-
-#24-HOUR GRAPHS
-met5 %>%
-	ggplot(aes(x=hour, 
-			   y=change.air))+
-	geom_point(aes(color=jdate))+
-	geom_smooth(method = "gam")+
-	labs(x="Time",
-		 y="Wind speed max")+
-	theme_classic()
-
-met5 %>%
-	ggplot(aes(x=hour, 
-			   y=Wind_speed_avg_m.s))+
-	geom_point(aes(color=jdate))+
-	geom_smooth(method = "gam")+
-	labs(x="Time",
-		 y="Wind speed average")+
-	theme_classic()
-
-met5 %>%
-	ggplot(aes(x=hour, 
-			   y=Rain_Accumulation_mm))+
-	geom_point(aes(color=jdate))+
-	geom_smooth(method = "gam")+
-	labs(x="Time",
-		 y="Rain_Accumulation_mm")+
-	theme_classic()
-
-met5 %>%
-	ggplot(aes(x=hour, 
-			   y=Rain_Duration_s))+
-	geom_point(aes(color=jdate))+
-	geom_smooth(method = "gam")+
-	labs(x="Time",
-		 y="Rain_Duration_s")+
-	theme_classic()
-
-met5 %>%
-	ggplot(aes(x=hour, 
-			   y=delta.air))+
-	geom_point(aes(color=jdate))+
-	geom_smooth(method = "gam")+
-	labs(x="Time",
-		 y="Change in air pressure")+
-	theme_classic()
 
 ###BIG BROWN DATA----
 ##INDOLE BIG BROWN ONLY---
