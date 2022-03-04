@@ -151,6 +151,7 @@ met1 <- met%>% filter( between(jdate, 238, 252))
 met2 <- met%>% filter( between(jdate, 255, 270))
 met3<-rbind(met1,met2)
 
+#filtering for hours bats were active, recorders active (6p-7a)
 met4<-met3%>%filter(between(hour, 0,7))
 met5<-met3%>%filter(between(hour, 18,23))
 
@@ -158,10 +159,12 @@ met.hour<-rbind(met4,met5)
 
 #aggregate data so it's daily
 met.day<-aggregate(cbind(Wind_speed_max_m.s,Wind_speed_avg_m.s,Rain_Accumulation_mm,
-					  Rain_Duration_s,delta.air,Air_Pressure_pascal)~jdate, dat=met3, FUN=mean)
+					  Rain_Duration_s,delta.air,Air_Pressure_pascal)~jdate, dat=met.hour, FUN=mean)
+
+abat<-cbind(met.hour,bat.hour3)
 
 field.control<-aggregate(activity ~ jdate, dat=dis.all.control, FUN=sum)
-bat2<-cbind(met6,field.control)
+bat2<-cbind(met.day,field.control)
 #removing second jdate col
 bat2 <- subset(bat2, select = -c(1))
 
