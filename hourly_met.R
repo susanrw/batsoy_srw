@@ -126,8 +126,9 @@ bat.hour3<-aggregate(FILES ~ jdate + sp + site + HOUR, data=bat.hour2, FUN=sum)
 
 #renaming activity column
 colnames(bat.hour3)[5] <- "activity"
+colnames(bat.hour3)[4] <- "hour"
 
-ddply(bat.hour3, c("HOUR"), summarise,
+ddply(bat.hour3, c("hour"), summarise,
 	  N    = length(activity),
 	  mean = mean(activity),
 	  sd   = sd(activity),
@@ -155,91 +156,154 @@ met3<-rbind(met1,met2)
 met4<-met3%>%filter(between(hour, 0,7))
 met5<-met3%>%filter(between(hour, 18,23))
 
-met.hour<-rbind(met4,met5)
+met6<-rbind(met4,met5)
+
+#aggregate data so it's hourly
+met.hour<-aggregate(cbind(Wind_speed_max_m.s,Wind_speed_avg_m.s,Rain_Accumulation_mm,
+						 Rain_Duration_s,delta.air,Air_Pressure_pascal)~hour + jdate, dat=met6, FUN=mean)
 
 #aggregate data so it's daily
 met.day<-aggregate(cbind(Wind_speed_max_m.s,Wind_speed_avg_m.s,Rain_Accumulation_mm,
 					  Rain_Duration_s,delta.air,Air_Pressure_pascal)~jdate, dat=met.hour, FUN=mean)
 
+#aggregate so hourly bat data is daily
+bat.day<-aggregate(activity ~ jdate, dat=bat.hour3, FUN=sum)
 
-abat<-cbind(met.hour,bat.hour3)
 
-field.control<-aggregate(activity ~ jdate, dat=dis.all.control, FUN=sum)
-bat2<-cbind(met.day,field.control)
-#removing second jdate col
-bat2 <- subset(bat2, select = -c(1))
 
-#figure this out
+
 library(BBmisc)
-a1<-scale(met.hour$Wind_speed_max_m.s)
-
-
 ## normalize met vars
 met.hour$n.Wind_speed_max_m.s <- normalize(met.hour$Wind_speed_max_m.s, 
 										   method = "range", range = c(0,1))
-## normalize weather vars
 met.hour$n.Wind_speed_avg_m.s <- normalize(met.hour$Wind_speed_avg_m.s, 
 										   method = "range", range = c(0,1))
-## normalize weather vars
 met.hour$n.Rain_Accumulation_mm <- normalize(met.hour$Rain_Accumulation_mm, 
 										   method = "range", range = c(0,1))
-## normalize weather vars
 met.hour$n.Rain_Duration_s <- normalize(met.hour$Rain_Duration_s, 
 										   method = "range", range = c(0,1))
-## normalize weather vars
 met.hour$n.delta.air <- normalize(met.hour$delta.air, 
 										   method = "range", range = c(0,1))
-## normalize weather vars
 met.hour$n.Air_Pressure_pascal <- normalize(met.hour$Air_Pressure_pascal, 
 										   method = "range", range = c(0,1))
 
+##CHECKING FOR COLINEARITY----
+library(corrplot)
+met1<-met.hour[,c(9:14)]#cat vars
 
-#analysis?
-mod.a<-glmer.nb(activity~Wind_speed_max_m.s+Wind_speed_avg_m.s+Rain_Accumulation_mm+
-					Rain_Duration_s+delta.air+(1|jdate), dat = bat2)
+M1 <- cor(met1)#correlation matrix
+corrplot(M1, method = "circle")
+corrplot(M1, method = "number")
+#need to choose between rain and wind variables
+#wind max, rain duration
+
+
+#combine bat 
+bat.met.hour<-merge(met.hour, bat.hour3, by=c("hour","jdate"))
+
+
+#analysis
+library(lme4)
+library(car)
+mod.a<-glmer.nb(activity~n.Wind_speed_max_m.s+n.Rain_Duration_s+n.delta.air+
+					(1|jdate)+(1|site), dat = bat.met.hour, na.action="na.fail")
 Anova(mod.a)
 
+library(MuMIn)
+da<-dredge(mod.a)
+davg<-model.avg(da, subset=delta<4)
+summary(davg)
+
+library(ggplot2)
 #graphs
-bat2 %>%
-	ggplot(aes(x=delta.air, 
+bat.met.hour %>%
+	ggplot(aes(x=n.delta.air, 
 			   y=activity))+
 	geom_point(aes(color=jdate))+
 	geom_smooth(method = "gam")+
 	theme_classic()
 
-bat2 %>%
-	ggplot(aes(x=Wind_speed_avg_m.s, 
+bat.met.hour %>%
+	ggplot(aes(x=n.delta.air, 
 			   y=activity))+
-	geom_point(aes(color=jdate))+
 	geom_smooth(method = "gam")+
 	theme_classic()
 
-bat2 %>%
+bat.met.hour %>%
+	ggplot(aes(x=n.Wind_speed_avg_m.s, 
+			   y=activity))+
+	geom_smooth(method = "gam")+
+	theme_classic()
+
+bat.met.hour %>%
 	ggplot(aes(x=Rain_Accumulation_mm, 
 			   y=activity))+
-	geom_point(aes(color=jdate))+
 	geom_smooth(method = "gam")+
 	theme_classic()
 
-bat2 %>%
-	ggplot(aes(x=Rain_Duration_s, 
+bat.met.hour %>%
+	ggplot(aes(x=n.Rain_Duration_s, 
 			   y=activity))+
 	geom_point(aes(color=jdate))+
 	geom_smooth(method = "gam")+
 	theme_classic()
 
-bat2 %>%
-	ggplot(aes(x=Wind_speed_max_m.s, 
+bat.met.hour %>%
+	ggplot(aes(x=n.Wind_speed_max_m.s, 
+			   y=activity))+
+	geom_point(aes(color=jdate))+
+	geom_smooth(method = "glm")+
+	theme_classic()
+
+bat.met.hour %>%
+	ggplot(aes(x=n.Wind_speed_max_m.s, 
+			   y=activity))+
+	geom_smooth(method = "glm")+
+	theme_classic()
+
+#split by species
+bat.met.hour.bb <- bat.met.hour[which(bat.met.hour$sp== 'EPFU/LANO'),]
+bat.met.hour.other <- bat.met.hour[which(bat.met.hour$sp== 'Other spp.'),]
+
+#big brown analysis
+mod.met.bb<-glmer.nb(activity~n.Wind_speed_max_m.s+n.Rain_Duration_s+n.delta.air+
+					 	+(1|site), dat = bat.met.hour.bb, na.action="na.fail")
+Anova(mod.met.bb)
+
+library(MuMIn)
+mod.met.bb.d<-dredge(mod.met.bb)
+mod.met.bb.avg<-model.avg(mod.met.bb.d)
+summary(mod.met.bb.avg)
+#change in air pressure and wind gust significant
+#Negative relationship between delta air and activity 
+#positive relationship in gust and activity
+
+bat.met.hour.bb %>%
+	ggplot(aes(x=n.delta.air, 
 			   y=activity))+
 	geom_point(aes(color=jdate))+
 	geom_smooth(method = "gam")+
 	theme_classic()
 
-###start here---
-met4 <- met%>% filter( between(jdate, 238, 270))
+bat.met.hour.bb %>%
+	ggplot(aes(x=n.Rain_Duration_s, 
+			   y=activity))+
+	geom_smooth(method = "glm")+
+	theme_classic()
+
+#other spp analysis
+mod.met.other<-glmer.nb(activity~n.Wind_speed_max_m.s+n.Rain_Duration_s+n.delta.air
+						+(1|site), dat = bat.met.hour.other, na.action="na.fail")
+Anova(mod.met.other)
+
+mod.met.other.d<-dredge(mod.met.other)
+mod.met.other.avg<-model.avg(mod.met.other.d)
+summary(mod.met.other.avg)
+#only wind max marg sig
 
 
-#summarizing data
+#MET DATA GRAPHS
+#summarizing met data
 library(Rmisc)
 met.gust.sum<-summarySE(met4, measurevar="Wind_speed_max_m.s", groupvars=c("jdate"))
 met.gust.sum %>%
