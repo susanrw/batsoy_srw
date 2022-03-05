@@ -161,6 +161,7 @@ met.hour<-rbind(met4,met5)
 met.day<-aggregate(cbind(Wind_speed_max_m.s,Wind_speed_avg_m.s,Rain_Accumulation_mm,
 					  Rain_Duration_s,delta.air,Air_Pressure_pascal)~jdate, dat=met.hour, FUN=mean)
 
+
 abat<-cbind(met.hour,bat.hour3)
 
 field.control<-aggregate(activity ~ jdate, dat=dis.all.control, FUN=sum)
@@ -170,9 +171,28 @@ bat2 <- subset(bat2, select = -c(1))
 
 #figure this out
 library(BBmisc)
-bat2<-normalize(cbind(Wind_speed_max_m.s,Wind_speed_avg_m.s,Rain_Accumulation_mm,
-					  Rain_Duration_s,delta.air,Air_Pressure_pascal), method = "standardize", 
-				range = c(0, 1))
+a1<-scale(met.hour$Wind_speed_max_m.s)
+
+
+## normalize met vars
+met.hour$n.Wind_speed_max_m.s <- normalize(met.hour$Wind_speed_max_m.s, 
+										   method = "range", range = c(0,1))
+## normalize weather vars
+met.hour$n.Wind_speed_avg_m.s <- normalize(met.hour$Wind_speed_avg_m.s, 
+										   method = "range", range = c(0,1))
+## normalize weather vars
+met.hour$n.Rain_Accumulation_mm <- normalize(met.hour$Rain_Accumulation_mm, 
+										   method = "range", range = c(0,1))
+## normalize weather vars
+met.hour$n.Rain_Duration_s <- normalize(met.hour$Rain_Duration_s, 
+										   method = "range", range = c(0,1))
+## normalize weather vars
+met.hour$n.delta.air <- normalize(met.hour$delta.air, 
+										   method = "range", range = c(0,1))
+## normalize weather vars
+met.hour$n.Air_Pressure_pascal <- normalize(met.hour$Air_Pressure_pascal, 
+										   method = "range", range = c(0,1))
+
 
 #analysis?
 mod.a<-glmer.nb(activity~Wind_speed_max_m.s+Wind_speed_avg_m.s+Rain_Accumulation_mm+
