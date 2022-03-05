@@ -200,7 +200,7 @@ corrplot(M1, method = "number")
 
 #combine bat 
 bat.met.hour<-merge(met.hour, bat.hour3, by=c("hour","jdate"))
-
+bat.met.hour$log.act<-log(bat.met.hour$activity)
 
 #analysis
 library(lme4)
@@ -272,43 +272,55 @@ Anova(mod.met.bb)
 
 library(MuMIn)
 mod.met.bb.d<-dredge(mod.met.bb)
-mod.met.bb.avg<-model.avg(mod.met.bb.d)
+mod.met.bb.avg<-model.avg(mod.met.bb.d, subset=delta<4)
 summary(mod.met.bb.avg)
 #change in air pressure and wind gust significant
 #Negative relationship between delta air and activity 
 #positive relationship in gust and activity
 
 #change in air pressure
-#points with gam dist
 bat.met.hour.bb %>%
-	ggplot(aes(x=n.delta.air, 
+	ggplot(aes(x=delta.air, 
 			   y=activity))+
-	geom_point(aes(color=jdate))+
-	geom_smooth(method = "gam")+
-	theme_classic()
-
-#glm, no points
-bat.met.hour.bb %>%
-	ggplot(aes(x=n.delta.air, 
-			   y=activity))+
+	geom_point()+
 	geom_smooth(method = "glm")+
-	theme_classic()
+	theme_classic()+
+	labs(x="Change in air pressure (Pa)",
+		 y="Bat activity (average hourly passes)",
+		 title="EPFU/LANO")
+
+#log transformed
+bat.met.hour.bb %>%
+	ggplot(aes(x=delta.air, 
+			   y=log.act))+
+	geom_point()+
+	geom_smooth(method = "glm")+
+	theme_classic()+
+	labs(x="Change in air pressure (Pa)",
+		 y="Bat activity (log-transformed)",
+		 title="EPFU/LANO")
+
 
 #wind gust
-#gam, points
 bat.met.hour.bb %>%
-	ggplot(aes(x=n.Wind_speed_max_m.s, 
+	ggplot(aes(x=Wind_speed_max_m.s, 
 			   y=activity))+
-	geom_point(aes(color=jdate))+
-	geom_smooth(method = "gam")+
-	theme_classic()
-
-#glm, no points
-bat.met.hour.bb %>%
-	ggplot(aes(x=n.Wind_speed_max_m.s, 
-			   y=activity))+
+	geom_point()+
 	geom_smooth(method = "glm")+
-	theme_classic()
+	theme_classic()+
+	labs(x="Wind gust (m/s)",
+		 y="Bat activity (average hourly passes)",
+		 title="EPFU/LANO")
+
+bat.met.hour.bb %>%
+	ggplot(aes(x=Wind_speed_max_m.s, 
+			   y=log.act))+
+	geom_point()+
+	geom_smooth(method = "glm")+
+	theme_classic()+
+	labs(x="Wind gust (m/s)",
+		 y="Bat activity (log-transformed)",
+		 title="EPFU/LANO")
 
 #other spp analysis
 mod.met.other<-glmer.nb(activity~n.Wind_speed_max_m.s+n.Rain_Duration_s+n.delta.air
@@ -316,46 +328,133 @@ mod.met.other<-glmer.nb(activity~n.Wind_speed_max_m.s+n.Rain_Duration_s+n.delta.
 Anova(mod.met.other)
 
 mod.met.other.d<-dredge(mod.met.other)
-mod.met.other.avg<-model.avg(mod.met.other.d)
+mod.met.other.avg<-model.avg(mod.met.other.d, subset=delta<4)
 summary(mod.met.other.avg)
 #change in air and rain duration sig
 #again negative relationship with change in air pressure
 #positive relationship with rain duration...
 
 #change in air pressure
-#points with gam dist
 bat.met.hour.other %>%
-	ggplot(aes(x=n.delta.air, 
+	ggplot(aes(x=delta.air, 
 			   y=activity))+
-	geom_point(aes(color=jdate))+
-	geom_smooth(method = "gam")+
-	theme_classic()
-
-#glm, no points
-bat.met.hour.other %>%
-	ggplot(aes(x=n.delta.air, 
-			   y=activity))+
+	geom_point()+
 	geom_smooth(method = "glm")+
-	theme_classic()
+	theme_classic()+
+	labs(x="Change in air pressure (Pa)",
+		 y="Bat activity (average hourly passes)",
+		 title="Other spp.")
+
+bat.met.hour.other %>%
+	ggplot(aes(x=delta.air, 
+			   y=log.act))+
+	geom_point()+
+	geom_smooth(method = "glm")+
+	theme_classic()+
+	labs(x="Change in air pressure (Pa)",
+		 y="Bat activity (log-transformed)",
+		 title="Other spp.")
 
 #rain duration
-#gam, points
 bat.met.hour.other %>%
-	ggplot(aes(x=n.Rain_Duration_s, 
+	ggplot(aes(x=Rain_Duration_s, 
 			   y=activity))+
-	geom_point(aes(color=jdate))+
-	geom_smooth(method = "gam")+
-	theme_classic()
+	geom_point()+
+	geom_smooth(method = "glm")+
+	theme_classic()+
+	labs(x="Rain duration (sec)",
+		 y="Bat activity (average hourly passes)",
+		 title="Other spp.")
+
+bat.met.hour.other %>%
+	ggplot(aes(x=Rain_Duration_s, 
+			   y=log.act))+
+	geom_smooth(method = "glm")+
+	geom_point()+
+	theme_classic()+
+	labs(x="Rain duration (sec)",
+		 y="Bat activity (log-transformed)",
+		 title="Other spp.")
+
+#combine species
+bat.met.hour.all<-aggregate(activity~jdate+site+hour+Wind_speed_max_m.s+
+							Rain_Duration_s+delta.air+n.Wind_speed_max_m.s+
+								n.Rain_Duration_s+n.delta.air, data=bat.met.hour, FUN=sum)
+
+bat.met.hour.all$log.act<-log(bat.met.hour.all$activity)
+
+mod.met.all<-glmer.nb(activity~n.Wind_speed_max_m.s+n.Rain_Duration_s+n.delta.air+
+					 	+(1|site), dat = bat.met.hour.all, na.action="na.fail")
+Anova(mod.met.all)
+
+library(MuMIn)
+mod.met.all.d<-dredge(mod.met.all)
+mod.met.all.avg<-model.avg(mod.met.all.d, subset=delta<4)
+summary(mod.met.all.avg)
+
+#change in air pressure
+#points
+bat.met.hour.all %>%
+	ggplot(aes(x=delta.air, 
+			   y=activity))+
+	geom_point()+
+	geom_smooth(method = "glm")+
+	theme_classic()+
+	labs(x="Change in air pressure (Pa)",
+		 y="Bat activity (average hourly passes)",
+		 title="All species, averaged")
 
 #glm, no points
-bat.met.hour.other %>%
-	ggplot(aes(x=n.Rain_Duration_s, 
+bat.met.hour.all %>%
+	ggplot(aes(x=delta.air, 
+			   y=activity))+
+	geom_smooth(method = "glm")+
+	theme_classic()+
+	labs(x="Change in air pressure (Pa)",
+		 y="Bat activity (average hourly passes)",
+		 title="All species, averaged")
+
+#wind gust
+#points
+bat.met.hour.all %>%
+	ggplot(aes(x=n.Wind_speed_max_m.s, 
+			   y=activity))+
+	geom_point()+
+	geom_smooth(method = "glm")+
+	theme_classic()+
+	labs(x="Wind gust (standardized)",
+		 y="Bat activity",
+		 title="All species, averaged")
+
+bat.met.hour.all %>%
+	ggplot(aes(x=Wind_speed_max_m.s, 
+			   y=activity))+
+	geom_point()+
+	geom_smooth(method = "gam")+
+	theme_classic()+
+	labs(x="Wind gust (m/s)",
+		 y="Bat activity (hourly average passes)",
+		 title="All species, averaged—GAM")
+
+bat.met.hour.all %>%
+	ggplot(aes(x=Wind_speed_max_m.s, 
+			   y=activity))+
+	geom_point()+
+	geom_smooth(method = "lm", formula = y ~ x + I(x^2))+
+	theme_classic()+
+	labs(x="Wind gust (m/s)",
+		 y="Bat activity (hourly average passes)",
+		 title="All species, averaged—GLM")
+
+#glm, no points
+bat.met.hour.all %>%
+	ggplot(aes(x=n.Wind_speed_max_m.s, 
 			   y=activity))+
 	geom_smooth(method = "glm")+
 	theme_classic()
 
 
-#MET DATA GRAPHS
+#MET DATA GRAPHS----
 #summarizing met data
 library(Rmisc)
 met.gust.sum<-summarySE(met4, measurevar="Wind_speed_max_m.s", groupvars=c("jdate"))
