@@ -278,6 +278,8 @@ summary(mod.met.bb.avg)
 #Negative relationship between delta air and activity 
 #positive relationship in gust and activity
 
+#change in air pressure
+#points with gam dist
 bat.met.hour.bb %>%
 	ggplot(aes(x=n.delta.air, 
 			   y=activity))+
@@ -285,8 +287,25 @@ bat.met.hour.bb %>%
 	geom_smooth(method = "gam")+
 	theme_classic()
 
+#glm, no points
 bat.met.hour.bb %>%
-	ggplot(aes(x=n.Rain_Duration_s, 
+	ggplot(aes(x=n.delta.air, 
+			   y=activity))+
+	geom_smooth(method = "glm")+
+	theme_classic()
+
+#wind gust
+#gam, points
+bat.met.hour.bb %>%
+	ggplot(aes(x=n.Wind_speed_max_m.s, 
+			   y=activity))+
+	geom_point(aes(color=jdate))+
+	geom_smooth(method = "gam")+
+	theme_classic()
+
+#glm, no points
+bat.met.hour.bb %>%
+	ggplot(aes(x=n.Wind_speed_max_m.s, 
 			   y=activity))+
 	geom_smooth(method = "glm")+
 	theme_classic()
@@ -299,7 +318,41 @@ Anova(mod.met.other)
 mod.met.other.d<-dredge(mod.met.other)
 mod.met.other.avg<-model.avg(mod.met.other.d)
 summary(mod.met.other.avg)
-#only wind max marg sig
+#change in air and rain duration sig
+#again negative relationship with change in air pressure
+#positive relationship with rain duration...
+
+#change in air pressure
+#points with gam dist
+bat.met.hour.other %>%
+	ggplot(aes(x=n.delta.air, 
+			   y=activity))+
+	geom_point(aes(color=jdate))+
+	geom_smooth(method = "gam")+
+	theme_classic()
+
+#glm, no points
+bat.met.hour.other %>%
+	ggplot(aes(x=n.delta.air, 
+			   y=activity))+
+	geom_smooth(method = "glm")+
+	theme_classic()
+
+#rain duration
+#gam, points
+bat.met.hour.other %>%
+	ggplot(aes(x=n.Rain_Duration_s, 
+			   y=activity))+
+	geom_point(aes(color=jdate))+
+	geom_smooth(method = "gam")+
+	theme_classic()
+
+#glm, no points
+bat.met.hour.other %>%
+	ggplot(aes(x=n.Rain_Duration_s, 
+			   y=activity))+
+	geom_smooth(method = "glm")+
+	theme_classic()
 
 
 #MET DATA GRAPHS
