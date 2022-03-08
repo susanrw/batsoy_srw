@@ -381,9 +381,12 @@ bat.met.hour.all<-aggregate(activity~jdate+site+hour+Wind_speed_max_m.s+
 							Rain_Duration_s+delta.air+n.Wind_speed_max_m.s+
 								n.Rain_Duration_s+n.delta.air, data=bat.met.hour, FUN=sum)
 
+#creating column for quadratic term
+bat.met.hour.all$n.wind.max2 = (as.numeric(bat.met.hour.all$n.Wind_speed_max_m.s))^2
+
 bat.met.hour.all$log.act<-log(bat.met.hour.all$activity)
 
-mod.met.all<-glmer.nb(activity~n.Wind_speed_max_m.s+n.Rain_Duration_s+n.delta.air+
+mod.met.all<-glmer.nb(activity~n.delta.air+n.wind.max2+n.Rain_Duration_s+
 					 	+(1|site), dat = bat.met.hour.all, na.action="na.fail")
 Anova(mod.met.all)
 
@@ -408,7 +411,7 @@ bat.met.hour.all %>%
 bat.met.hour.all %>%
 	ggplot(aes(x=delta.air, 
 			   y=activity))+
-	geom_smooth(method = "glm")+
+	geom_smooth(method = "gam")+
 	theme_classic()+
 	labs(x="Change in air pressure (Pa)",
 		 y="Bat activity (average hourly passes)",
@@ -420,7 +423,7 @@ bat.met.hour.all %>%
 	ggplot(aes(x=n.Wind_speed_max_m.s, 
 			   y=activity))+
 	geom_point()+
-	geom_smooth(method = "glm")+
+	geom_smooth(method = "gam")+
 	theme_classic()+
 	labs(x="Wind gust (standardized)",
 		 y="Bat activity",
@@ -430,7 +433,7 @@ bat.met.hour.all %>%
 	ggplot(aes(x=Wind_speed_max_m.s, 
 			   y=activity))+
 	geom_point()+
-	geom_smooth(method = "gam")+
+	geom_smooth(method = "lm", formula = y ~ x + I(x^2))+
 	theme_classic()+
 	labs(x="Wind gust (m/s)",
 		 y="Bat activity (hourly average passes)",
