@@ -59,6 +59,16 @@ plant10.tab
 plant11<-spread(data=plant10, treatment, activity)
 t.test(plant11$D, plant11$U, paired = T)#t=-1.37,df=4,p=0.24
 
+
+ggplot(data=plant10, aes(x=treatment, y=activity))+ 
+	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5)+
+	theme_classic()+
+	labs(x=" ", y="Bat activity (nightly passes)")+
+	theme(text = element_text(size=18))+
+	scale_x_discrete(limits=c("U", "D"),
+					 labels=c("Undamaged", "Damaged"))+
+	stat_summary(fun.data = "mean_se", size=1.5, shape="diamond")
+
 ##GROUPING SPP WITH SIMILAR CALLS----
 {plant2<-plant1
 plant2$sp=as.character(plant2$sp)
