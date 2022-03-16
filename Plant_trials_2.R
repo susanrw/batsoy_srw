@@ -22,6 +22,43 @@ plant1$sp<-as.factor(plant1$sp)
 levels(plant1$sp)
 plant1<-aggregate(activity ~ treatment + sp + trial, dat=plant1, FUN=sum)
 
+plant10<-aggregate(activity ~ treatment + trial, dat=plant1, FUN=sum)
+
+
+#Test for overdispersion function
+overdisp_fun <- function(model) {
+	rdf <- df.residual(model)
+	rp <- residuals(model,type="pearson")
+	Pearson.chisq <- sum(rp^2)
+	prat <- Pearson.chisq/rdf
+	pval <- pchisq(Pearson.chisq, df=rdf, lower.tail=FALSE)
+	c(chisq=Pearson.chisq,ratio=prat,rdf=rdf,p=pval)
+}
+
+test<-glmer(activity~treatment+(1|trial), dat = plant10, family=poisson)
+summary(test)
+overdisp_fun(test)#overdispersed
+shapiro.test(resid(test))#non-normal
+#poisson distribution model=overdispersed with non-normal residuals,
+#so fitting data to negative binomial 
+
+#negative binomial model
+mod.plant<-glmer.nb(activity~treatment+(1|trial), dat = plant10)#isSingular
+Anova(mod.plant)
+#chisq=2.05, p=0.15
+
+plant10.tab <- ddply(plant10, c("treatment"), summarise,
+					 N    = length(activity),
+					 mean = mean(activity),
+					 sd   = sd(activity),
+					 se   = sd / sqrt(N))
+plant10.tab
+
+
+#paired t-test
+plant11<-spread(data=plant10, treatment, activity)
+t.test(plant11$D, plant11$U, paired = T)#t=-1.37,df=4,p=0.24
+
 ##GROUPING SPP WITH SIMILAR CALLS----
 {plant2<-plant1
 plant2$sp=as.character(plant2$sp)
@@ -39,20 +76,10 @@ plant2$sp[plant2$sp=="NYCHUM"]="Other spp."
 plant3<-aggregate(activity ~ treatment + sp + trial, dat=plant2, FUN=sum)
 plant3$log.act<-log(plant3$activity)
 
-#Test for overdispersion function
-overdisp_fun <- function(model) {
-	rdf <- df.residual(model)
-	rp <- residuals(model,type="pearson")
-	Pearson.chisq <- sum(rp^2)
-	prat <- Pearson.chisq/rdf
-	pval <- pchisq(Pearson.chisq, df=rdf, lower.tail=FALSE)
-	c(chisq=Pearson.chisq,ratio=prat,rdf=rdf,p=pval)
-}
-
-test1<-glmer(activity~treatment*sp+(1|trial), dat = plant3,family=poisson)
-summary(test1)
-overdisp_fun(test1)#overdispersed
-shapiro.test(resid(test1))#normal
+test3<-glmer(activity~treatment*sp+(1|trial), dat = plant3,family=poisson)
+summary(test3)
+overdisp_fun(test3)#overdispersed
+shapiro.test(resid(test3))#normal
 
 mod.p<-glmer.nb(activity~treatment*sp+(1|trial), dat = plant3)
 Anova(mod.p)

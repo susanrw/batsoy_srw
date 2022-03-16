@@ -1,3 +1,9 @@
+
+library(dplyr)
+library(lubridate)
+library(BBmisc)
+library(glmmTMB)
+
 # Hourly bat data import and cleaning ------------------------------------------------
 
 
@@ -100,7 +106,6 @@ bat.hour<-select(bat.hour, TIME, HOUR, DATE.12, AUTO.ID., FILES, site)
 
 #insert jdate
 bat.hour$jdate<-NA
-library(lubridate)
 bat.hour$jdate<-yday(bat.hour$DATE.12)
 
 
@@ -108,6 +113,16 @@ bat.hour$jdate<-yday(bat.hour$DATE.12)
 colnames(bat.hour)[4] <- "sp"
 colnames(bat.hour)[5] <- "activity"
 colnames(bat.hour)[2] <- "hour"
+
+#aggregate so hourly bat data is daily
+bat.day<-aggregate(activity ~ jdate, dat=bat.hour, FUN=sum)
+
+#aggregate hourly bat data with all species summed
+bat.hour.all<-aggregate(activity ~ jdate + hour + site, dat=bat.hour, FUN=sum)
+
+#figure out where the zeros are
+#fix<-aggregate(activity~jdate+site+hour,data = bat.hour3, FUN = sum)
+#write.csv(fix, "fix.csv")
 
 ##GROUPING SPECIES----
 {bat.hour2<-bat.hour
@@ -144,7 +159,6 @@ met<-rbind(aug,sep,jun,jul)
 
 met$date<-as.Date(met$date,)
 met$jdate<-NA
-library(lubridate)
 met$jdate<-yday(met$date)
 
 #control field trials 238-252, 255-270 (no detectors out nights of 253&254)
@@ -160,24 +174,12 @@ met6<-rbind(met4,met5)
 
 #aggregate data so it's hourly
 met.hour<-aggregate(cbind(Wind_speed_max_m.s,Wind_speed_avg_m.s,Rain_Accumulation_mm,
-						 Rain_Duration_s,delta.air,Air_Pressure_pascal)~hour + jdate, dat=met6, FUN=mean)
+						 Rain_Duration_s,delta.air,Air_Pressure_pascal,Air_Temperature_C)~hour + jdate, dat=met6, FUN=mean)
 
 #aggregate data so it's daily
 met.day<-aggregate(cbind(Wind_speed_max_m.s,Wind_speed_avg_m.s,Rain_Accumulation_mm,
 					  Rain_Duration_s,delta.air,Air_Pressure_pascal)~jdate, dat=met.hour, FUN=mean)
 
-#aggregate so hourly bat data is daily
-bat.day<-aggregate(activity ~ jdate, dat=bat.hour, FUN=sum)
-
-#aggregate hourly bat data with all species summed
-bat.hour.all<-aggregate(activity ~ jdate + hour + site, dat=bat.hour, FUN=sum)
-
-#figure out where the zeros are
-fix<-aggregate(activity~jdate+site+hour,data = bat.hour3, FUN = sum)
-write.csv(fix, "fix.csv")
-
-
-library(BBmisc)
 ## normalize met vars
 met.hour$n.Wind_speed_max_m.s <- normalize(met.hour$Wind_speed_max_m.s, 
 										   method = "range", range = c(0,1))
@@ -191,10 +193,13 @@ met.hour$n.delta.air <- normalize(met.hour$delta.air,
 										   method = "range", range = c(0,1))
 met.hour$n.Air_Pressure_pascal <- normalize(met.hour$Air_Pressure_pascal, 
 										   method = "range", range = c(0,1))
+met.hour$n.Air_Temperature_C <- normalize(met.hour$Air_Temperature_C, 
+											method = "range", range = c(0,1))
+
 
 ##CHECKING FOR COLINEARITY----
 library(corrplot)
-met1<-met.hour[,c(9:14)]#cat vars
+met1<-met.hour[,c(10:16)]#cat vars
 
 M1 <- cor(met1)#correlation matrix
 corrplot(M1, method = "circle")
@@ -204,13 +209,13 @@ corrplot(M1, method = "number")
 
 
 #combine bat and met data
-bat.met.hour<-merge(met.hour, bat.hour3, by=c("hour","jdate"), all = T)
-bat.met.hour$log.act<-log(bat.met.hour$activity)
+#bat.met.hour<-merge(met.hour, bat.hour.all, by=c("hour","jdate"))
+#bat.met.hour$log.act<-log(bat.met.hour$activity)
 
 #combine species
-bat.met.hour.all<-aggregate(activity~jdate+site+hour+Wind_speed_max_m.s+
-								Rain_Duration_s+delta.air+n.Wind_speed_max_m.s+
-								n.Rain_Duration_s+n.delta.air, data=bat.met.hour, FUN=sum)
+#bat.met.hour.all<-aggregate(activity~jdate+site+hour+Wind_speed_max_m.s+
+								#Rain_Duration_s+delta.air+n.Wind_speed_max_m.s+
+							#	n.Rain_Duration_s+n.delta.air, data=bat.met.hour, FUN=sum)
 
 zero1 <- read.csv(file="hour_zeros_spsum_indiv.csv",head=TRUE)
 zero2 <- read.csv(file="hour_zeros_spsum.csv",head=TRUE)
@@ -218,10 +223,11 @@ zero2 <- read.csv(file="hour_zeros_spsum.csv",head=TRUE)
 bat.hour.all.zeros<-rbind(bat.hour.all, zero1,zero2)
 
 bat.met.hour.zeros<-merge(bat.hour.all, met.hour, by=c("hour","jdate"))
+bat.met.hour.zeros$log.act<-log(bat.met.hour.zeros$activity)
 
 #creating column for quadratic terms
 bat.met.hour.zeros$n.wind.max2 = (as.numeric(bat.met.hour.zeros$n.Wind_speed_max_m.s))^2
-bat.met.hour.zeros$n.rain.dur.2 = (as.numeric(bat.met.hour.zeros$n.Rain_Duration_s))^2
+bat.met.hour.zeros$n.temp = (as.numeric(bat.met.hour.zeros$n.Air_Temperature_C))^2
 
 #analysis
 library(lme4)
@@ -231,8 +237,10 @@ mod.a<-glmer.nb(activity~n.Wind_speed_max_m.s+n.Rain_Duration_s+n.delta.air+
 Anova(mod.a)
 hist(bat.met.hour.zeros$activity)
 
-mod.b<-glmmTMB(activity~n.rain.dur.2+n.delta.air+n.wind.max2+(1|site),
-			   zi=~n.rain.dur.2+n.delta.air+n.wind.max2, 
+mod.b<-glmmTMB(activity~n.delta.air+n.wind.max2+n.Air_Temperature_C+n.Rain_Accumulation_mm+
+			   	(1|site)+(1|jdate),
+			   zi=~n.delta.air+n.wind.max2+n.Air_Temperature_C+n.Rain_Accumulation_mm+
+			   	(1|site)+(1|jdate), 
 			   family = nbinom2, data = bat.met.hour.zeros, na.action = "na.fail")
 Anova(mod.b)
 summary(mod.b)
@@ -255,7 +263,7 @@ bat.met.hour.zeros %>%
 
 
 bat.met.hour.zeros %>%
-	ggplot(aes(x=Wind_speed_avg_m.s, 
+	ggplot(aes(x=Wind_speed_max_m.s, 
 			   y=activity))+
 	geom_point()+
 	geom_smooth(method = "lm", formula = y ~ x + I(x^2))+
@@ -264,39 +272,33 @@ bat.met.hour.zeros %>%
 		 y="Bat activity (hourly passes)")
 
 bat.met.hour.zeros %>%
-	ggplot(aes(x=Rain_Duration_s, 
+	ggplot(aes(x=Wind_speed_max_m.s, 
 			   y=activity))+
 	geom_point()+
-	geom_smooth(method = "lm", formula = y ~ x + I(x^2))+
+	geom_smooth(method = "glm")+
 	theme_classic()+
-	labs(x="Rain duration (s)",
+	labs(x="Wind speed max (m/s)",
 		 y="Bat activity (hourly passes)")
 
-bat.met.hour %>%
+bat.met.hour.zeros %>%
 	ggplot(aes(x=Rain_Accumulation_mm, 
 			   y=activity))+
-	geom_smooth(method = "gam")+
-	theme_classic()
-
-bat.met.hour %>%
-	ggplot(aes(x=n.Rain_Duration_s, 
-			   y=activity))+
-	geom_point(aes(color=jdate))+
-	geom_smooth(method = "gam")+
-	theme_classic()
-
-bat.met.hour %>%
-	ggplot(aes(x=n.Wind_speed_max_m.s, 
-			   y=activity))+
-	geom_point(aes(color=jdate))+
+	geom_point()+
 	geom_smooth(method = "glm")+
-	theme_classic()
+	theme_classic()+
+	labs(x="Rain accumulation (mm)",
+		 y="Bat activity (hourly passes)")
 
-bat.met.hour %>%
-	ggplot(aes(x=n.Wind_speed_max_m.s, 
+
+bat.met.hour.zeros %>%
+	ggplot(aes(x=Air_Temperature_C, 
 			   y=activity))+
+	geom_point(aes(color=hour))+
 	geom_smooth(method = "glm")+
-	theme_classic()
+	theme_classic()+
+	labs(x="Temperature (C)",
+		 y="Bat activity (hourly passes)")
+
 
 #split by species
 bat.met.hour.bb <- bat.met.hour[which(bat.met.hour$sp== 'EPFU/LANO'),]
