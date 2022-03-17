@@ -25,6 +25,21 @@ indole1<-aggregate(activity ~ treatment + sp + jdate + site, dat=indole1, FUN=su
 #data without species-level
 indole10<-aggregate(activity ~ treatment + jdate + site, dat=indole1, FUN=sum)
 
+
+#creating column for quadratic term
+met.day$n.wind.max2 = (as.numeric(met.day$n.Wind_speed_max_m.s))^2
+
+#
+indole.met<-merge(indole10, met.day, by=c("jdate"))
+
+mod.in.met<-glmer.nb(activity~((treatment*n.Rain_Accumulation_mm)
+					 +(treatment*n.Air_Temperature_C)+
+					 	(treatment*n.wind.max2)+(1|site)), dat = indole.met,
+					 na.action="na.fail")
+d.in.met<-dredge(mod.in.met)
+d.in.met.avg<-model.avg(d.in.met, subset=delta<4)
+summary(d.in.met.avg)
+
 #creating log-transformed value for graphs
 indole10$log.act<-log(indole10$activity)
 indole10$log.act[which(!is.finite(indole10$log.act))] <- 0
