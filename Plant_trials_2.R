@@ -22,7 +22,7 @@ plant1$sp<-as.factor(plant1$sp)
 levels(plant1$sp)
 plant1<-aggregate(activity ~ treatment + sp + trial, dat=plant1, FUN=sum)
 
-plant10<-aggregate(activity ~ treatment + trial, dat=plant1, FUN=sum)
+plant10<-aggregate(activity ~ treatment + trial + jdate, dat=plant1, FUN=sum)
 
 
 #Test for overdispersion function
@@ -38,14 +38,13 @@ overdisp_fun <- function(model) {
 test<-glmer(activity~treatment+(1|trial), dat = plant10, family=poisson)
 summary(test)
 overdisp_fun(test)#overdispersed
-shapiro.test(resid(test))#non-normal
 #poisson distribution model=overdispersed with non-normal residuals,
 #so fitting data to negative binomial 
 
 #negative binomial model
-mod.plant<-glmer.nb(activity~treatment+(1|trial), dat = plant10)#isSingular
+mod.plant<-glmer.nb(activity~treatment+(1|trial), dat = plant10)
 Anova(mod.plant)
-#chisq=2.05, p=0.15
+#chisq=2.4452, p=0.1179
 
 plant10.tab <- ddply(plant10, c("treatment"), summarise,
 					 N    = length(activity),

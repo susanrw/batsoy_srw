@@ -115,7 +115,7 @@ colnames(bat.hour)[5] <- "activity"
 colnames(bat.hour)[2] <- "hour"
 
 #aggregate so hourly bat data is daily
-bat.day<-aggregate(activity ~ jdate, dat=bat.hour, FUN=sum)
+bat.day<-aggregate(activity ~ jdate + site, dat=bat.hour, FUN=sum)
 
 #aggregate hourly bat data with all species summed
 bat.hour.all<-aggregate(activity ~ jdate + hour + site, dat=bat.hour, FUN=sum)
@@ -176,10 +176,6 @@ met6<-rbind(met4,met5)
 met.hour<-aggregate(cbind(Wind_speed_max_m.s,Wind_speed_avg_m.s,Rain_Accumulation_mm,
 						 Rain_Duration_s,delta.air,Air_Pressure_pascal,Air_Temperature_C)~hour + jdate, dat=met6, FUN=mean)
 
-#aggregate data so it's daily
-met.day<-aggregate(cbind(Wind_speed_max_m.s,Wind_speed_avg_m.s,Rain_Accumulation_mm,
-					  Rain_Duration_s,delta.air,Air_Pressure_pascal)~jdate, dat=met.hour, FUN=mean)
-
 ## normalize met vars
 met.hour$n.Wind_speed_max_m.s <- normalize(met.hour$Wind_speed_max_m.s, 
 										   method = "range", range = c(0,1))
@@ -196,6 +192,13 @@ met.hour$n.Air_Pressure_pascal <- normalize(met.hour$Air_Pressure_pascal,
 met.hour$n.Air_Temperature_C <- normalize(met.hour$Air_Temperature_C, 
 											method = "range", range = c(0,1))
 
+#aggregate data so it's daily
+met.day<-aggregate(cbind(Wind_speed_max_m.s,Wind_speed_avg_m.s,Rain_Accumulation_mm,
+						 Rain_Duration_s,Air_Temperature_C, n.Rain_Duration_s,
+						 n.Rain_Accumulation_mm,n.Wind_speed_avg_m.s,n.Wind_speed_max_m.s,
+						 n.Air_Temperature_C)~jdate, dat=met.hour, FUN=mean)
+
+
 
 ##CHECKING FOR COLINEARITY----
 library(corrplot)
@@ -208,9 +211,14 @@ corrplot(M1, method = "number")
 #wind max, rain duration
 
 
-#combine bat and met data
-#bat.met.hour<-merge(met.hour, bat.hour.all, by=c("hour","jdate"))
-#bat.met.hour$log.act<-log(bat.met.hour$activity)
+#combine nightly bat and met data
+bat.met.night<-merge(met.day, bat.day, by=c("jdate"))
+bat.met.night$n.wind.max2 = (as.numeric(bat.met.night$n.Wind_speed_max_m.s))^2
+
+mod.night<-glmer.nb(activity~n.Rain_Accumulation_mm+n.Air_Temperature_C+
+						n.wind.max2+(1|site), dat = bat.met.night)
+Anova(mod.night)
+summary(mod.night)
 
 #combine species
 #bat.met.hour.all<-aggregate(activity~jdate+site+hour+Wind_speed_max_m.s+
@@ -225,9 +233,49 @@ bat.hour.all.zeros<-rbind(bat.hour.all, zero1,zero2)
 bat.met.hour.zeros<-merge(bat.hour.all, met.hour, by=c("hour","jdate"))
 bat.met.hour.zeros$log.act<-log(bat.met.hour.zeros$activity)
 
+
+#creating new variables for hour
+bat.met.hour.zeros$n.hour<-NA
+{bat.met.hour.zeros<-bat.met.hour.zeros
+	bat.met.hour.zeros$n.hour[bat.met.hour.zeros$hour=="0"]="0.07"
+	bat.met.hour.zeros$n.hour[bat.met.hour.zeros$hour=="1"]="0.08"
+	bat.met.hour.zeros$n.hour[bat.met.hour.zeros$hour=="2"]="0.09"
+	bat.met.hour.zeros$n.hour[bat.met.hour.zeros$hour=="3"]="0.1"
+	bat.met.hour.zeros$n.hour[bat.met.hour.zeros$hour=="4"]="0.11"
+	bat.met.hour.zeros$n.hour[bat.met.hour.zeros$hour=="5"]="0.12"
+	bat.met.hour.zeros$n.hour[bat.met.hour.zeros$hour=="6"]="0.13"
+	bat.met.hour.zeros$n.hour[bat.met.hour.zeros$hour=="7"]="0.14"
+	bat.met.hour.zeros$n.hour[bat.met.hour.zeros$hour=="18"]="0.01"
+	bat.met.hour.zeros$n.hour[bat.met.hour.zeros$hour=="19"]="0.02"
+	bat.met.hour.zeros$n.hour[bat.met.hour.zeros$hour=="20"]="0.03"
+	bat.met.hour.zeros$n.hour[bat.met.hour.zeros$hour=="21"]="0.04"
+	bat.met.hour.zeros$n.hour[bat.met.hour.zeros$hour=="22"]="0.05"
+	bat.met.hour.zeros$n.hour[bat.met.hour.zeros$hour=="23"]="0.06"
+}
+
 #creating column for quadratic terms
 bat.met.hour.zeros$n.wind.max2 = (as.numeric(bat.met.hour.zeros$n.Wind_speed_max_m.s))^2
 bat.met.hour.zeros$n.temp = (as.numeric(bat.met.hour.zeros$n.Air_Temperature_C))^2
+bat.met.hour.zeros$n.hour<-as.numeric(bat.met.hour.zeros$n.hour)
+bat.met.hour.zeros$n.hour2<-(bat.met.hour.zeros$n.hour)^2
+
+library(DHARMa)
+mod.hour<-glmmTMB(activity~n.hour+(1|site)+(1|jdate),
+				  zi=~n.hour+(1|site)+(1|jdate), 
+				  family = nbinom2, data = bat.met.hour.zeros, na.action = "na.fail")
+res = simulateResiduals(mod.hour)
+res = recalculateResiduals(res, group = bat.met.hour.zeros$n.hour)
+testTemporalAutocorrelation(res, time = unique(bat.met.hour.zeros$n.hour))
+#hour data is temporally autocorrelated
+
+
+mod.night<-glmmTMB(activity~jdate+(1|site),
+				  zi=~jdate+(1|site), 
+				  family = nbinom2, data = bat.met.hour.zeros, na.action = "na.fail")
+res1 = simulateResiduals(mod.night)
+res1 = recalculateResiduals(res, group = bat.met.hour.zeros$jdate)
+testTemporalAutocorrelation(res, time = unique(bat.met.hour.zeros$jdate))
+#nightly data is NOT temporally autocorrelated, is independent 
 
 #analysis
 library(lme4)
@@ -237,13 +285,81 @@ mod.a<-glmer.nb(activity~n.Wind_speed_max_m.s+n.Rain_Duration_s+n.delta.air+
 Anova(mod.a)
 hist(bat.met.hour.zeros$activity)
 
-mod.b<-glmmTMB(activity~n.delta.air+n.wind.max2+n.Air_Temperature_C+n.Rain_Accumulation_mm+
+mod.global<-glmmTMB(activity~n.delta.air+n.wind.max2+n.Air_Temperature_C+n.Rain_Accumulation_mm+n.hour+
 			   	(1|site)+(1|jdate),
-			   zi=~n.delta.air+n.wind.max2+n.Air_Temperature_C+n.Rain_Accumulation_mm+
+			   zi=~n.delta.air+n.wind.max2+n.Air_Temperature_C+n.Rain_Accumulation_mm+n.hour+
 			   	(1|site)+(1|jdate), 
 			   family = nbinom2, data = bat.met.hour.zeros, na.action = "na.fail")
-Anova(mod.b)
-summary(mod.b)
+Anova(mod.global)
+summary(mod.global)
+
+mod.air<-glmmTMB(activity~n.delta.air+(1|site)+(1|jdate),
+			  zi=~n.delta.air+(1|site)+(1|jdate), 
+			  family = nbinom2, data = bat.met.hour.zeros, na.action = "na.fail")
+mod.wind<-glmmTMB(activity~n.Wind_speed_max_m.s+(1|site)+(1|jdate),
+				   zi=~n.Wind_speed_max_m.s+(1|site)+(1|jdate), 
+				   family = nbinom2, data = bat.met.hour.zeros, na.action = "na.fail")
+mod.wind2<-glmmTMB(activity~n.wind.max2+(1|site)+(1|jdate),
+				 zi=~n.wind.max2+(1|site)+(1|jdate), 
+				 family = nbinom2, data = bat.met.hour.zeros, na.action = "na.fail")
+mod.rain<-glmmTMB(activity~n.Rain_Accumulation_mm+(1|site)+(1|jdate),
+				   zi=~n.Rain_Accumulation_mm+(1|site)+(1|jdate), 
+				   family = nbinom2, data = bat.met.hour.zeros, na.action = "na.fail")
+mod.temp<-glmmTMB(activity~n.Air_Temperature_C+(1|site)+(1|jdate),
+				  zi=~n.Air_Temperature_C+(1|site)+(1|jdate), 
+				  family = nbinom2, data = bat.met.hour.zeros, na.action = "na.fail")
+mod.hour<-glmmTMB(activity~n.hour+(1|site)+(1|jdate),
+				  zi=~n.hour+(1|site)+(1|jdate), 
+				  family = nbinom2, data = bat.met.hour.zeros, na.action = "na.fail")
+mod.null<-glmmTMB(activity~1+(1|site)+(1|jdate),
+				  zi=~1+(1|site)+(1|jdate), 
+				  family = nbinom2, data = bat.met.hour.zeros, na.action = "na.fail")
+	
+AIC(mod.global,mod.air,mod.rain,mod.wind,mod.wind2,mod.temp,mod.hour,mod.null)
+
+#creating tabular output
+library(AICcmodavg)
+aictab(cand.set=list(mod.global,mod.air,mod.rain,mod.wind,mod.wind2,mod.temp,mod.hour,mod.null),
+	   modnames=c("global","air","rain","wind","wind2","temp","hour","null"))#AIC table
+
+mod.temp.hour<-glmmTMB(activity~n.temp+n.hour+(1|site)+(1|jdate),
+					   zi=~n.temp+n.hour+(1|site)+(1|jdate), 
+					   family = nbinom2, data = bat.met.hour.zeros, na.action = "na.fail")
+mod.air.hour<-glmmTMB(activity~n.delta.air+n.hour+(1|site)+(1|jdate),
+					  zi=~n.delta.air+n.hour+(1|site)+(1|jdate), 
+					  family = nbinom2, data = bat.met.hour.zeros, na.action = "na.fail")
+
+mod.air.temp.hour<-glmmTMB(activity~n.delta.air+n.hour+n.temp+(1|site)+(1|jdate),
+						   zi=~n.delta.air+n.hour+n.temp+(1|site)+(1|jdate), 
+						   family = nbinom2, data = bat.met.hour.zeros, na.action = "na.fail")
+
+AIC(mod.global,mod.air,mod.rain,mod.wind,mod.wind2,mod.temp,mod.hour,mod.null,mod.temp.hour,mod.air.hour,mod.air.temp.hour)
+
+#creating tabular output
+library(AICcmodavg)
+aictab(cand.set=list(mod.global,mod.air,mod.rain,mod.wind,mod.wind2,mod.temp,mod.hour,mod.null,
+					 mod.temp.hour,mod.air.hour,mod.air.temp.hour),
+	   modnames=c("global","air","rain","wind","wind2","temp","hour","null","temp.hour",
+	   		   "air.hour", "air.temp.hour"))#AIC table
+
+mod.rain.hour<-glmmTMB(activity~n.Rain_Accumulation_mm+n.hour+(1|site)+(1|jdate),
+						   zi=~n.Rain_Accumulation_mm+n.hour+(1|site)+(1|jdate), 
+						   family = nbinom2, data = bat.met.hour.zeros, na.action = "na.fail")
+
+mod.wind2.hour<-glmmTMB(activity~n.wind.max2+n.hour+(1|site)+(1|jdate),
+					   zi=~n.wind.max2+n.hour+(1|site)+(1|jdate), 
+					   family = nbinom2, data = bat.met.hour.zeros, na.action = "na.fail")
+
+#creating tabular output
+library(AICcmodavg)
+aictab(cand.set=list(mod.global,mod.air,mod.rain,mod.wind,mod.wind2,mod.temp,mod.hour,mod.null,
+					 mod.temp.hour,mod.air.hour,mod.air.temp.hour, mod.rain.hour, mod.wind2.hour),
+	   modnames=c("global","air","rain","wind","wind2","temp","hour","null","temp.hour",
+	   		   "air.hour", "air.temp.hour", "rain.hour", "wind2.hour"))#AIC table
+
+mod.avg<-model.avg(c=mod.air.hour, mod.hour, mod.rain.hour,mod.wind2.hour)
+summary(mod.avg)
+#change in air, rain accumulation, and hour have significant negative effects on bat activiy
 
 library(MuMIn)
 da<-dredge(mod.b)
@@ -253,7 +369,7 @@ summary(davg)
 library(ggplot2)
 #graphs
 bat.met.hour.zeros %>%
-	ggplot(aes(x=delta.air, 
+	ggplot(aes(x=hour, 
 			   y=activity))+
 	geom_point()+
 	geom_smooth(method = "glm")+

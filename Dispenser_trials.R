@@ -22,7 +22,52 @@ indole1$sp<-as.factor(indole1$sp)
 levels(indole1$sp)
 indole1<-aggregate(activity ~ treatment + sp + jdate + site, dat=indole1, FUN=sum)
 
-##GROUPING SPECIES----
+#data without species-level
+indole10<-aggregate(activity ~ treatment + jdate + site, dat=indole1, FUN=sum)
+
+#creating log-transformed value for graphs
+indole10$log.act<-log(indole10$activity)
+indole10$log.act[which(!is.finite(indole10$log.act))] <- 0
+
+#Test for overdispersion function
+overdisp_fun <- function(model) {
+	rdf <- df.residual(model)
+	rp <- residuals(model,type="pearson")
+	Pearson.chisq <- sum(rp^2)
+	prat <- Pearson.chisq/rdf
+	pval <- pchisq(Pearson.chisq, df=rdf, lower.tail=FALSE)
+	c(chisq=Pearson.chisq,ratio=prat,rdf=rdf,p=pval)
+}
+
+test.in<-glmer(activity~treatment+(1|site), dat = indole10,family=poisson)
+summary(test.in)
+shapiro.test(resid(test.in))#non-normal
+overdisp_fun(test.in)#overdispersed
+
+mod.in<-glmer.nb(activity~treatment+(1|site), dat = indole10)
+Anova(mod.in)
+#treatment chi=2.2635 p=0.1325
+
+#table
+in10.tab <- ddply(indole10, c("treatment"), summarise,
+					 N    = length(activity),
+					 mean = mean(activity),
+					 sd   = sd(activity),
+					 se   = sd / sqrt(N))
+in10.tab
+
+#graph
+ggplot(data=indole10, aes(x=treatment, y=activity))+ 
+	geom_boxplot(outlier.shape = NA)+
+	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5)+
+	theme_classic()+
+	labs(x=" ", y="Relative activity (nightly passes)",
+		 title = "Indole trials")+
+	theme(text = element_text(size=15))+
+	stat_summary(fun.data = "mean_se", size=1.5, shape="diamond", color="#d9a9f6")
+
+
+##GROUPING SPECIES INDOLE----
 {indole2<-indole1
 indole2$sp=as.character(indole2$sp)
 indole2$sp[indole2$sp=="EPTFUS"]="EPFU/LANO"
@@ -42,19 +87,9 @@ indole3$log.act[which(!is.finite(indole3$log.act))] <- 0
 
 #indole3<-indole3[order(indole3$sp),]
 
-test.i<-glmer(activity~treatment*sp+(1|jdate), dat = indole3,family=poisson)
+test.i<-glmer(activity~treatment*sp+(1|site), dat = indole3,family=poisson)
 summary(test.i)
 shapiro.test(resid(test.i))#non-normal
-
-#Test for overdispersion function
-overdisp_fun <- function(model) {
-	rdf <- df.residual(model)
-	rp <- residuals(model,type="pearson")
-	Pearson.chisq <- sum(rp^2)
-	prat <- Pearson.chisq/rdf
-	pval <- pchisq(Pearson.chisq, df=rdf, lower.tail=FALSE)
-	c(chisq=Pearson.chisq,ratio=prat,rdf=rdf,p=pval)
-}
 
 overdisp_fun(test.i)#overdispersed
 
@@ -188,6 +223,40 @@ farn1<-farn %>% gather(sp, activity, EPTFUS:NOID)
 farn1$sp<-as.factor(farn1$sp)
 levels(farn1$sp)
 farn1<-aggregate(activity ~ treatment + sp + jdate + site, dat=farn1, FUN=sum)
+
+#not species-level
+farn10<-aggregate(activity ~ treatment + jdate + site, dat=farn1, FUN=sum)
+
+#creating log-transformed value for graphs
+farn10$log.act<-log(farn10$activity)
+farn10$log.act[which(!is.finite(farn10$log.act))] <- 0
+
+test.farn<-glmer(activity~treatment+(1|site), dat = farn10,family=poisson)
+summary(test.farn)
+shapiro.test(resid(test.farn))#non-normal
+overdisp_fun(test.farn)#overdispersed
+
+mod.farn<-glmer.nb(activity~treatment+(1|site), dat = farn10)
+Anova(mod.farn)
+#treatment chi=0.398 p=0.5281
+
+#table
+farn10.tab <- ddply(farn10, c("treatment"), summarise,
+				  N    = length(activity),
+				  mean = mean(activity),
+				  sd   = sd(activity),
+				  se   = sd / sqrt(N))
+farn10.tab
+
+#graph
+ggplot(data=farn10, aes(x=treatment, y=activity))+ 
+	geom_boxplot(outlier.shape = NA)+
+	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5)+
+	theme_classic()+
+	labs(x=" ", y="Relative activity (nightly passes)",
+		 title = "Farnesene trials")+
+	theme(text = element_text(size=15))+
+	stat_summary(fun.data = "mean_se", size=1.5, shape="diamond", color="#d9a9f6")
 
 ##GROUPING SPECIES----
 {farn2<-farn1
@@ -418,7 +487,7 @@ ggplot(data=dis.all.control, aes(x=sp, y=log.act))+
 
 ###BIG BROWN DATA----
 ##INDOLE BIG BROWN ONLY---
-brown.ind <- indole2[which(indole2$sp== 'EPFU/LANO'),]
+	brown.ind <- indole2[which(indole2$sp== 'EPFU/LANO'),]
 
 test3.ind<-glmer(activity~treatment+(1|jdate), dat = brown.ind,family=poisson)
 shapiro.test(resid(test3.ind))#normal
