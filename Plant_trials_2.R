@@ -46,6 +46,10 @@ mod.plant<-glmer.nb(activity~treatment+(1|trial), dat = plant10)
 Anova(mod.plant)
 #chisq=2.4452, p=0.1179
 
+plant.met<-merge(plant10, met.day, by=c("jdate"))
+
+mod.plant.met<-glmer.nb(activity~treatment*+(1|trial), dat = plant10)
+
 plant10.tab <- ddply(plant10, c("treatment"), summarise,
 					 N    = length(activity),
 					 mean = mean(activity),
