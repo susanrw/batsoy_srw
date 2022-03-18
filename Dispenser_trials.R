@@ -25,20 +25,80 @@ indole1<-aggregate(activity ~ treatment + sp + jdate + site, dat=indole1, FUN=su
 #data without species-level
 indole10<-aggregate(activity ~ treatment + jdate + site, dat=indole1, FUN=sum)
 
-
-#creating column for quadratic term
+#creating column for quadratic terms
 met.day$n.wind.max2 = (as.numeric(met.day$n.Wind_speed_max_m.s))^2
+met.day$n.wind.avg2 = (as.numeric(met.day$n.Wind_speed_avg_m.s))^2
 
-#
-indole.met<-merge(indole10, met.day, by=c("jdate"))
+indole.met<-merge(indole10, met.day, by="jdate")
 
-mod.in.met<-glmer.nb(activity~((treatment*n.Rain_Accumulation_mm)
-					 +(treatment*n.Air_Temperature_C)+
-					 	(treatment*n.wind.max2)+(1|site)), dat = indole.met,
+#interaction pair model
+mod.in.met<-glmer.nb(activity~((treatment*n.Air_Temperature_C)+(treatment*n.rh_pct)+
+					 	(treatment*n.wind.avg2)+(treatment*n.Rain_Duration_s)+(1|site)), dat = indole.met,
 					 na.action="na.fail")
+Anova(mod.in.met)
+
 d.in.met<-dredge(mod.in.met)
 d.in.met.avg<-model.avg(d.in.met, subset=delta<4)
 summary(d.in.met.avg)
+
+
+#interaction models
+mod.in.met.treat.rain<-glmer.nb(activity~((treatment*n.Rain_Duration_s)+(1|site)), 
+								dat = indole.met, na.action="na.fail")
+mod.in.met.treat.wind2<-glmer.nb(activity~((treatment*n.wind.avg2)+(1|site)), 
+								dat = indole.met, na.action="na.fail")
+mod.in.met.treat.temp<-glmer.nb(activity~((treatment*n.Air_Temperature_C)+(1|site)), 
+								dat = indole.met, na.action="na.fail")
+mod.in.met.treat.rh<-glmer.nb(activity~((treatment*n.rh_pct)+(1|site)), 
+								dat = indole.met, na.action="na.fail")
+
+#univariate models
+mod.in.met.treat<-glmer.nb(activity~(treatment+(1|site)), 
+								dat = indole.met, na.action="na.fail")
+mod.in.met.rain<-glmer.nb(activity~(n.Rain_Duration_s+(1|site)), 
+								dat = indole.met, na.action="na.fail")
+mod.in.met.wind2<-glmer.nb(activity~(n.wind.avg2+(1|site)), 
+						  dat = indole.met, na.action="na.fail")
+mod.in.met.temp<-glmer.nb(activity~(n.Air_Temperature_C+(1|site)), 
+						  dat = indole.met, na.action="na.fail")
+mod.in.met.rh<-glmer.nb(activity~(n.rh_pct+(1|site)), 
+							  dat = indole.met, na.action="na.fail")
+
+mod.in.met.null<-glmer.nb(activity~(1+(1|site)), 
+						  dat = indole.met, na.action="na.fail")
+
+#creating tabular output
+library(AICcmodavg)
+aictab(cand.set=list(mod.in.met,mod.in.met.treat.rain,mod.in.met.treat.wind2,mod.in.met.treat.temp,mod.in.met.treat.rh,
+					 mod.in.met.treat,mod.in.met.rain,mod.in.met.temp,mod.in.met.wind2,mod.in.met.rh,mod.in.met.null),
+	   modnames=c("global","treat*rain","treat*wind2","treat*temp","treat*rh",
+	   		   "treat","rain","temp","wind2","rh","null"))#AIC table
+
+Anova(mod.in.met)
+
+indole.met %>%
+	ggplot(aes(x=Wind_speed_avg_m.s, 
+			   y=activity))+
+	geom_point()+
+	geom_smooth(method = "lm", formula = y ~ x + I(x^2))+
+	theme_classic()+
+	labs(x="Average nightly wind speed (m/s)",
+		 y="Bat activity (nightly passes)")
+
+indole.met$rain.dur.min<-NA
+indole.met$rain.dur.min<-(indole.met$Rain_Duration_s)/60
+
+indole.met$rain.dur.hr<-NA
+indole.met$rain.dur.hr<-((indole.met$Rain_Duration_s)/60)/60
+
+indole.met %>%
+	ggplot(aes(x=rain.dur.hr, 
+			   y=activity))+
+	geom_point()+
+	geom_smooth(method = "glm")+
+	theme_classic()+
+	labs(x="Total nightly rain duration (min)",
+		 y="Bat activity (nightly passes)")
 
 #creating log-transformed value for graphs
 indole10$log.act<-log(indole10$activity)

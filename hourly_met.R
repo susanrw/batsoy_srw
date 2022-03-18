@@ -176,7 +176,7 @@ met6<-rbind(met4,met5)
 met.hour<-aggregate(cbind(Wind_speed_max_m.s,Wind_speed_avg_m.s,Rain_Accumulation_mm,
 						 Rain_Duration_s,delta.air,Air_Pressure_pascal,Air_Temperature_C)~hour + jdate, dat=met6, FUN=mean)
 
-## normalize met vars
+## normalize met vars-hourly
 met.hour$n.Wind_speed_max_m.s <- normalize(met.hour$Wind_speed_max_m.s, 
 										   method = "range", range = c(0,1))
 met.hour$n.Wind_speed_avg_m.s <- normalize(met.hour$Wind_speed_avg_m.s, 
@@ -193,12 +193,30 @@ met.hour$n.Air_Temperature_C <- normalize(met.hour$Air_Temperature_C,
 											method = "range", range = c(0,1))
 
 #aggregate data so it's daily
-met.day<-aggregate(cbind(Wind_speed_max_m.s,Wind_speed_avg_m.s,Rain_Accumulation_mm,
-						 Rain_Duration_s,Air_Temperature_C, n.Rain_Duration_s,
-						 n.Rain_Accumulation_mm,n.Wind_speed_avg_m.s,n.Wind_speed_max_m.s,
-						 n.Air_Temperature_C)~jdate, dat=met.hour, FUN=mean)
+met.day1<-aggregate(cbind(Wind_speed_max_m.s,Wind_speed_avg_m.s,Air_Temperature_C,Relative_Humidity_pct)~jdate, dat=met6, FUN=mean)
+met.day2<-aggregate(cbind(Rain_Accumulation_mm, Rain_Duration_s)~jdate, dat=met6, FUN=sum)
+
+met.day<-cbind(met.day1,met.day2)
+#remove second jdate col
+met.day<-met.day[,-6]
+
+met.day$Rain_Accumulation_mm<-as.numeric(met.day$Rain_Accumulation_mm)
 
 
+## normalize met vars-daily
+met.day$n.Wind_speed_max_m.s <- normalize(met.day$Wind_speed_max_m.s, 
+										   method = "range", range = c(0,1))
+met.day$n.Wind_speed_avg_m.s <- normalize(met.day$Wind_speed_avg_m.s, 
+										   method = "range", range = c(0,1))
+met.day$n.Rain_Accumulation_mm <- normalize(met.day$Rain_Accumulation_mm, 
+											 method = "range", range = c(0,1))
+met.day$n.Rain_Duration_s <- normalize(met.day$Rain_Duration_s, 
+										method = "range", range = c(0,1))
+met.day$n.Air_Temperature_C <- normalize(met.day$Air_Temperature_C, 
+										  method = "range", range = c(0,1))
+met.day$n.rh_pct <- normalize(met.day$Relative_Humidity_pct, 
+										 method = "range", range = c(0,1))
+met.day$n.Rain_Accumulation_mm<-as.numeric(met.day$n.Rain_Accumulation_mm)
 
 ##CHECKING FOR COLINEARITY----
 library(corrplot)
