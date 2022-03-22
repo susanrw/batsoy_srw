@@ -26,10 +26,10 @@ indole1<-aggregate(activity ~ treatment + sp + jdate + site, dat=indole1, FUN=su
 indole10<-aggregate(activity ~ treatment + jdate + site, dat=indole1, FUN=sum)
 
 #creating column for quadratic terms
-met.day$n.wind.max2 = (as.numeric(met.day$n.Wind_speed_max_m.s))^2
-met.day$n.wind.avg2 = (as.numeric(met.day$n.Wind_speed_avg_m.s))^2
+met.day.d$n.wind.max2 = (as.numeric(met.day.d$n.Wind_speed_max_m.s))^2
+met.day.d$n.wind.avg2 = (as.numeric(met.day.d$n.Wind_speed_avg_m.s))^2
 
-indole.met<-merge(indole10, met.day, by="jdate")
+indole.met<-merge(indole10, met.day.d, by="jdate")
 
 #interaction pair model
 mod.in.met<-glmer.nb(activity~((treatment*n.Air_Temperature_C)+(treatment*n.rh_pct)+
@@ -37,6 +37,7 @@ mod.in.met<-glmer.nb(activity~((treatment*n.Air_Temperature_C)+(treatment*n.rh_p
 					 na.action="na.fail")
 Anova(mod.in.met)
 
+library(MuMIn)
 d.in.met<-dredge(mod.in.met)
 d.in.met.avg<-model.avg(d.in.met, subset=delta<4)
 summary(d.in.met.avg)
