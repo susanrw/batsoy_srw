@@ -20,7 +20,7 @@ plant[, 3:11][is.na(plant[, 3:11])] <- 0
 plant1<-plant %>% gather(sp, activity, EPTFUS:NOID)
 plant1$sp<-as.factor(plant1$sp)
 levels(plant1$sp)
-plant1<-aggregate(activity ~ treatment + sp + trial, dat=plant1, FUN=sum)
+plant1<-aggregate(activity ~ treatment + sp + trial + jdate, dat=plant1, FUN=sum)
 
 plant10<-aggregate(activity ~ treatment + trial + jdate, dat=plant1, FUN=sum)
 

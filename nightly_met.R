@@ -143,9 +143,18 @@ mod.in<-glmer.nb((activity~treatment+(1|site)), dat = indole.met,
 Anova(mod.in)
 
 #weather model
-mod.in.weather<-glmer.nb(activity~(n.Air_Temperature_C+n.rh_pct+n.wind.avg2+n.Rain_Duration_s+(1|site)), dat = indole.met,
+mod.in.weather<-glmer.nb(activity~(n.Air_Temperature_C+n.rh_pct+n.wind.avg2+n.Rain_Duration_s+(1|site)), 
+						 dat = met.day.d,
 						 na.action="na.fail")
 Anova(mod.in.weather)
+
+#prediction plot
+indole.met$yhat<-predict(mod.in.weather)
+predplot<-ggplot(indole.met)+
+	geom_point(aes(x=n.Rain_Duration_s, y=activity))+
+	geom_point(aes(x=n.Rain_Duration_s, y=yhat), color="red", size=2)+
+	geom_line(aes(x=n.Rain_Duration_s, y=yhat) ,color="red", size=1)
+predplot
 
 #interaction pair model
 mod.in.met<-glmer.nb(activity~((treatment*n.Air_Temperature_C)+(treatment*n.rh_pct)+
@@ -197,7 +206,7 @@ indole.met %>%
 	ggplot(aes(x=Wind_speed_avg_m.s, 
 			   y=activity))+
 	geom_point()+
-	geom_smooth(method = "lm", formula = y ~ x + I(x^2))+
+	geom_smooth(method = "glm.nb", formula = y ~ x + I(x^2))+
 	theme_classic()+
 	labs(x="Average nightly wind speed (m/s)",
 		 y="Bat activity (nightly passes)")
@@ -208,11 +217,12 @@ indole.met$rain.dur.min<-(indole.met$Rain_Duration_s)/60
 indole.met$rain.dur.hr<-NA
 indole.met$rain.dur.hr<-((indole.met$Rain_Duration_s)/60)/60
 
+library(MASS)
 indole.met %>%
-	ggplot(aes(x=rain.dur.hr, 
+	ggplot(aes(x=rain.dur.min, 
 			   y=activity))+
 	geom_point()+
-	geom_smooth(method = "glm")+
+	geom_smooth(method = "glm.nb")+
 	theme_classic()+
 	labs(x="Total nightly rain duration (min)",
 		 y="Bat activity (nightly passes)")
