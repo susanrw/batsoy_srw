@@ -168,10 +168,17 @@ met.hour<-aggregate(cbind(Wind_speed_max_m.s,Wind_speed_avg_m.s,
 #create log-transformed rain var
 met.hour$rain.log<-log((met.hour$Rain_Duration_s+0.001))
 
+#ordering data
 met.hour<-met.hour[order(met.hour$jdate, met.hour$hour),]
 
+#creating hourly change in air pressure var
 met.hour$air2<-lag(met.hour$Air_Pressure_pascal, k=1)
 met.hour$delta.air2<-met.hour$Air_Pressure_pascal-met.hour$air2
+
+#creating quad term for avg wind and rh
+bat.met.hour$wind.avg2 <- (as.numeric(bat.met.hour$Wind_speed_avg_m.s))^2
+bat.met.hour$rh2 <- (as.numeric(bat.met.hour$Relative_Humidity_pct))^2
+
 
 ##CHECKING FOR COLINEARITY----
 library(corrplot)
@@ -188,16 +195,71 @@ bat.met.hour<-merge(bat.hour.all2, met.hour, by=c("hour","jdate"))
 library(MASS)
 library(car)
 bat.met.hour[is.na(bat.met.hour)]<-0
-mod1<-glm.nb(activity~Wind_speed_max_m.s+rain.log+delta.air2+
-			   	Relative_Humidity_pct +Air_Pressure_pascal+
+mod1<-glm(activity~wind.avg2+rain.log+delta.air2+
+			   	rh2 +Air_Pressure_pascal+
 			 	Air_Temperature_C + delta.air +  act2, dat = bat.met.hour, na.action="na.fail")
+summary(mod1)#rh, temp, AR
 Anova(mod1)
-summary(mod1)
+shapiro.test(resid(mod1))#not normal
 
 library(MuMIn)
 d1<-dredge(mod1)
-davg1<-model.avg(d1, subset=delta<3)
+davg1<-model.avg(d1, subset=delta<4)
 summary(davg1)
+
+summary(lm(bat.met.hour$activity~bat.met.hour$act2))
+summary(lm(bat.met.hour$activity~bat.met.hour$Relative_Humidity_pct))
+summary(lm(bat.met.hour$activity~bat.met.hour$Air_Temperature_C))
+
+library(ggplot2)
+#graphs
+bat.met.hour%>%
+	ggplot(aes(x=act2, 
+			   y=activity))+
+	geom_point()+
+	geom_smooth(method = "glm")+
+	theme_classic()+
+	labs(x="AR term",
+		 y="Bat activity (average hourly passes)")
+
+bat.met.hour%>%
+	ggplot(aes(x=Air_Temperature_C, 
+			   y=activity))+
+	geom_point()+
+	geom_smooth(method = "glm")+
+	theme_classic()+
+	labs(x="Air temp (C)",
+		 y="Bat activity (average hourly passes)")
+
+bat.met.hour%>%
+	ggplot(aes(x=rh2, 
+			   y=activity))+
+	geom_point()+
+	geom_smooth(method = "lm", formula = y ~ x + I(x^2))+
+	theme_classic()+
+	labs(x="Relative humidity",
+		 y="Bat activity (average hourly passes)")
+
+bat.met.hour%>%
+	ggplot(aes(x=Relative_Humidity_pct, 
+			   y=activity))+
+	geom_point()+
+	geom_smooth(method = "glm")+
+	theme_classic()+
+	labs(x="% Relative humidity",
+		 y="Bat activity (average hourly passes)")
+
+bat.met.hour%>%
+	ggplot(aes(x=Wind_speed_avg_m.s, 
+			   y=activity))+
+	geom_point()+
+	geom_smooth(method = "glm")+
+	theme_classic()+
+	labs(x="Avg wind speed (m/s)",
+		 y="Bat activity (average hourly passes)")
+
+
+###other stuff----
 
 
 ## normalize met vars-hourly
