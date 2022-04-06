@@ -100,54 +100,41 @@ bat.hour <- rbind(ind1,ind2,ind3,ind4,ind5,ind6,ind7,ind8,ind9,ind10,
 bat.hour<-bat.hour[bat.hour$AUTO.ID. != "Noise", ]  
 
 #select columns
-bat.hour<-select(bat.hour, TIME, HOUR, DATE.12, AUTO.ID., FILES, site)
+bat.hour<-select(bat.hour, TIME, HOUR, DATE, AUTO.ID., FILES)
+#using regular date to match with met data
 
 #bat.hour$DATE.12 <- format(as.Date(bat.hour$DATE.12, format = "%m/%d/%y"), "%m-%d-%y")
 
 #insert jdate
 bat.hour$jdate<-NA
-bat.hour$jdate<-yday(bat.hour$DATE.12)
+bat.hour$jdate<-yday(bat.hour$DATE)
 
 
 #renaming columns
+colnames(bat.hour)[2] <- "hour"
 colnames(bat.hour)[4] <- "sp"
 colnames(bat.hour)[5] <- "activity"
-colnames(bat.hour)[2] <- "hour"
+
 
 #aggregate so hourly bat data is daily
-bat.day<-aggregate(activity ~ jdate + site, dat=bat.hour, FUN=sum)
+bat.day<-aggregate(activity ~ jdate, dat=bat.hour, FUN=sum)
 
 #aggregate hourly bat data with all species summed
-bat.hour.all<-aggregate(activity ~ jdate + hour + site, dat=bat.hour, FUN=sum)
+bat.hour.all<-aggregate(activity ~ jdate + hour, dat=bat.hour, FUN=sum)
+zeros <- read.csv(file="zero_all.csv",head=TRUE)
+
+bat.hour.all2<-rbind(bat.hour.all, zeros)
 
 #figure out where the zeros are
-#fix<-aggregate(activity~jdate+site+hour,data = bat.hour3, FUN = sum)
-#write.csv(fix, "fix.csv")
-
-##GROUPING SPECIES----
-{bat.hour2<-bat.hour
-bat.hour2$sp=as.character(bat.hour2$sp)
-bat.hour2$sp[bat.hour2$sp=="EPTFUS"]="EPFU/LANO"
-bat.hour2$sp[bat.hour2$sp=="LASNOC"]="EPFU/LANO"
-bat.hour2$sp[bat.hour2$sp=="LASBOR"]="LABO/LASE"
-bat.hour2$sp[bat.hour2$sp=="LASSEM"]="LABO/LASE"
-bat.hour2$sp[bat.hour2$sp=="LASCIN"]="Other spp."
-bat.hour2$sp[bat.hour2$sp=="MYOLUC"]="Other spp."
-bat.hour2$sp[bat.hour2$sp=="PERSUB"]="Other spp."
-bat.hour2$sp[bat.hour2$sp=="NOID"]="No ID"
-bat.hour2$sp[bat.hour2$sp=="NYCHUM"]="Other spp."
-bat.hour2$sp[bat.hour2$sp=="MYOSEP"]="Other spp."
-bat.hour2$sp[bat.hour2$sp=="MYOSOD"]="Other spp."
-}
-
-bat.hour3<-aggregate(activity ~ jdate + sp + site + hour, data=bat.hour2, FUN=sum)
+#write.csv(bat.hour.all, "fix2.csv")
 
 
-ddply(bat.hour3, c("hour"), summarise,
-	  N    = length(activity),
-	  mean = mean(activity),
-	  sd   = sd(activity),
-	  se   = sd / sqrt(N))
+bat.hour.all2<-bat.hour.all2[order(bat.hour.all2$jdate, bat.hour.all2$hour),]
+
+library(stats)
+acf(bat.hour.all2$activity, type = "correlation")
+
+bat.hour.all2$act2<-lag(bat.hour.all2$activity, k=1)
 
 ##SERC met data----
 aug <- read.csv(file="SERC_TOWER_aug2021.csv",head=TRUE)
@@ -167,14 +154,50 @@ met2 <- met%>% filter( between(jdate, 255, 270))
 met3<-rbind(met1,met2)
 
 #filtering for hours bats were active, recorders active (6p-7a)
-met4<-met3%>%filter(between(hour, 0,7))
-met5<-met3%>%filter(between(hour, 18,23))
+met4<-met3%>%filter(between(hour, 0,6))
+met5<-met3%>%filter(between(hour, 19,23))
 
 met6<-rbind(met4,met5)
 
 #aggregate data so it's hourly
-met.hour<-aggregate(cbind(Wind_speed_max_m.s,Wind_speed_avg_m.s,Rain_Accumulation_mm,
-						 Rain_Duration_s,delta.air,Air_Pressure_pascal,Air_Temperature_C)~hour + jdate, dat=met6, FUN=mean)
+met.hour<-aggregate(cbind(Wind_speed_max_m.s,Wind_speed_avg_m.s,
+						  Rain_Accumulation_mm,Rain_Duration_s,
+						  delta.air,Air_Pressure_pascal,
+						  Air_Temperature_C, Relative_Humidity_pct)~hour + jdate, dat=met6, FUN=mean)
+#create log-transformed rain var
+met.hour$rain.log<-log((met.hour$Rain_Duration_s+0.001))
+
+met.hour<-met.hour[order(met.hour$jdate, met.hour$hour),]
+
+met.hour$air2<-lag(met.hour$Air_Pressure_pascal, k=1)
+met.hour$delta.air2<-met.hour$Air_Pressure_pascal-met.hour$air2
+
+##CHECKING FOR COLINEARITY----
+library(corrplot)
+met1<-met.hour[,c(3:13)]
+
+M1 <- cor(met1)#correlation matrix
+corrplot(M1, method = "circle")
+corrplot(M1, method = "number")
+#need to choose between rain and wind variables
+#wind max, rain duration
+
+bat.met.hour<-merge(bat.hour.all2, met.hour, by=c("hour","jdate"))
+
+library(MASS)
+library(car)
+bat.met.hour[is.na(bat.met.hour)]<-0
+mod1<-glm.nb(activity~Wind_speed_max_m.s+rain.log+delta.air2+
+			   	Relative_Humidity_pct + act2 + Air_Pressure_pascal+
+			 	Air_Temperature_C + delta.air, dat = bat.met.hour, na.action="na.fail")
+Anova(mod1)
+summary(mod1)
+
+library(MuMIn)
+d1<-dredge(mod1)
+davg1<-model.avg(d1, subset=delta<3)
+summary(davg1)
+
 
 ## normalize met vars-hourly
 met.hour$n.Wind_speed_max_m.s <- normalize(met.hour$Wind_speed_max_m.s, 
@@ -218,15 +241,7 @@ met.day$n.rh_pct <- normalize(met.day$Relative_Humidity_pct,
 										 method = "range", range = c(0,1))
 met.day$n.Rain_Accumulation_mm<-as.numeric(met.day$n.Rain_Accumulation_mm)
 
-##CHECKING FOR COLINEARITY----
-library(corrplot)
-met1<-met.hour[,c(10:16)]#cat vars
 
-M1 <- cor(met1)#correlation matrix
-corrplot(M1, method = "circle")
-corrplot(M1, method = "number")
-#need to choose between rain and wind variables
-#wind max, rain duration
 
 
 #combine nightly bat and met data
