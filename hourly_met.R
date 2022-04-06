@@ -165,8 +165,7 @@ met.hour<-aggregate(cbind(Wind_speed_max_m.s,Wind_speed_avg_m.s,
 						  Rain_Accumulation_mm,Rain_Duration_s,
 						  delta.air,Air_Pressure_pascal,
 						  Air_Temperature_C, Relative_Humidity_pct)~hour + jdate, dat=met6, FUN=mean)
-#create log-transformed rain var
-met.hour$rain.log<-log((met.hour$Rain_Duration_s+0.001))
+#create log-transformed rain var 
 
 #ordering data
 met.hour<-met.hour[order(met.hour$jdate, met.hour$hour),]
@@ -176,8 +175,8 @@ met.hour$air2<-lag(met.hour$Air_Pressure_pascal, k=1)
 met.hour$delta.air2<-met.hour$Air_Pressure_pascal-met.hour$air2
 
 #creating quad term for avg wind and rh
-bat.met.hour$wind.avg2 <- (as.numeric(bat.met.hour$Wind_speed_avg_m.s))^2
-bat.met.hour$rh2 <- (as.numeric(bat.met.hour$Relative_Humidity_pct))^2
+met.hour$wind.avg2 <- (as.numeric(met.hour$Wind_speed_avg_m.s))^2
+met.hour$rh2 <- (as.numeric(met.hour$Relative_Humidity_pct))^2
 
 
 ##CHECKING FOR COLINEARITY----
@@ -250,7 +249,7 @@ bat.met.hour%>%
 		 y="Bat activity (average hourly passes)")
 
 bat.met.hour%>%
-	ggplot(aes(x=Wind_speed_avg_m.s, 
+	ggplot(aes(x=delta.air2, 
 			   y=activity))+
 	geom_point()+
 	geom_smooth(method = "glm")+
