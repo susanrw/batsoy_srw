@@ -137,6 +137,16 @@ acf(bat.hour.all2$activity, type = "correlation")
 
 bat.hour.all2$act2<-lag(bat.hour.all2$activity, k=1)
 
+#add NAs to the beginning of each night
+bat.hour.all2<-bat.hour.all2[order(bat.hour.all2$hour, bat.hour.all2$jdate),]
+#jdate 258, 259, 262, 264, 266 have 18s
+#rows 226-243, 246-247,249,251-256=0
+
+bat.hour.all2$act2[c(226:243, 246,247,249,251:256)]<-0
+
+bat.hour.all2$act2<-(bat.hour.all2$act2)+0.01
+bat.hour.all2$activity<-(bat.hour.all2$activity)+0.01
+
 ##SERC met data----
 aug <- read.csv(file="SERC_TOWER_aug2021.csv",head=TRUE)
 sep <- read.csv(file="SERC_TOWER_sep2021.csv",head=TRUE)
@@ -178,10 +188,14 @@ met.hour$delta.air2<-met.hour$Air_Pressure_pascal-met.hour$air2
 met.hour$wind.avg2 <- (as.numeric(met.hour$Wind_speed_avg_m.s))^2
 met.hour$rh2 <- (as.numeric(met.hour$Relative_Humidity_pct))^2
 
+met.hour$rain.log<-log((met.hour$Rain_Duration_s)+0.01)
+met.hour$rh2<-log(met.hour$Relative_Humidity_pct)
+
 
 ##CHECKING FOR COLINEARITY----
 library(corrplot)
-met1<-met.hour[,c(3:13)]
+met1<-met.hour[,c(5:15)]
+met.hour[is.na(met.hour)]<-0
 
 M1 <- cor(met1)#correlation matrix
 corrplot(M1, method = "circle")
@@ -191,12 +205,14 @@ corrplot(M1, method = "number")
 
 bat.met.hour<-merge(bat.hour.all2, met.hour, by=c("hour","jdate"))
 
+#write.csv(bat.met.hour, "bat.met.hour.csv")
+
 library(MASS)
 library(car)
 bat.met.hour[is.na(bat.met.hour)]<-0
-mod1<-glm(activity~wind.avg2+rain.log+delta.air2+
-			   	rh2 +Air_Pressure_pascal+
-			 	Air_Temperature_C + delta.air +  act2, dat = bat.met.hour, na.action="na.fail")
+mod1<-glm(activity~wind.avg2+rain.log+Air_Pressure_pascal+
+			   	rh2 + Air_Temperature_C + delta.air + act2, dat = bat.met.hour,
+		  family = Gamma(link=log))
 summary(mod1)#rh, temp, AR
 Anova(mod1)
 shapiro.test(resid(mod1))#not normal
@@ -231,7 +247,7 @@ bat.met.hour%>%
 		 y="Bat activity (average hourly passes)")
 
 bat.met.hour%>%
-	ggplot(aes(x=rh2, 
+	ggplot(aes(x=delta.air2, 
 			   y=activity))+
 	geom_point()+
 	geom_smooth(method = "lm", formula = y ~ x + I(x^2))+
@@ -254,7 +270,7 @@ bat.met.hour%>%
 	geom_point()+
 	geom_smooth(method = "glm")+
 	theme_classic()+
-	labs(x="Avg wind speed (m/s)",
+	labs(x="Average change in hourly air pressure",
 		 y="Bat activity (average hourly passes)")
 
 
