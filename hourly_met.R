@@ -100,7 +100,7 @@ bat.hour <- rbind(ind1,ind2,ind3,ind4,ind5,ind6,ind7,ind8,ind9,ind10,
 bat.hour<-bat.hour[bat.hour$AUTO.ID. != "Noise", ]  
 
 #select columns
-bat.hour<-select(bat.hour, TIME, HOUR, DATE, AUTO.ID., FILES)
+bat.hour<-select(bat.hour, TIME, HOUR, DATE, AUTO.ID., FILES, site)
 #using regular date to match with met data
 
 #bat.hour$DATE.12 <- format(as.Date(bat.hour$DATE.12, format = "%m/%d/%y"), "%m-%d-%y")
@@ -120,10 +120,11 @@ colnames(bat.hour)[5] <- "activity"
 bat.day<-aggregate(activity ~ jdate, dat=bat.hour, FUN=sum)
 
 #aggregate hourly bat data with all species summed
-bat.hour.all<-aggregate(activity ~ jdate + hour, dat=bat.hour, FUN=sum)
+bat.hour.all<-aggregate(activity ~ jdate + hour+site, dat=bat.hour, FUN=sum)
+bat.hour.all1<-aggregate(activity ~ jdate + hour, dat=bat.hour.all, FUN=mean)
 zeros <- read.csv(file="zero_all.csv",head=TRUE)
 
-bat.hour.all2<-rbind(bat.hour.all, zeros)
+bat.hour.all2<-rbind(bat.hour.all1, zeros)
 
 #figure out where the zeros are
 #write.csv(bat.hour.all, "fix2.csv")
@@ -188,8 +189,8 @@ library(MASS)
 library(car)
 bat.met.hour[is.na(bat.met.hour)]<-0
 mod1<-glm.nb(activity~Wind_speed_max_m.s+rain.log+delta.air2+
-			   	Relative_Humidity_pct + act2 + Air_Pressure_pascal+
-			 	Air_Temperature_C + delta.air, dat = bat.met.hour, na.action="na.fail")
+			   	Relative_Humidity_pct +Air_Pressure_pascal+
+			 	Air_Temperature_C + delta.air +  act2, dat = bat.met.hour, na.action="na.fail")
 Anova(mod1)
 summary(mod1)
 
