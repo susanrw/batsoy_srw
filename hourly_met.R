@@ -201,29 +201,28 @@ bat.hour.all1<-aggregate(activity ~ jdate + hour, dat=bat.hour.all, FUN=mean)
 #figure out where the zeros are
 #write.csv(bat.hour.all1, "fix3.csv")
 #no zeros
-
-bat.hour.all2<-rbind(bat.hour.all1, zeros)
-
-#figure out where the zeros are
-#write.csv(bat.hour.all, "fix2.csv")
+#258,259,262 had 7a calls (2,2,1)
+#251, 257-262, 264-267 had calls at 1800 
 
 
-bat.hour.all2<-bat.hour.all2[order(bat.hour.all2$jdate, bat.hour.all2$hour),]
+#bat.hour.all1<-rbind(bat.hour.all1, zeros)
+
+bat.hour.all1<-bat.hour.all1[order(bat.hour.all1$jdate, bat.hour.all1$hour),]
 
 library(stats)
-acf(bat.hour.all2$activity, type = "correlation")
+acf(bat.hour.all1$activity, type = "correlation")
 
-bat.hour.all2$act2<-lag(bat.hour.all2$activity, k=1)
+bat.hour.all1$act2<-lag(bat.hour.all1$activity, k=1)
 
 #add NAs to the beginning of each night
-bat.hour.all2<-bat.hour.all2[order(bat.hour.all2$hour, bat.hour.all2$jdate),]
-#jdate 258, 259, 262, 264, 266 have 18s
-#rows 226-243, 246-247,249,251-256=0
+bat.hour.all1<-bat.hour.all1[order(bat.hour.all1$hour, bat.hour.all1$jdate),]
+#jdate 251, 257-262, 264-267 had calls at 1800 
+#rows ....
 
-bat.hour.all2$act2[c(226:243, 246,247,249,251:256)]<-0
+bat.hour.all1$act2[c(226:243, 246,247,249,251:256)]<-0
 
-bat.hour.all2$act2<-(bat.hour.all2$act2)+0.01
-bat.hour.all2$activity<-(bat.hour.all2$activity)+0.01
+bat.hour.all1$act2<-(bat.hour.all1$act2)+0.01
+bat.hour.all1$activity<-(bat.hour.all1$activity)+0.01
 
 ##SERC met data----
 aug <- read.csv(file="SERC_TOWER_aug2021.csv",head=TRUE)
@@ -281,7 +280,7 @@ corrplot(M1, method = "number")
 #need to choose between rain and wind variables
 #wind max, rain duration
 
-bat.met.hour<-merge(bat.hour.all2, met.hour, by=c("hour","jdate"))
+bat.met.hour<-merge(bat.hour.all1, met.hour, by=c("hour","jdate"))
 
 #write.csv(bat.met.hour, "bat.met.hour.csv")
 
