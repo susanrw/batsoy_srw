@@ -33,6 +33,30 @@ far7 <- read.csv(file="farn2_id_2198_c.csv",head=TRUE)
 far8 <- read.csv(file="farn2_id_4608_c.csv",head=TRUE)
 far9 <- read.csv(file="farn2_id_4614_c.csv",head=TRUE)
 far10 <- read.csv(file="farn2_id_4672_c.csv",head=TRUE)
+f1_1708d <- read.csv(file="farn1_id_1708_d.csv",head=TRUE)
+f1_2198d <- read.csv(file="farn1_id_2198_d.csv",head=TRUE)
+f1_4608d <- read.csv(file="farn1_id_4608_d.csv",head=TRUE)
+f1_4614d <- read.csv(file="farn1_id_4614_d.csv",head=TRUE)
+f1_4672d <- read.csv(file="farn1_id_4672_d.csv",head=TRUE)
+f2_0505d <- read.csv(file="farn2_id_0505_d.csv",head=TRUE)
+f2_1676d <- read.csv(file="farn2_id_1676_d.csv",head=TRUE)
+f2_2207d <- read.csv(file="farn2_id_2207_d.csv",head=TRUE)
+f2_4604d <- read.csv(file="farn2_id_4604_d.csv",head=TRUE)
+f2_4655d <- read.csv(file="farn2_id_4655_d.csv",head=TRUE)
+i1_0505d <- read.csv(file="indole1_id_0505_d.csv",head=TRUE)
+i1_1676d <- read.csv(file="indole1_id_1676_d.csv",head=TRUE)
+i1_4604d <- read.csv(file="indole1_id_4604_d.csv",head=TRUE)
+i1_4614d <- read.csv(file="indole1_id_4614_d.csv",head=TRUE)
+i1_4672d <- read.csv(file="indole1_id_4672_d.csv",head=TRUE)
+i2_1708d <- read.csv(file="indole2_id_d_1708.csv",head=TRUE)
+i2_2198d <- read.csv(file="indole2_id_d_2198.csv",head=TRUE)
+i2_2207d <- read.csv(file="indole2_id_d_2207.csv",head=TRUE)
+i2_4608d <- read.csv(file="indole2_id_d_4608.csv",head=TRUE)
+i3_1708d <- read.csv(file="indole3_id_1708_d.csv",head=TRUE)
+i3_2198d <- read.csv(file="indole3_id_2198_d.csv",head=TRUE)
+i3_2207d <- read.csv(file="indole3_id_2207_d.csv",head=TRUE)
+i3_4608d <- read.csv(file="indole3_id_4608_d.csv",head=TRUE)
+i3_4655d <- read.csv(file="indole3_id_4655_d.csv",head=TRUE)
 }
 
 #creating plot columns
@@ -61,6 +85,30 @@ far7$site<-NA
 far8$site<-NA
 far9$site<-NA
 far10$site<-NA
+f1_1708d$site<-NA
+f1_2198d$site<-NA
+f1_4608d$site<-NA
+f1_4614d$site<-NA
+f1_4672d$site<-NA
+f2_0505d$site<-NA
+f2_1676d$site<-NA
+f2_2207d$site<-NA
+f2_4604d$site<-NA
+f2_4655d$site<-NA
+i1_0505d$site<-NA
+i1_1676d$site<-NA
+i1_4604d$site<-NA
+i1_4614d$site<-NA
+i1_4672d$site<-NA
+i2_1708d$site<-NA
+i2_2198d$site<-NA
+i2_2207d$site<-NA
+i2_4608d$site<-NA
+i3_1708d$site<-NA
+i3_2198d$site<-NA
+i3_2207d$site<-NA
+i3_4608d$site<-NA
+i3_4655d$site<-NA
 }
 
 #populating plot columns
@@ -89,19 +137,45 @@ far10$site<-NA
 	far8$site<-'4608'
 	far9$site<-'4614'
 	far10$site<-'4672'
+	f1_1708d$site<-'1708'
+	f1_2198d$site<-'2198'
+	f1_4608d$site<-'4608'
+	f1_4614d$site<-'4614'
+	f1_4672d$site<-'4672'
+	f2_0505d$site<-'0505'
+	f2_1676d$site<-'1676'
+	f2_2207d$site<-'2207'
+	f2_4604d$site<-'4604'
+	f2_4655d$site<-'4655'
+	i1_0505d$site<-'0505'
+	i1_1676d$site<-'1676'
+	i1_4604d$site<-'4604'
+	i1_4614d$site<-'4614'
+	i1_4672d$site<-'4672'
+	i2_1708d$site<-'1708'
+	i2_2198d$site<-'2198'
+	i2_2207d$site<-'2207'
+	i2_4608d$site<-'4608'
+	i3_1708d$site<-'1708'
+	i3_2198d$site<-'2198'
+	i3_2207d$site<-'2207'
+	i3_4608d$site<-'4608'
+	i3_4655d$site<-'4655'
 }
 
 #combine datasets
 bat.hour <- rbind(ind1,ind2,ind3,ind4,ind5,ind6,ind7,ind8,ind9,ind10,
 				  ind11,ind12,ind13,ind14,ind15,far1,far2,far3,far4,far5,
-				  far6,far7,far8,far9,far10)
+				  far6,far7,far8,far9,far10, f1_1708d, f1_2198d, f1_4608d, f1_4614d,
+				  f1_4672d, f2_0505d,f2_1676d,f2_2207d,f2_4604d,f2_4655d,i1_0505d,
+				  i1_1676d,i1_4604d, i1_4614d,i1_4672d,i2_1708d,i2_2198d,i2_2207d,i2_4608d,
+				  i3_1708d,i3_2198d,i3_2207d,i3_4608d,i3_4655d)
 
 #remove noise files
 bat.hour<-bat.hour[bat.hour$AUTO.ID. != "Noise", ]  
 
-#select columns
+#select columns (#can't have MASS loaded when you do this)
 bat.hour<-select(bat.hour, TIME, HOUR, DATE, AUTO.ID., FILES, site)
-#using regular date to match with met data
 
 #bat.hour$DATE.12 <- format(as.Date(bat.hour$DATE.12, format = "%m/%d/%y"), "%m-%d-%y")
 
@@ -121,8 +195,12 @@ bat.day<-aggregate(activity ~ jdate, dat=bat.hour, FUN=sum)
 
 #aggregate hourly bat data with all species summed
 bat.hour.all<-aggregate(activity ~ jdate + hour+site, dat=bat.hour, FUN=sum)
+#and averaged across all sites
 bat.hour.all1<-aggregate(activity ~ jdate + hour, dat=bat.hour.all, FUN=mean)
-zeros <- read.csv(file="zero_all.csv",head=TRUE)
+
+#figure out where the zeros are
+#write.csv(bat.hour.all1, "fix3.csv")
+#no zeros
 
 bat.hour.all2<-rbind(bat.hour.all1, zeros)
 
@@ -210,10 +288,10 @@ bat.met.hour<-merge(bat.hour.all2, met.hour, by=c("hour","jdate"))
 library(MASS)
 library(car)
 bat.met.hour[is.na(bat.met.hour)]<-0
-mod1<-glm(activity~wind.avg2+rain.log+Air_Pressure_pascal+
-			   	rh2 + Air_Temperature_C + delta.air + act2, dat = bat.met.hour,
-		  family = Gamma(link=log))
-summary(mod1)#rh, temp, AR
+mod1<-glm(activity~Wind_speed_avg_m.s+rain.log+Air_Pressure_pascal+ Air_Temperature_C + 
+		  	delta.air + act2, dat = bat.met.hour,
+		  family = Gamma(link=log),na.action = "na.fail")
+summary(mod1)#wind, temp, AR
 Anova(mod1)
 shapiro.test(resid(mod1))#not normal
 
@@ -232,7 +310,8 @@ bat.met.hour%>%
 	ggplot(aes(x=act2, 
 			   y=activity))+
 	geom_point()+
-	geom_smooth(method = "glm")+
+	geom_smooth(method = "glm", method.args = list(family = "Gamma"),se = FALSE, colour = "black", 
+				size = 0.8)+
 	theme_classic()+
 	labs(x="AR term",
 		 y="Bat activity (average hourly passes)")
@@ -241,27 +320,30 @@ bat.met.hour%>%
 	ggplot(aes(x=Air_Temperature_C, 
 			   y=activity))+
 	geom_point()+
-	geom_smooth(method = "glm")+
+	geom_smooth(method = "glm", method.args = list(family = "Gamma"),se = T, colour = "black", 
+				size = 0.8)+
 	theme_classic()+
 	labs(x="Air temp (C)",
-		 y="Bat activity (average hourly passes)")
-
-bat.met.hour%>%
-	ggplot(aes(x=delta.air2, 
-			   y=activity))+
-	geom_point()+
-	geom_smooth(method = "lm", formula = y ~ x + I(x^2))+
-	theme_classic()+
-	labs(x="Relative humidity",
 		 y="Bat activity (average hourly passes)")
 
 bat.met.hour%>%
 	ggplot(aes(x=Relative_Humidity_pct, 
 			   y=activity))+
 	geom_point()+
-	geom_smooth(method = "glm")+
+	geom_smooth(method = "glm", method.args = list(family = "Gamma"),se = T, colour = "black", 
+				size = 0.8)+
 	theme_classic()+
-	labs(x="% Relative humidity",
+	labs(x="Relative humidity",
+		 y="Bat activity (average hourly passes)")
+
+bat.met.hour%>%
+	ggplot(aes(x=Wind_speed_avg_m.s, 
+			   y=activity))+
+	geom_point()+
+	geom_smooth(method = "glm", method.args = list(family = "Gamma"),se = FALSE, colour = "black", 
+				size = 0.8)+
+	theme_classic()+
+	labs(x="Wind speed average (m/s)",
 		 y="Bat activity (average hourly passes)")
 
 bat.met.hour%>%
