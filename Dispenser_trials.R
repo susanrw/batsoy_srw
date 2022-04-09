@@ -457,28 +457,23 @@ ggplot(data=farn3, aes(x=sp, y=log.act))+
 
 ##COMBINING INDOLE AND FARNESENE TRIALS----
 #importing "failed" indole trial (only control plots)
-indole0 <- read.csv(file="Maynard_etal_indole2_control.csv",head=TRUE)
+indole0 <- read.csv(file="Maynard_indole2_all.csv",head=TRUE)
 indole0[, 3:11][is.na(indole0[, 3:11])] <- 0
 
 ##Gathering data — compounds from col to rows
 indole01<-indole0 %>% gather(sp, activity, EPTFUS:NOID)
 indole01$sp<-as.factor(indole01$sp)
 levels(indole01$sp)
-indole01<-aggregate(activity ~ treatment + sp + jdate + site, dat=indole01, FUN=sum)
+indole01<-aggregate(activity ~ sp + jdate + site, dat=indole01, FUN=sum)
 
-indole1$compound<-NA
-indole1$compound<-"indole"
+#data without treatment
+farn01<-aggregate(activity ~ sp + jdate + site, dat=indole01, FUN=sum)
+indole001<-aggregate(activity ~ sp + jdate + site, dat=indole1, FUN=sum)
 
-indole01$compound<-NA
-indole01$compound<-"indole"
-
-farn1$compound<-NA
-farn1$compound<-"farnesene"
-
-dis.all1 <- rbind(farn1, indole1, indole01)
+dis.all <- rbind(indole001, farn01, indole01)
 
 ##GROUPING SPECIES----
-{dis.all<-dis.all1
+{dis.all<-dis.all
 dis.all$sp=as.character(dis.all$sp)
 dis.all$sp[dis.all$sp=="EPTFUS"]="EPFU/LANO"
 dis.all$sp[dis.all$sp=="LASNOC"]="EPFU/LANO"
@@ -491,25 +486,18 @@ dis.all$sp[dis.all$sp=="NYCHUM"]="NYHU"
 dis.all$sp[dis.all$sp=="PERSUB"]="PESU"
 dis.all$sp[dis.all$sp=="MYOSOD"]="No ID"
 }
+#only one MYSO, so grouping with No ID. Could do Myotis spp?
 
-dis.all2<-aggregate(activity ~ treatment + sp + jdate + site, dat=dis.all, FUN=sum)
-dis.all2$log.act<-log(dis.all2$activity)
-dis.all2$log.act[which(!is.finite(dis.all2$log.act))] <- 0
+dis.all1<-aggregate(activity ~  sp + jdate + site, dat=dis.all, FUN=sum)
 
-#exclude treatment trials
-dis.all.control<-dis.all2[dis.all2$treatment != "Dispenser", ]  
-dis.all.control <- dis.all.control[order(dis.all.control$jdate),]
-
-dis.all.treat<-dis.all2[dis.all2$treatment != "Control", ]  
-dis.all.treat <- dis.all.treat[order(dis.all.treat$jdate),]
-
-q1<-glmer.nb(activity~sp+(1|site), data = dis.all.control)
+q1<-glmer.nb(activity~sp+(1|site), data = dis.all1)
 Anova(q1)
+summary(q1)
 
 #contrasts
 q1c<-emmeans(q1,pairwise~sp, type="response")
 cld(q1c$emmeans,  Letters ='abcdefg')
-#MYLU=A, NYHU=B, PESU=C, LABO/LASE+LACI=D, NOID=E, EPFU/LANO=f
+#MYLU=a, NYHU=a, PESU=b, LABO/LASE=c, LACI=d, NOID=e, EPFU/LANO=f
 
 q1.tab <- ddply(dis.all.control, c("sp"), summarise,
 				  N    = length(activity),
@@ -518,9 +506,10 @@ q1.tab <- ddply(dis.all.control, c("sp"), summarise,
 				  se   = sd / sqrt(N))
 q1.tab
 
+dis.all1$log.act<-log(dis.all1$activity)
 
 #species plot
-all.plot<-ggplot(data=dis.all.control, aes(x=sp, y=activity))+ 
+all.plot<-ggplot(data=dis.all1, aes(x=sp, y=activity))+ 
 	geom_boxplot(outlier.shape = NA)+
 	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5, aes(color=sp))+
 	theme_classic()+
@@ -547,18 +536,19 @@ all.with.inset <-
 	draw_plot(all.small, x = 0.45, y = .6, width = .5, height = .4)
 all.with.inset
 
+library(viridis)
 #log-transformed species plot
-ggplot(data=dis.all.control, aes(x=sp, y=log.act))+ 
+ggplot(data=dis.all1, aes(x=sp, y=log.act))+ 
 	geom_boxplot(outlier.shape = NA)+
 	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5, aes(color=sp))+
 	theme_classic()+
-	labs(x=" ", y="Relative activity (log-transformed)", title="All control trials")+
+	labs(x=" ", y="Bat activity (log-transformed)")+
 	theme(text = element_text(size=20), legend.position = "none", 
-		  axis.text.x = element_text(angle = 20, vjust = 0.5, hjust=.9))+
-	stat_summary(geom = 'text', label = c("f","d","d","a","e","b","c"),
+		  axis.text.x = element_text(angle = 30, vjust = 0.5, hjust=.9))+
+	stat_summary(geom = 'text', label = c("f","c","d","a","e","a","b"),
 				 fun = max, vjust = -0.8, size=5.5)+
-	scale_y_continuous(limits = c(0,8))
-
+	scale_y_continuous(limits = c(-0,8.5))+
+	scale_color_viridis(discrete = T, option = "D", name= "Species")
 
 
 ###BIG BROWN DATA----
@@ -617,3 +607,13 @@ ggplot(data=brown.farn, aes(x=treatment, y=activity))+
 	stat_summary(fun.data = "mean_se", size=1.5, shape="diamond")
 
 
+
+dis.all2$log.act<-log(dis.all2$activity)
+dis.all2$log.act[which(!is.finite(dis.all2$log.act))] <- 0
+
+#exclude treatment trials
+dis.all.control<-dis.all2[dis.all2$treatment != "Dispenser", ]  
+dis.all.control <- dis.all.control[order(dis.all.control$jdate),]
+
+dis.all.treat<-dis.all2[dis.all2$treatment != "Control", ]  
+dis.all.treat <- dis.all.treat[order(dis.all.treat$jdate),]
