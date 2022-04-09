@@ -135,12 +135,12 @@ in10.tab
 #graph
 ggplot(data=indole10, aes(x=treatment, y=activity))+ 
 	geom_boxplot(outlier.shape = NA)+
-	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5)+
+	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5, color="#810f7c")+
 	theme_classic()+
 	labs(x=" ", y="Relative activity (nightly passes)",
 		 title = "Indole trials")+
 	theme(text = element_text(size=15))+
-	stat_summary(fun.data = "mean_se", size=1.5, shape="diamond", color="#d9a9f6")
+	stat_summary(fun.data = "mean_se", size=2, shape="diamond")
 
 
 ##GROUPING SPECIES INDOLE----
@@ -327,12 +327,12 @@ farn10.tab
 #graph
 ggplot(data=farn10, aes(x=treatment, y=activity))+ 
 	geom_boxplot(outlier.shape = NA)+
-	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5)+
+	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5, color="#810f7c")+
 	theme_classic()+
 	labs(x=" ", y="Relative activity (nightly passes)",
 		 title = "Farnesene trials")+
 	theme(text = element_text(size=15))+
-	stat_summary(fun.data = "mean_se", size=1.5, shape="diamond", color="#d9a9f6")
+	stat_summary(fun.data = "mean_se", size=2, shape="diamond")
 
 ##GROUPING SPECIES----
 {farn2<-farn1
@@ -499,7 +499,7 @@ q1c<-emmeans(q1,pairwise~sp, type="response")
 cld(q1c$emmeans,  Letters ='abcdefg')
 #MYLU=a, NYHU=a, PESU=b, LABO/LASE=c, LACI=d, NOID=e, EPFU/LANO=f
 
-q1.tab <- ddply(dis.all.control, c("sp"), summarise,
+q1.tab <- ddply(dis.all1, c("sp"), summarise,
 				  N    = length(activity),
 				  mean = mean(activity),
 				  sd   = sd(activity),
@@ -548,6 +548,15 @@ ggplot(data=dis.all1, aes(x=sp, y=log.act))+
 	stat_summary(geom = 'text', label = c("f","c","d","a","e","a","b"),
 				 fun = max, vjust = -0.8, size=5.5)+
 	scale_y_continuous(limits = c(-0,8.5))+
+	scale_color_viridis(discrete = T, option = "D", name= "Species")
+
+ggplot(data=dis.all1, aes(x=jdate, y=log.act))+ 
+	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5, aes(color=sp))+
+	theme_classic()+
+	geom_smooth(method = "gam")+
+	labs(x="Julian date", y="Bat activity (log-transformed)")+
+	theme(text = element_text(size=10), 
+		  axis.text.x = element_text(angle = 30, vjust = 0.5, hjust=.9))+
 	scale_color_viridis(discrete = T, option = "D", name= "Species")
 
 
