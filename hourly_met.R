@@ -217,12 +217,9 @@ bat.hour.all1$act2<-lag(bat.hour.all1$activity, k=1)
 #add NAs to the beginning of each night
 bat.hour.all1<-bat.hour.all1[order(bat.hour.all1$hour, bat.hour.all1$jdate),]
 #jdate 251, 257-262, 264-267 had calls at 1800 
-#rows ....
 
-bat.hour.all1$act2[c(226:243, 246,247,249,251:256)]<-0
-
-bat.hour.all1$act2<-(bat.hour.all1$act2)+0.01
-bat.hour.all1$activity<-(bat.hour.all1$activity)+0.01
+#select rows for those dates
+bat.hour.all1$act2[c(232,245, 249:254,256:259)]<-0
 
 ##SERC met data----
 aug <- read.csv(file="SERC_TOWER_aug2021.csv",head=TRUE)
@@ -262,23 +259,22 @@ met.hour$air2<-lag(met.hour$Air_Pressure_pascal, k=1)
 met.hour$delta.air2<-met.hour$Air_Pressure_pascal-met.hour$air2
 
 #creating quad term for avg wind and rh
-met.hour$wind.avg2 <- (as.numeric(met.hour$Wind_speed_avg_m.s))^2
-met.hour$rh2 <- (as.numeric(met.hour$Relative_Humidity_pct))^2
+#met.hour$wind.avg2 <- (as.numeric(met.hour$Wind_speed_avg_m.s))^2
+#met.hour$rh2 <- (as.numeric(met.hour$Relative_Humidity_pct))^2
 
 met.hour$rain.log<-log((met.hour$Rain_Duration_s)+0.01)
-met.hour$rh2<-log(met.hour$Relative_Humidity_pct)
 
+met.hour[is.na(met.hour)]<-0
 
 ##CHECKING FOR COLINEARITY----
 library(corrplot)
-met1<-met.hour[,c(5:15)]
-met.hour[is.na(met.hour)]<-0
+met1<-met.hour[,c(5:13)]
 
 M1 <- cor(met1)#correlation matrix
 corrplot(M1, method = "circle")
 corrplot(M1, method = "number")
 #need to choose between rain and wind variables
-#wind max, rain duration
+#wind avg, rain duration
 
 bat.met.hour<-merge(bat.hour.all1, met.hour, by=c("hour","jdate"))
 
@@ -286,7 +282,7 @@ bat.met.hour<-merge(bat.hour.all1, met.hour, by=c("hour","jdate"))
 
 library(MASS)
 library(car)
-bat.met.hour[is.na(bat.met.hour)]<-0
+#bat.met.hour[is.na(bat.met.hour)]<-0
 mod1<-glm(activity~Wind_speed_avg_m.s+rain.log+Air_Pressure_pascal+ Air_Temperature_C + 
 		  	delta.air + act2, dat = bat.met.hour,
 		  family = Gamma(link=log),na.action = "na.fail")
@@ -299,9 +295,15 @@ d1<-dredge(mod1)
 davg1<-model.avg(d1, subset=delta<4)
 summary(davg1)
 
-summary(lm(bat.met.hour$activity~bat.met.hour$act2))
-summary(lm(bat.met.hour$activity~bat.met.hour$Relative_Humidity_pct))
-summary(lm(bat.met.hour$activity~bat.met.hour$Air_Temperature_C))
+library(dglm)
+fit <- dglm(bat.met.hour$activity~1, family=Gamma(link="log"), mustart=mean(bat.met.hour$activity))
+summary(fit)
+
+mu <- exp(3.265833)
+shape <- exp(0.1464342)
+scale <- mu/shape
+rate <- 1/scale
+c(shape, scale, rate)
 
 library(ggplot2)
 #graphs
@@ -309,11 +311,11 @@ bat.met.hour%>%
 	ggplot(aes(x=act2, 
 			   y=activity))+
 	geom_point()+
-	geom_smooth(method = "glm", method.args = list(family = "Gamma"),se = FALSE, colour = "black", 
-				size = 0.8)+
 	theme_classic()+
 	labs(x="AR term",
-		 y="Bat activity (average hourly passes)")
+		 y="Bat activity (average hourly passes)")+
+	theme(text = element_text(size = 18))+
+	stat_function(fun=dgamma, args=list(shape=1.16, rate=1))
 
 bat.met.hour%>%
 	ggplot(aes(x=Air_Temperature_C, 
@@ -322,8 +324,9 @@ bat.met.hour%>%
 	geom_smooth(method = "glm", method.args = list(family = "Gamma"),se = T, colour = "black", 
 				size = 0.8)+
 	theme_classic()+
-	labs(x="Air temp (C)",
-		 y="Bat activity (average hourly passes)")
+	labs(x="Air temperature (C)",
+		 y="Bat activity (average hourly passes)")+
+	theme(text = element_text(size = 18))
 
 bat.met.hour%>%
 	ggplot(aes(x=Relative_Humidity_pct, 
@@ -339,11 +342,12 @@ bat.met.hour%>%
 	ggplot(aes(x=Wind_speed_avg_m.s, 
 			   y=activity))+
 	geom_point()+
-	geom_smooth(method = "glm", method.args = list(family = "Gamma"),se = FALSE, colour = "black", 
+	geom_smooth(method = "glm", method.args = list(family = "Gamma"),se = T, colour = "black", 
 				size = 0.8)+
 	theme_classic()+
 	labs(x="Wind speed average (m/s)",
-		 y="Bat activity (average hourly passes)")
+		 y="Bat activity (average hourly passes)")+
+	theme(text = element_text(size = 18))
 
 bat.met.hour%>%
 	ggplot(aes(x=delta.air2, 
