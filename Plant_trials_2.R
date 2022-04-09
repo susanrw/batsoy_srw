@@ -46,9 +46,6 @@ mod.plant<-glmer.nb(activity~treatment+(1|trial), dat = plant10)
 Anova(mod.plant)
 #chisq=2.4452, p=0.1179
 
-plant.met<-merge(plant10, met.day, by=c("jdate"))
-
-mod.plant.met<-glmer.nb(activity~treatment*+(1|trial), dat = plant10)
 
 plant10.tab <- ddply(plant10, c("treatment"), summarise,
 					 N    = length(activity),
@@ -64,7 +61,7 @@ t.test(plant11$D, plant11$U, paired = T)#t=-1.37,df=4,p=0.24
 
 
 ggplot(data=plant10, aes(x=treatment, y=activity))+ 
-	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5)+
+	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5, color="#810f7c")+
 	theme_classic()+
 	labs(x=" ", y="Bat activity (nightly passes)")+
 	theme(text = element_text(size=18))+
