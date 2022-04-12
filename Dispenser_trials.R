@@ -20,90 +20,17 @@ indole[, 3:11][is.na(indole[, 3:11])] <- 0
 indole1<-indole %>% gather(sp, activity, EPTFUS:NOID)
 indole1$sp<-as.factor(indole1$sp)
 levels(indole1$sp)
+
+#aggregating data, species level
 indole1<-aggregate(activity ~ treatment + sp + jdate + site, dat=indole1, FUN=sum)
 
 #data without species-level
 indole10<-aggregate(activity ~ treatment + jdate + site, dat=indole1, FUN=sum)
 
-#creating column for quadratic terms
-met.day.d$n.wind.max2 = (as.numeric(met.day.d$n.Wind_speed_max_m.s))^2
-met.day.d$n.wind.avg2 = (as.numeric(met.day.d$n.Wind_speed_avg_m.s))^2
-
-indole.met<-merge(indole10, met.day.d, by="jdate")
-
-#interaction pair model
-mod.in.met<-glmer.nb(activity~((treatment*n.Air_Temperature_C)+(treatment*n.rh_pct)+
-					 	(treatment*n.wind.avg2)+(treatment*n.Rain_Duration_s)+(1|site)), dat = indole.met,
-					 na.action="na.fail")
-Anova(mod.in.met)
-
-library(MuMIn)
-d.in.met<-dredge(mod.in.met)
-d.in.met.avg<-model.avg(d.in.met, subset=delta<4)
-summary(d.in.met.avg)
-
-
-#interaction models
-mod.in.met.treat.rain<-glmer.nb(activity~((treatment*n.Rain_Duration_s)+(1|site)), 
-								dat = indole.met, na.action="na.fail")
-mod.in.met.treat.wind2<-glmer.nb(activity~((treatment*n.wind.avg2)+(1|site)), 
-								dat = indole.met, na.action="na.fail")
-mod.in.met.treat.temp<-glmer.nb(activity~((treatment*n.Air_Temperature_C)+(1|site)), 
-								dat = indole.met, na.action="na.fail")
-mod.in.met.treat.rh<-glmer.nb(activity~((treatment*n.rh_pct)+(1|site)), 
-								dat = indole.met, na.action="na.fail")
-
-#univariate models
-mod.in.met.treat<-glmer.nb(activity~(treatment+(1|site)), 
-								dat = indole.met, na.action="na.fail")
-mod.in.met.rain<-glmer.nb(activity~(n.Rain_Duration_s+(1|site)), 
-								dat = indole.met, na.action="na.fail")
-mod.in.met.wind2<-glmer.nb(activity~(n.wind.avg2+(1|site)), 
-						  dat = indole.met, na.action="na.fail")
-mod.in.met.temp<-glmer.nb(activity~(n.Air_Temperature_C+(1|site)), 
-						  dat = indole.met, na.action="na.fail")
-mod.in.met.rh<-glmer.nb(activity~(n.rh_pct+(1|site)), 
-							  dat = indole.met, na.action="na.fail")
-
-mod.in.met.null<-glmer.nb(activity~(1+(1|site)), 
-						  dat = indole.met, na.action="na.fail")
-
-#creating tabular output
-library(AICcmodavg)
-aictab(cand.set=list(mod.in.met,mod.in.met.treat.rain,mod.in.met.treat.wind2,mod.in.met.treat.temp,mod.in.met.treat.rh,
-					 mod.in.met.treat,mod.in.met.rain,mod.in.met.temp,mod.in.met.wind2,mod.in.met.rh,mod.in.met.null),
-	   modnames=c("global","treat*rain","treat*wind2","treat*temp","treat*rh",
-	   		   "treat","rain","temp","wind2","rh","null"))#AIC table
-
-Anova(mod.in.met)
-
-indole.met %>%
-	ggplot(aes(x=Wind_speed_avg_m.s, 
-			   y=activity))+
-	geom_point()+
-	geom_smooth(method = "lm", formula = y ~ x + I(x^2))+
-	theme_classic()+
-	labs(x="Average nightly wind speed (m/s)",
-		 y="Bat activity (nightly passes)")
-
-indole.met$rain.dur.min<-NA
-indole.met$rain.dur.min<-(indole.met$Rain_Duration_s)/60
-
-indole.met$rain.dur.hr<-NA
-indole.met$rain.dur.hr<-((indole.met$Rain_Duration_s)/60)/60
-
-indole.met %>%
-	ggplot(aes(x=rain.dur.hr, 
-			   y=activity))+
-	geom_point()+
-	geom_smooth(method = "glm")+
-	theme_classic()+
-	labs(x="Total nightly rain duration (min)",
-		 y="Bat activity (nightly passes)")
 
 #creating log-transformed value for graphs
 indole10$log.act<-log(indole10$activity)
-indole10$log.act[which(!is.finite(indole10$log.act))] <- 0
+#indole10$log.act[which(!is.finite(indole10$log.act))] <- 0 #no zeros, so unnecessary
 
 #Test for overdispersion function
 overdisp_fun <- function(model) {
@@ -120,9 +47,11 @@ summary(test.in)
 shapiro.test(resid(test.in))#non-normal
 overdisp_fun(test.in)#overdispersed
 
+#fitting data to glm with neg binom dist
 mod.in<-glmer.nb(activity~treatment+(1|site), dat = indole10)
+summary(mod.in)
 Anova(mod.in)
-#treatment chi=2.2635 p=0.1325
+#treatment chi=2.2635 p=0.1325, wald chisquared test
 
 #table
 in10.tab <- ddply(indole10, c("treatment"), summarise,
@@ -131,17 +60,25 @@ in10.tab <- ddply(indole10, c("treatment"), summarise,
 					 sd   = sd(activity),
 					 se   = sd / sqrt(N))
 in10.tab
+#control= 328.2 +/- 56.5
+#treatment= 321.0 +/- 36.9
+
+indole10$treatment[indole10$treatment=="Dispenser"]="Indole"
 
 #graph
-ggplot(data=indole10, aes(x=treatment, y=activity))+ 
-	geom_boxplot(outlier.shape = NA)+
-	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5, color="#810f7c")+
+#graph
+indole.plot<-ggplot(data=indole10, aes(x=treatment, y=activity))+ 
+	geom_boxplot(outlier.shape = NA, width=.5, lwd=1)+
+	geom_point(position=position_jitter(width = 0.1), alpha=0.4, size=3, color="#810f7c")+
 	theme_classic()+
-	labs(x=" ", y="Relative activity (nightly passes)",
-		 title = "Indole trials")+
-	theme(text = element_text(size=15))+
-	stat_summary(fun.data = "mean_se", size=2, shape="diamond")
+	labs(x=" ", y="Bat activity (nightly passes)")+
+	theme(text = element_text(size=20), axis.text.x = element_text(size = 20))
+indole.plot
 
+#EXPORT PLOT
+tiff('indole.tiff', units="in", width=6, height=5, res=400)
+indole.plot
+dev.off()
 
 ##GROUPING SPECIES INDOLE----
 {indole2<-indole1
@@ -298,14 +235,16 @@ farn[, 3:11][is.na(farn[, 3:11])] <- 0
 farn1<-farn %>% gather(sp, activity, EPTFUS:NOID)
 farn1$sp<-as.factor(farn1$sp)
 levels(farn1$sp)
+
+#aggregated by species
 farn1<-aggregate(activity ~ treatment + sp + jdate + site, dat=farn1, FUN=sum)
 
-#not species-level
+#w/o species-level
 farn10<-aggregate(activity ~ treatment + jdate + site, dat=farn1, FUN=sum)
 
 #creating log-transformed value for graphs
 farn10$log.act<-log(farn10$activity)
-farn10$log.act[which(!is.finite(farn10$log.act))] <- 0
+#farn10$log.act[which(!is.finite(farn10$log.act))] <- 0 #no zeros
 
 test.farn<-glmer(activity~treatment+(1|site), dat = farn10,family=poisson)
 summary(test.farn)
@@ -323,16 +262,24 @@ farn10.tab <- ddply(farn10, c("treatment"), summarise,
 				  sd   = sd(activity),
 				  se   = sd / sqrt(N))
 farn10.tab
+#control 318.1 +/- 58.7
+#dispenser 284.6 +/- 58.1
+
+farn10$treatment[farn10$treatment=="Dispenser"]="Farnesene"
 
 #graph
-ggplot(data=farn10, aes(x=treatment, y=activity))+ 
-	geom_boxplot(outlier.shape = NA)+
-	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5, color="#810f7c")+
+farn.plot<-ggplot(data=farn10, aes(x=treatment, y=activity))+ 
+	geom_boxplot(outlier.shape = NA, width=.5, lwd=1)+
+	geom_point(position=position_jitter(width = 0.1), alpha=0.4, size=3, color="#810f7c")+
 	theme_classic()+
-	labs(x=" ", y="Relative activity (nightly passes)",
-		 title = "Farnesene trials")+
-	theme(text = element_text(size=15))+
-	stat_summary(fun.data = "mean_se", size=2, shape="diamond")
+	labs(x=" ", y="Bat activity (nightly passes)")+
+	theme(text = element_text(size=20), axis.text.x = element_text(size = 20))
+farn.plot
+
+#EXPORT PLOT
+tiff('farnesene.tiff', units="in", width=6, height=5, res=400)
+farn.plot
+dev.off()
 
 ##GROUPING SPECIES----
 {farn2<-farn1
@@ -492,6 +439,7 @@ dis.all1<-aggregate(activity ~  sp + jdate + site, dat=dis.all, FUN=sum)
 
 q1<-glmer.nb(activity~sp+(1|site), data = dis.all1)
 Anova(q1)
+#chisq=2678.4, p<0.001, Wald chisquare tests
 summary(q1)
 
 #contrasts
@@ -507,6 +455,7 @@ q1.tab <- ddply(dis.all1, c("sp"), summarise,
 q1.tab
 
 dis.all1$log.act<-log(dis.all1$activity)
+dis.all1$log.act[which(!is.finite(dis.all1$log.act))]<-0
 
 #species plot
 all.plot<-ggplot(data=dis.all1, aes(x=sp, y=activity))+ 
@@ -538,9 +487,9 @@ all.with.inset
 
 library(viridis)
 #log-transformed species plot
-ggplot(data=dis.all1, aes(x=sp, y=log.act))+ 
+q1.plot<-ggplot(data=dis.all1, aes(x=sp, y=log.act))+ 
 	geom_boxplot(outlier.shape = NA)+
-	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5, aes(color=sp))+
+	geom_point(position=position_jitter(width = 0.2, height = .05), alpha=0.4, size=3, aes(color=sp))+
 	theme_classic()+
 	labs(x=" ", y="Bat activity (log-transformed)")+
 	theme(text = element_text(size=20), legend.position = "none", 
@@ -548,17 +497,47 @@ ggplot(data=dis.all1, aes(x=sp, y=log.act))+
 	stat_summary(geom = 'text', label = c("f","c","d","a","e","a","b"),
 				 fun = max, vjust = -0.8, size=5.5)+
 	scale_y_continuous(limits = c(-0,8.5))+
-	scale_color_viridis(discrete = T, option = "D", name= "Species")
+	scale_x_discrete(limits=c("EPFU/LANO","LABO/LASE", "LACI","MYLU",
+							  "NYHU", "PESU", "No ID"))+
+	scale_color_manual(values = c("#450757", "#443885", "#2d678e","#178f8b", "#fee800", "#2ab977","#8fd839"))
+q1.plot
 
-ggplot(data=dis.all1, aes(x=jdate, y=log.act))+ 
-	geom_point(position=position_jitter(width = 0.025), alpha=0.4, size=2.5, aes(color=sp))+
+#EXPORT PLOT
+tiff('Q1.tiff', units="in", width=8, height=5, res=400)
+q1.plot
+dev.off()
+
+
+legend_ord <- levels(with(dis.all1$sp, reorder("EPFU/LANO","LABO/LASE", "LACI","MYLU",
+											   "NYHU", "PESU", "No ID")))
+
+q1.sp.plot<-ggplot(data=dis.all1, aes(x=jdate, y=log.act))+ 
+	geom_point(alpha=0.4, size=2.5, aes(color=sp1))+
 	theme_classic()+
-	geom_smooth(method = "gam")+
+	geom_smooth(method = "gam", color="black")+
 	labs(x="Julian date", y="Bat activity (log-transformed)")+
-	theme(text = element_text(size=10), 
+	theme(text = element_text(size=19), 
 		  axis.text.x = element_text(angle = 30, vjust = 0.5, hjust=.9))+
-	scale_color_viridis(discrete = T, option = "D", name= "Species")
+	scale_color_manual(values = c("#450757", "#443885", "#2d678e","#178f8b", "#2ab977", "#8fd839","#fee800"),
+					   limits=c("EPFU/LANO","LABO/LASE", "LACI","MYLU",
+					   		 "NYHU", "PESU", "No ID"))+
+	guides(color=guide_legend(title="Species"))
+q1.sp.plot
 
+#EXPORT PLOT
+tiff('Q1_time.tiff', units="in", width=8, height=5, res=400)
+q1.sp.plot
+dev.off()
+
+dis.all1$sp1 = factor(dis.all1$sp, levels=c("EPFU/LANO","LABO/LASE", "LACI","MYLU",
+											"NYHU", "PESU", "No ID"))
+q1.wrap<-q1.sp.plot+facet_wrap(~sp1, ncol = 2)+theme(legend.position = "none")
+q1.wrap
+
+#EXPORT PLOT
+tiff('Q1_time_sp.tiff', units="in", width=7, height=6, res=400)
+q1.wrap
+dev.off()
 
 ###BIG BROWN DATA----
 ##INDOLE BIG BROWN ONLY---

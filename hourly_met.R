@@ -286,7 +286,7 @@ library(MASS)
 library(car)
 #bat.met.hour[is.na(bat.met.hour)]<-0
 mod1<-glm(activity~Wind_speed_avg_m.s+rain.log+Air_Pressure_pascal+ Air_Temperature_C + 
-		  	delta.air + act2, dat = bat.met.hour,
+		  	delta.air + act2 + Relative_Humidity_pct, dat = bat.met.hour,
 		  family = Gamma(link=log),na.action = "na.fail")
 summary(mod1)#wind, temp, AR
 Anova(mod1)
@@ -296,6 +296,12 @@ library(MuMIn)
 d1<-dredge(mod1)
 davg1<-model.avg(d1, subset=delta<4)
 summary(davg1)
+
+summary(lm(bat.met.hour$activity~bat.met.hour$Air_Temperature_C))
+plot(bat.met.hour$activity~bat.met.hour$Air_Temperature_C)
+summary(lm(bat.met.hour$activity~bat.met.hour$Wind_speed_avg_m.s))
+
+#use estimate and SE to fit linear 
 
 library(dglm)
 fit <- dglm(bat.met.hour$activity~1, family=Gamma(link="log"), mustart=mean(bat.met.hour$activity))
@@ -317,8 +323,7 @@ bat.met.hour%>%
 	labs(x="AR term",
 		 y="Bat activity (average hourly passes)")+
 	theme(text = element_text(size = 18))+
-	geom_smooth(method = "glm", method.args = list(family = "Gamma"),se = F, colour = "black", 
-				size = 0.8)+
+	geom_smooth(method = "glm", color="black")+
 	scale_y_continuous(limits = c(0,180))
 	#stat_function(fun=dgamma, args=list(shape=1.16, rate=1))
 
@@ -326,10 +331,9 @@ bat.met.hour%>%
 	ggplot(aes(x=Air_Temperature_C, 
 			   y=activity))+
 	geom_point(alpha=0.4, size=2.5,color="#810f7c")+
-	geom_smooth(method = "glm", method.args = list(family = "Gamma"),se = F, colour = "black", 
-				size = 0.8)+
+	geom_smooth(method = "glm", color="black")+
 	theme_classic()+
-	labs(x="Air temperature (C)",
+	labs(x="Average air temperature (ºC)",
 		 y="Bat activity (average hourly passes)")+
 	theme(text = element_text(size = 18))
 
@@ -337,10 +341,9 @@ bat.met.hour%>%
 	ggplot(aes(x=Wind_speed_avg_m.s, 
 			   y=activity))+
 	geom_point(alpha=0.4, size=2.5,color="#810f7c")+
-	geom_smooth(method = "glm", method.args = list(family = "Gamma"),se = F, colour = "black", 
-				size = 0.8)+
+	geom_smooth(method = "glm", color="black")+
 	theme_classic()+
-	labs(x="Wind speed average (m/s)",
+	labs(x="Average wind speed (m/s)",
 		 y="Bat activity (average hourly passes)")+
 	theme(text = element_text(size = 18))
 
@@ -388,11 +391,11 @@ bat.met.hour%>%
 	ggplot(aes(x=Relative_Humidity_pct, 
 			   y=activity))+
 	geom_point(alpha=0.4, size=2.5,color="#810f7c")+
-	geom_smooth(method = "glm", method.args = list(family = "Gamma"),se = F, colour = "black", 
-				size = 0.8)+
+	geom_smooth(method = "glm", colour = "black")+
 	theme_classic()+
 	labs(x="Average relative humidity (%)",
-		 y="Bat activity (average hourly passes)")
+		 y="Bat activity (average hourly passes)")+
+	theme(text = element_text(size = 18))
 
 ###other stuff----
 
