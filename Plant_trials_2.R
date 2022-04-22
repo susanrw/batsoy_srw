@@ -61,17 +61,17 @@ t.test(plant11$D, plant11$U, paired = T)#t=-1.37,df=4,p=0.24
 
 
 plant.plot<-ggplot(data=plant10, aes(x=treatment, y=activity))+ 
-	geom_boxplot(outlier.shape = NA, width=.3, lwd=1)+ 
+	geom_boxplot(outlier.shape = NA, width=.5, lwd=1)+ 
 	geom_point(position=position_jitter(width = 0.1), alpha=0.4, size=3, color="#810f7c")+
 	theme_classic()+
 	labs(x=" ", y="Bat activity (nightly passes)")+
-	theme(text = element_text(size=18))+
+	theme(text = element_text(size=20), axis.text.x = element_text(size = 20))+
 	scale_x_discrete(limits=c("U", "D"),
 					 labels=c("Undamaged", "Damaged"))
 plant.plot
 
 #EXPORT PLOT
-tiff('plant.tiff', units="in", width=6, height=5, res=400)
+tiff('plant.tiff', units="in", width=5, height=5, res=400)
 plant.plot
 dev.off()
 

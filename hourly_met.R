@@ -285,8 +285,8 @@ bat.met.hour$wind.avg2 <- (as.numeric(bat.met.hour$Wind_speed_avg_m.s))^2
 library(MASS)
 library(car)
 #bat.met.hour[is.na(bat.met.hour)]<-0
-mod1<-glm(activity~Wind_speed_avg_m.s+rain.log+Air_Pressure_pascal+ Air_Temperature_C + 
-		  	delta.air + act2 + Relative_Humidity_pct, dat = bat.met.hour,
+mod1<-glm(activity~wind.avg2+rain.log+Air_Pressure_pascal+ Air_Temperature_C + 
+		  	delta.air + act2, dat = bat.met.hour,
 		  family = Gamma(link=log),na.action = "na.fail")
 summary(mod1)#wind, temp, AR
 Anova(mod1)
@@ -294,8 +294,37 @@ shapiro.test(resid(mod1))#not normal
 
 library(MuMIn)
 d1<-dredge(mod1)
-davg1<-model.avg(d1, subset=delta<4)
+davg1<-model.avg(d1, subset=delta<2)
 summary(davg1)
+exp(7.566e-02)
+exp(2.063e-02)
+
+## normalize met vars
+bat.met.hour$n.wind.avg <- normalize(bat.met.hour$Wind_speed_avg_m.s, 
+										  method = "range", range = c(0,1))
+bat.met.hour$n.rain.dur <- normalize(bat.met.hour$Rain_Duration_s, 
+									   method = "range", range = c(0,1))
+bat.met.hour$n.air.temp <- normalize(bat.met.hour$Air_Temperature_C, 
+										 method = "range", range = c(0,1))
+bat.met.hour$n.rh <- normalize(bat.met.hour$Relative_Humidity_pct, 
+							  method = "range", range = c(0,1))
+bat.met.hour$n.air.pres <- normalize(bat.met.hour$Air_Pressure_pascal, 
+								   method = "range", range = c(0,1))
+bat.met.hour$n.delta.air <- normalize(bat.met.hour$delta.air, 
+									 method = "range", range = c(0,1))
+bat.met.hour$n.act2 <- normalize(bat.met.hour$act2, 
+									  method = "range", range = c(0,1))
+
+mod.norm<-glm(activity~n.wind.avg+n.air.temp+n.rh+n.rain.dur+n.air.pres+n.delta.air+n.act2,
+			 	dat = bat.met.hour,
+			  family = Gamma(link=log),na.action = "na.fail")
+summary(mod.norm)#wind, temp, AR, rel humid
+Anova(mod.top)
+shapiro.test(resid(mod.top))#not normal
+
+d2<-dredge(mod.norm)
+davg2<-model.avg(d2, subset=delta<4)
+summary(davg2)
 
 summary(lm(bat.met.hour$activity~bat.met.hour$Air_Temperature_C))
 plot(bat.met.hour$activity~bat.met.hour$Air_Temperature_C)
@@ -327,15 +356,21 @@ bat.met.hour%>%
 	scale_y_continuous(limits = c(0,180))
 	#stat_function(fun=dgamma, args=list(shape=1.16, rate=1))
 
-bat.met.hour%>%
+temp.plot<-bat.met.hour%>%
 	ggplot(aes(x=Air_Temperature_C, 
 			   y=activity))+
 	geom_point(alpha=0.4, size=2.5,color="#810f7c")+
 	geom_smooth(method = "glm", color="black")+
 	theme_classic()+
 	labs(x="Average air temperature (ºC)",
-		 y="Bat activity (average hourly passes)")+
-	theme(text = element_text(size = 18))
+		 y="Bat activity (avg hourly passes)")+
+	theme(text = element_text(size = 13))
+temp.plot
+
+#EXPORT PLOT
+tiff('temp.tiff', units="in", width=4.5, height=3, res=400)
+temp.plot
+dev.off()
 
 bat.met.hour%>%
 	ggplot(aes(x=Wind_speed_avg_m.s, 
@@ -347,24 +382,30 @@ bat.met.hour%>%
 		 y="Bat activity (average hourly passes)")+
 	theme(text = element_text(size = 18))
 
-bat.met.hour%>%
+wind2.plot<-bat.met.hour%>%
 	ggplot(aes(x=Wind_speed_avg_m.s, 
 			   y=activity))+
 	geom_point(alpha=0.4, size=2.5,color="#810f7c")+
 	geom_smooth(method = "glm", formula = y ~ x + I(x^2), color="black")+
 	theme_classic()+
 	labs(x="Wind speed average (m/s)",
-		 y="Bat activity (average hourly passes)")+
-	theme(text = element_text(size = 18))
+		 y="Bat activity (avg hourly passes)")+
+	theme(text = element_text(size = 13))
+wind2.plot
+
+#EXPORT PLOT
+tiff('wind.tiff', units="in", width=4.5, height=3, res=400)
+wind2.plot
+dev.off()
+
 
 bat.met.hour%>%
-	ggplot(aes(x=delta.air, 
+	ggplot(aes(x=delta.air2, 
 			   y=activity))+
 	geom_point(alpha=0.4, size=2.5,color="#810f7c")+
-	geom_smooth(method = "glm", method.args = list(family = "Gamma"),se = F, colour = "black", 
-				size = 0.8)+
+	geom_smooth(method = "glm", color="black")+
 	theme_classic()+
-	labs(x="Average variation in hourly air pressure",
+	labs(x="Average change between hourly air pressure",
 		 y="Bat activity (average hourly passes)")
 
 bat.met.hour%>%
