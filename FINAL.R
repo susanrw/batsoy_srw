@@ -16,6 +16,7 @@ library(MuMIn)
 
 #Note: because you need data from Q2 to answer Q1, they are in that order
 #Q2a, Q2b, Q1, Q3
+#all plots and end of script
 
 ##Q2a: Naturally occurring soybean HIPVS (damaged vs. undamaged plants)----
 
