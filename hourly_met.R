@@ -183,14 +183,12 @@ bat.hour<-select(bat.hour, TIME, HOUR, DATE, AUTO.ID., FILES, site)
 bat.hour$jdate<-NA
 bat.hour$jdate<-yday(bat.hour$DATE)
 
-
 #renaming columns
 colnames(bat.hour)[2] <- "hour"
 colnames(bat.hour)[4] <- "sp"
 colnames(bat.hour)[5] <- "activity"
 
-
-#aggregate so hourly bat data is daily
+#aggregate so hourly bat data -> daily
 bat.day<-aggregate(activity ~ jdate, dat=bat.hour, FUN=sum)
 
 #aggregate hourly bat data with all species summed
@@ -233,7 +231,7 @@ met$date<-as.Date(met$date,)
 met$jdate<-NA
 met$jdate<-yday(met$date)
 
-#control field trials 238-252, 255-270 (no detectors out nights of 253&254)
+#jdate 238-252, 255-270 (no detectors out nights of 253&254)
 met1 <- met%>% filter( between(jdate, 238, 252))
 met2 <- met%>% filter( between(jdate, 255, 270))
 met3<-rbind(met1,met2)

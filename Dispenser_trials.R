@@ -225,7 +225,7 @@ ggplot(data=indole3, aes(x=sp, y=log.act))+
 
 
 ##FARNESENE TRIALS----
-# Farnesene data import and cleaning ------------------------------------------------
+# Farnesene data import and cleaning
 
 #SUMMARY DATA----
 farn <- read.csv(file="Maynard_etal_farnesene_sum.csv",head=TRUE)
@@ -403,7 +403,7 @@ ggplot(data=farn3, aes(x=sp, y=log.act))+
 	scale_y_continuous(limits = c(0,8))
 
 ##COMBINING INDOLE AND FARNESENE TRIALS----
-#importing "failed" indole trial (only control plots)
+#importing "failed" indole trial
 indole0 <- read.csv(file="Maynard_indole2_all.csv",head=TRUE)
 indole0[, 3:11][is.na(indole0[, 3:11])] <- 0
 
@@ -414,7 +414,7 @@ levels(indole01$sp)
 indole01<-aggregate(activity ~ sp + jdate + site, dat=indole01, FUN=sum)
 
 #data without treatment
-farn01<-aggregate(activity ~ sp + jdate + site, dat=indole01, FUN=sum)
+farn01<-aggregate(activity ~ sp + jdate + site, dat=farn1, FUN=sum)
 indole001<-aggregate(activity ~ sp + jdate + site, dat=indole1, FUN=sum)
 
 dis.all <- rbind(indole001, farn01, indole01)
