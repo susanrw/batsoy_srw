@@ -433,6 +433,9 @@ met.hour.sum<-aggregate(cbind(Rain_Accumulation_mm,Rain_Duration_s)~hour + jdate
 
 #combine the two
 met.hour<-cbind(met.hour.avg,met.hour.sum)
+#remove duplicate columns
+met.hour<-met.hour[,-c(9,10)]
+
 
 #ordering data
 met.hour<-met.hour[order(met.hour$jdate, met.hour$hour),]
@@ -465,11 +468,13 @@ mod1<-glm(activity~wind.avg2+rain.log+Air_Pressure_pascal+ Air_Temperature_C +
 		  family = Gamma(link=log),na.action = "na.fail")
 summary(mod1)#wind, temp, AR
 Anova(mod1)
-shapiro.test(resid(mod1))#not normal
 
 d1<-dredge(mod1)
 davg1<-model.avg(d1, subset=delta<2)
 summary(davg1)
+
+exp(0.013755)
+#bat activity increases 1.1 with every 1 degC increase in air temp
 
 #PLOTS----
 
