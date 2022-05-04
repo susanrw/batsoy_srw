@@ -464,11 +464,11 @@ bat.met.hour$wind.avg2 <- (as.numeric(bat.met.hour$Wind_speed_avg_m.s))^2
 library(MASS)
 #bat.met.hour[is.na(bat.met.hour)]<-0
 mod1<-glm(activity~wind.avg2+rain.log+Air_Pressure_pascal+ Air_Temperature_C + 
-		  	delta.air + act2, dat = bat.met.hour,
+		  	delta.air + act2 + Wind_speed_avg_m.s, dat = bat.met.hour,
 		  family = Gamma(link=log),na.action = "na.fail")
-summary(mod1)#wind, temp, AR
-Anova(mod1)
+summary(mod1)
 
+#dredging and model averaging
 d1<-dredge(mod1)
 davg1<-model.avg(d1, subset=delta<2)
 summary(davg1)
@@ -599,12 +599,14 @@ temp.plot<-bat.met.hour%>%
 	ggplot(aes(x=Air_Temperature_C, 
 			   y=activity))+
 	geom_point(alpha=0.4, size=2.5,color="#810f7c")+
-	geom_smooth(method = "glm", color="black")+
 	theme_classic()+
 	labs(x="Average air temperature (ºC)",
 		 y="Bat activity (avg hourly passes)")+
-	theme(text = element_text(size = 13))
+	theme(text = element_text(size = 13))+ 
+	geom_abline(slope=1.094393, intercept=0.2107674, color="black",
+				size=1.5, ci=T)
 temp.plot
+#geom_smooth(method = "glm", color="black")+
 
 #EXPORT PLOT
 tiff('temp.tiff', units="in", width=4.5, height=3, res=400)
