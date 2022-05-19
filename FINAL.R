@@ -65,9 +65,8 @@ plant10.tab <- ddply(plant10, c("treatment"), summarise,
 plant10.tab
 
 ##Q2b: sythentic soybean HIPVs (indole and farnesene)----
-# Indole data import and cleaning ----
+# Indole data import and cleaning
 
-#SUMMARY DATA----
 indole <- read.csv(file="Maynard_etal_indole_sum.csv",head=TRUE)
 indole[, 3:11][is.na(indole[, 3:11])] <- 0
 
@@ -107,10 +106,10 @@ in10.tab
 #control= 328.2 +/- 56.5
 #treatment= 321.0 +/- 36.9
 
-##FARNESENE TRIALS----
-# Farnesene data import and cleaning
 
-#SUMMARY DATA----
+# Farnesene data import and cleaning----
+
+
 farn <- read.csv(file="Maynard_etal_farnesene_sum.csv",head=TRUE)
 farn[, 3:11][is.na(farn[, 3:11])] <- 0
 
@@ -203,7 +202,7 @@ q1.tab
 
 ###Q3: weather----
 
-#I didn't write a forloop, so there are just lots of lines
+#I didn't write a forloop, so there are just a lot of lines
 
 #read in all data
 {ind1 <- read.csv(file="indole1_id_1708_c.csv",head=TRUE)
@@ -448,6 +447,16 @@ met.hour$rain.log<-log((met.hour$Rain_Duration_s)+0.01)
 
 met.hour[is.na(met.hour)]<-0
 
+#creating binary rain variable by the hour
+met.hour$rain_binary<-NA
+for(i in 1:length(met.hour$Rain_Duration_s)){
+	if(met.hour$Rain_Duration_s[i]==0){met.hour$rain_binary[i]="0"}
+	if(met.hour$Rain_Duration_s[i]>0){met.hour$rain_binary[i]="1"}
+}
+
+#creating cumulative rain value
+setDT(met.hour)[, rain_cum_hours := cumsum(rain_binary), by = rleid(rain_binary == 0)]
+
 ##CHECKING FOR COLINEARITY----
 met1<-met.hour[,c(5:13)]
 
@@ -464,7 +473,7 @@ bat.met.hour$wind.avg2 <- (as.numeric(bat.met.hour$Wind_speed_avg_m.s))^2
 library(MASS)
 #bat.met.hour[is.na(bat.met.hour)]<-0
 mod1<-glm(activity~wind.avg2+rain.log+Air_Pressure_pascal+ Air_Temperature_C + 
-		  	delta.air + act2 + Wind_speed_avg_m.s, dat = bat.met.hour,
+		  	delta.air + act2 + Wind_speed_avg_m.s + rain_cum_hours, dat = bat.met.hour,
 		  family = Gamma(link=log),na.action = "na.fail")
 summary(mod1)
 
