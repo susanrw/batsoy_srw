@@ -11,6 +11,7 @@ library(lubridate)
 library(stats)
 library(corrplot)
 library(MuMIn)
+library(stats)
 
 #library(cowplot)
 
@@ -454,6 +455,7 @@ for(i in 1:length(met.hour$Rain_Duration_s)){
 	if(met.hour$Rain_Duration_s[i]>0){met.hour$rain_binary[i]="1"}
 }
 
+library(data.table)
 #creating cumulative rain value
 setDT(met.hour)[, rain_cum_hours := cumsum(rain_binary), by = rleid(rain_binary == 0)]
 
@@ -473,7 +475,7 @@ bat.met.hour$wind.avg2 <- (as.numeric(bat.met.hour$Wind_speed_avg_m.s))^2
 library(MASS)
 #bat.met.hour[is.na(bat.met.hour)]<-0
 mod1<-glm(activity~wind.avg2+rain.log+Air_Pressure_pascal+ Air_Temperature_C + 
-		  	delta.air + act2 + Wind_speed_avg_m.s + rain_cum_hours, dat = bat.met.hour,
+		  	delta.air + act2 + Wind_speed_avg_m.s + wind.avg2 + rain_cum_hours, dat = bat.met.hour,
 		  family = Gamma(link=log),na.action = "na.fail")
 summary(mod1)
 
@@ -482,8 +484,16 @@ d1<-dredge(mod1)
 davg1<-model.avg(d1, subset=delta<2)
 summary(davg1)
 
-exp(0.013755)
+
+exp(8.995e-02)
 #bat activity increases 1.1 with every 1 degC increase in air temp
+exp(8.320e-01)
+#bat activity increases 2.3.1 with every 1 m/s increase in wind speed
+
+summary(lm(bat.met.hour$activity~bat.met.hour$Air_Temperature_C))
+#lm estimate=2.9
+summary(lm(bat.met.hour$activity~bat.met.hour$Wind_speed_avg_m.s))
+#lm estimate=2.8
 
 #PLOTS----
 
@@ -603,7 +613,18 @@ bat.met.hour%>%
 	geom_smooth(method = "glm", color="black")+
 	scale_y_continuous(limits = c(0,180))
 
-#temperature
+#temperature, linear
+bat.met.hour%>%
+	ggplot(aes(x=Air_Temperature_C, 
+			   y=activity))+
+	geom_point(alpha=0.4, size=2.5,color="#810f7c")+
+	theme_classic()+
+	labs(x="Average air temperature (ºC)",
+		 y="Bat activity (average hourly passes)")+
+	theme(text = element_text(size = 18))+
+	geom_smooth(method = "glm", color="black")
+
+#temperature, controlling the slope
 temp.plot<-bat.met.hour%>%
 	ggplot(aes(x=Air_Temperature_C, 
 			   y=activity))+
@@ -612,7 +633,7 @@ temp.plot<-bat.met.hour%>%
 	labs(x="Average air temperature (ºC)",
 		 y="Bat activity (avg hourly passes)")+
 	theme(text = element_text(size = 13))+ 
-	geom_abline(slope=1.094393, intercept=0.2107674, color="black",
+	geom_abline(slope=1.094393, intercept=0.2518303, color="black",
 				size=1.5, ci=T)
 temp.plot
 #geom_smooth(method = "glm", color="black")+
@@ -638,3 +659,14 @@ wind2.plot
 tiff('wind.tiff', units="in", width=4.5, height=3, res=400)
 wind2.plot
 dev.off()
+
+#wind, linear
+bat.met.hour%>%
+	ggplot(aes(x=Wind_speed_avg_m.s, 
+			   y=activity))+
+	geom_point(alpha=0.4, size=2.5,color="#810f7c")+
+	theme_classic()+
+	labs(x="Wind speed average (m/s)",
+		 y="Bat activity (average hourly passes)")+
+	theme(text = element_text(size = 18))+
+	geom_smooth(method = "glm", color="black")
