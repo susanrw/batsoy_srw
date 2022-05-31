@@ -484,7 +484,7 @@ d1<-dredge(mod1)
 davg1<-model.avg(d1, subset=delta<2)
 summary(davg1)
 
-
+#effect sizes
 exp(8.995e-02)
 #bat activity increases 1.1 with every 1 degC increase in air temp
 exp(8.320e-01)
@@ -494,6 +494,35 @@ summary(lm(bat.met.hour$activity~bat.met.hour$Air_Temperature_C))
 #lm estimate=2.9
 summary(lm(bat.met.hour$activity~bat.met.hour$Wind_speed_avg_m.s))
 #lm estimate=2.8
+
+library(plotrix)
+mean(bat.met.hour$Air_Temperature_C)
+std.error(bat.met.hour$Air_Temperature_C)
+range(bat.met.hour$Air_Temperature_C)
+
+mean(bat.met.hour$Wind_speed_avg_m.s)
+std.error(bat.met.hour$Wind_speed_avg_m.s)
+range(bat.met.hour$Wind_speed_avg_m.s)
+
+mean(bat.met.hour$Rain_Duration_s)
+#rained an average of 7.2 sec 
+std.error(bat.met.hour$Rain_Duration_s)
+
+
+mean(bat.met.hour$rain_cum_hours)
+range(bat.met.hour$rain_cum_hours)
+#longest stetch of rain=18 h
+plot(bat.met.hour$activity~bat.met.hour$rain_cum_hours)
+
+mean(bat.met.hour$Air_Pressure_pascal)
+std.error(bat.met.hour$Air_Pressure_pascal)
+range(bat.met.hour$Air_Pressure_pascal)
+
+mean(bat.met.hour$delta.air)
+std.error(bat.met.hour$delta.air)
+
+mean(bat.met.hour$Relative_Humidity_pct)
+std.error(bat.met.hour$Relative_Humidity_pct)
 
 #PLOTS----
 
