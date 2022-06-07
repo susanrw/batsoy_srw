@@ -487,6 +487,18 @@ d1<-dredge(mod1)
 davg1<-model.avg(d1, subset=delta<2)
 summary(davg1)
 
+exp(-0.520942)
+exp(0.091999)
+exp(0.824378)
+
+#Happiness = -0.1012(hours)2 + 6.7444(hours) – 18.2536
+#wind=-1.115(wind)^2 + 2.28 (wind) - 1.683613
+exp(0.135966)
+exp(0.824378)
+exp(0.520942)
+
+(-1.115*(4)^2) + (2.28*4) + (1.683613)
+
 #removing zeros from cumulative rain hours data
 rain.bat.hour<-bat.met.hour[bat.met.hour$rain_cum_hours != "0", ]  
 
@@ -499,7 +511,7 @@ plot(rain.bat.hour$activity~rain.bat.hour$rain_cum_hours)+
 	abline(glm((rain.bat.hour$activity~rain.bat.hour$rain_cum_hours)))
 summary(glm((rain.bat.hour$activity~rain.bat.hour$rain_cum_hours)))
 
-
+#creating model with top variables to make prediction plots
 mod3<-glm(activity~Air_Temperature_C + act2 + Wind_speed_avg_m.s + wind.avg2, dat = bat.met.hour,
 		  family = Gamma(link=log),na.action = "na.fail")
 summary(mod3)
@@ -513,6 +525,7 @@ predplot1
 
 predplot2<-ggplot(bat.met.hour)+
 	geom_point(aes(x=wind.avg2, y=activity))+
+	geom_point(aes(x=wind.avg2, y=yhat), color="red", size=2)+
 	geom_line(aes(x=wind.avg2, y=yhat) ,color="red", size=1)
 predplot2
 
@@ -650,13 +663,13 @@ indole.plot<-ggplot(data=indole10, aes(x=treatment, y=activity))+
 	geom_point(position=position_jitter(width = 0.1), alpha=0.4, size=3, color="#810f7c")+
 	theme_classic()+
 	labs(x=" ", y="Bat activity (nightly passes)")+
-	theme(text = element_text(size=20), axis.text.x = element_text(size = 20))
+	theme(text = element_text(size=17), axis.text.x = element_text(size = 18))
 indole.plot
 
 #EXPORT PLOT
-tiff('indole.tiff', units="in", width=6, height=5, res=400)
-indole.plot
-dev.off()
+#tiff('indole.tiff', units="in", width=6, height=5, res=400)
+#indole.plot
+#dev.off()
 
 #farnesene
 farn10$treatment[farn10$treatment=="Dispenser"]="Farnesene"
@@ -665,14 +678,23 @@ farn.plot<-ggplot(data=farn10, aes(x=treatment, y=activity))+
 	geom_boxplot(outlier.shape = NA, width=.5, lwd=1)+
 	geom_point(position=position_jitter(width = 0.1), alpha=0.4, size=3, color="#810f7c")+
 	theme_classic()+
-	labs(x=" ", y="Bat activity (nightly passes)")+
-	theme(text = element_text(size=20), axis.text.x = element_text(size = 20))
+	labs(x=" ", y="")+
+	theme(text = element_text(size=18), axis.text.x = element_text(size = 18))
 farn.plot
 
 #EXPORT PLOT
-tiff('farnesene.tiff', units="in", width=6, height=5, res=400)
-farn.plot
+#tiff('farnesene.tiff', units="in", width=6, height=5, res=400)
+#farn.plot
+#dev.off()
+
+library(gridExtra)
+library(ggpubr)
+tiff('Dispersers.tiff', units="in", width=8, height=4, res=300)
+ggarrange(indole.plot, farn.plot, 
+		  labels = c("a", "b"),heights = c(2, 2),
+		  ncol = 2, nrow = 1)
 dev.off()
+
 
 #Q3
 #ar term
@@ -681,11 +703,12 @@ bat.met.hour%>%
 			   y=activity))+
 	geom_point(alpha=0.4, size=2.5,color="#810f7c")+
 	theme_classic()+
-	labs(x="AR term",
+	labs(x="Autoregressive term",
 		 y="Bat activity (average hourly passes)")+
 	theme(text = element_text(size = 18))+
-	geom_smooth(method = "glm", color="black")+
-	scale_y_continuous(limits = c(0,180))
+	scale_y_continuous(limits = c(0,180))+ 
+	geom_abline(slope=1.021139, intercept=0.5939608, color="black",
+				size=1.5)
 
 #temperature, linear
 bat.met.hour%>%
@@ -706,9 +729,9 @@ temp.plot<-bat.met.hour%>%
 	theme_classic()+
 	labs(x="Average air temperature (ºC)",
 		 y="Bat activity (avg hourly passes)")+
-	theme(text = element_text(size = 13))+ 
-	geom_abline(slope=1.094393, intercept=0.2518303, color="black",
-				size=1.5, ci=T)
+	theme(text = element_text(size = 18))+ 
+	geom_abline(slope=1.094393, intercept=0.5939608, color="black",
+				size=1.5)
 temp.plot
 #geom_smooth(method = "glm", color="black")+
 
@@ -722,11 +745,12 @@ wind2.plot<-bat.met.hour%>%
 	ggplot(aes(x=Wind_speed_avg_m.s, 
 			   y=activity))+
 	geom_point(alpha=0.4, size=2.5,color="#810f7c")+
-	geom_smooth(method = "glm", formula = y ~ x + I(x^2), color="black")+
+	geom_smooth(method = "glm", formula = y ~ x + I(x^2), color="black", se=F,
+				fullrange = T)+
 	theme_classic()+
 	labs(x="Wind speed average (m/s)",
 		 y="Bat activity (avg hourly passes)")+
-	theme(text = element_text(size = 13))
+	theme(text = element_text(size = 18))
 wind2.plot
 
 #EXPORT PLOT
@@ -742,8 +766,9 @@ bat.met.hour%>%
 	theme_classic()+
 	labs(x="Wind speed average (m/s)",
 		 y="Bat activity (average hourly passes)")+
-	theme(text = element_text(size = 18))+
-	geom_smooth(method = "glm", color="black")
+	theme(text = element_text(size = 18))+ 
+	geom_abline(slope=1.021139, intercept=2.280462, color="black",
+				size=1.5)
 
 #cumulative rain hours
 rain.bat.hour%>%
