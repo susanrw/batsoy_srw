@@ -441,7 +441,10 @@ met.hour<-met.hour[,-c(9,10)]
 met.hour<-met.hour[order(met.hour$jdate, met.hour$hour),]
 #creating hourly change in air pressure var
 met.hour$air2<-lag(met.hour$Air_Pressure_pascal, k=1)
-met.hour$delta.air2<-met.hour$Air_Pressure_pascal-met.hour$air2
+met.hour$air2<-as.numeric(met.hour$air2)
+met.hour$Air_Pressure_pascal<-as.numeric(met.hour$Air_Pressure_pascal)
+met.hour$delta.air2=(met.hour$Air_Pressure_pascal)-(met.hour$air2)
+
 
 #creating log-transformed variable for rain
 met.hour$rain.log<-log((met.hour$Rain_Duration_s)+0.01)
@@ -475,10 +478,14 @@ bat.met.hour<-merge(bat.hour.all1, met.hour, by=c("jdate","hour"))
 #creating nonlinear wind var
 bat.met.hour$wind.avg2 <- (as.numeric(bat.met.hour$Wind_speed_avg_m.s))^2
 
+#transforming delta air
+bat.met.hour$delta.air3<-(bat.met.hour$delta.air2)^(1/3)
+hist(bat.met.hour$delta.air3)
+
 library(MASS)
 #bat.met.hour[is.na(bat.met.hour)]<-0
 mod1<-glm(activity~Air_Pressure_pascal+ Air_Temperature_C + 
-		  	delta.air + act2 + Wind_speed_avg_m.s + wind.avg2, dat = bat.met.hour,
+		  	delta.air2 + act2 + Wind_speed_avg_m.s + wind.avg2, dat = bat.met.hour,
 		  family = Gamma(link=log),na.action = "na.fail")
 summary(mod1)
 
@@ -487,17 +494,13 @@ d1<-dredge(mod1)
 davg1<-model.avg(d1, subset=delta<2)
 summary(davg1)
 
-exp(-0.520942)
-exp(0.091999)
-exp(0.824378)
+exp(-5.144e-01)#intercept
+exp(2.102e-02)#ar term slope
+exp(9.175e-02)#temperature slow
+exp(8.190e-01)#linear wind slope
 
 #Happiness = -0.1012(hours)2 + 6.7444(hours) – 18.2536
 #wind=-1.115(wind)^2 + 2.28 (wind) - 1.683613
-exp(0.135966)
-exp(0.824378)
-exp(0.520942)
-
-(-1.115*(4)^2) + (2.28*4) + (1.683613)
 
 #removing zeros from cumulative rain hours data
 rain.bat.hour<-bat.met.hour[bat.met.hour$rain_cum_hours != "0", ]  
@@ -519,7 +522,6 @@ summary(mod3)
 bat.met.hour$yhat<-predict(mod3)
 predplot1<-ggplot(bat.met.hour)+
 	geom_point(aes(x=Air_Temperature_C, y=activity))+
-	geom_point(aes(x=Air_Temperature_C, y=yhat), color="red", size=2)+
 	geom_line(aes(x=Air_Temperature_C, y=yhat) ,color="red", size=1)
 predplot1
 
