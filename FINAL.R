@@ -12,8 +12,12 @@ library(stats)
 library(corrplot)
 library(MuMIn)
 library(stats)
+library(data.table)
+library(plotrix)
+library(gridExtra)
+library(ggpubr)
 
-#library(cowplot)
+
 
 #Note: because you need data from Q2 to answer Q1, they are in that order
 #Q2a, Q2b, Q1, Q3
@@ -395,7 +399,7 @@ bat.hour.all1<-bat.hour.all1[order(bat.hour.all1$jdate, bat.hour.all1$hour),]
 acf(bat.hour.all1$activity, type = "correlation")
 bat.hour.all1$act2<-lag(bat.hour.all1$activity, k=1)
 
-#add 0s to the beginning of each night
+#add 0s to the beginning of each night to rep no activity and not pre-sunrise data
 bat.hour.all1<-bat.hour.all1[order(bat.hour.all1$hour, bat.hour.all1$jdate),]
 #jdate 251, 257-262, 264-267 had calls at 1800 
 #select rows for those dates
@@ -413,74 +417,68 @@ met$date<-as.Date(met$date,)
 met$jdate<-NA
 met$jdate<-yday(met$date)
 
-#jdate 238-252, 255-270 (no detectors out nights of 253&254)
-met1 <- met%>% filter( between(jdate, 238, 252))
-met2 <- met%>% filter( between(jdate, 255, 270))
-met3<-rbind(met1,met2)
-
-#filtering for hours bats were active, recorders active (6p-7a)
-met4<-met3%>%filter(between(hour, 0,6))
-met5<-met3%>%filter(between(hour, 19,23))
-met6<-rbind(met4,met5)
-
 #aggregate data so it's hourly
 #most variables averaged
 met.hour.avg<-aggregate(cbind(Wind_speed_max_m.s,Wind_speed_avg_m.s,
-						  delta.air,Air_Pressure_pascal,
-						  Air_Temperature_C, Relative_Humidity_pct)~hour + jdate, dat=met6, FUN=mean)
+							  delta.air,Air_Pressure_pascal,
+							  Air_Temperature_C)~hour + jdate, dat=met, FUN=mean)
 #rain variables summed
-met.hour.sum<-aggregate(cbind(Rain_Accumulation_mm,Rain_Duration_s)~hour + jdate, dat=met6, FUN=sum)
+met.hour.sum<-aggregate(cbind(Rain_Accumulation_mm,Rain_Duration_s)~hour + jdate, dat=met, FUN=sum)
 
 #combine the two
 met.hour<-cbind(met.hour.avg,met.hour.sum)
-#remove duplicate columns
-met.hour<-met.hour[,-c(9,10)]
+#remove duplicate columns, hour & jdate 
+met.hour<-met.hour[,-c(8,9)]
 
-
+##creating change in average hourly air pressure
 #ordering data
 met.hour<-met.hour[order(met.hour$jdate, met.hour$hour),]
 #creating hourly change in air pressure var
 met.hour$air2<-lag(met.hour$Air_Pressure_pascal, k=1)
-met.hour$air2<-as.numeric(met.hour$air2)
-met.hour$Air_Pressure_pascal<-as.numeric(met.hour$Air_Pressure_pascal)
 met.hour$delta.air2=(met.hour$Air_Pressure_pascal)-(met.hour$air2)
+
+#jdate 238-252, 255-270 (no detectors out nights of 253&254)
+#met1 <- met.hour%>% filter( between(jdate, 238, 252))
+#met2 <- met.hour%>% filter( between(jdate, 255, 270))
+#met3<-rbind(met1,met2)
+
+#filtering for hours bats were active, recorders active (6p-7a)
+met4<-met.hour%>%filter(between(hour, 0,6))
+met5<-met.hour%>%filter(between(hour, 19,23))
+met6<-rbind(met4,met5)
 
 
 #creating log-transformed variable for rain
-met.hour$rain.log<-log((met.hour$Rain_Duration_s)+0.01)
+met6$rain.log<-log((met6$Rain_Duration_s)+0.01)
 
-met.hour[is.na(met.hour)]<-0
+met6[is.na(met6)]<-0
 
 #creating binary rain variable by the hour
-met.hour$rain_binary<-NA
-for(i in 1:length(met.hour$Rain_Duration_s)){
-	if(met.hour$Rain_Duration_s[i]==0){met.hour$rain_binary[i]="0"}
-	if(met.hour$Rain_Duration_s[i]>0){met.hour$rain_binary[i]="1"}
+met6$rain_binary<-NA
+for(i in 1:length(met6$Rain_Duration_s)){
+	if(met6$Rain_Duration_s[i]==0){met6$rain_binary[i]="0"}
+	if(met6$Rain_Duration_s[i]>0){met6$rain_binary[i]="1"}
 }
-met.hour$rain_binary<-as.numeric(met.hour$rain_binary)
+met6$rain_binary<-as.numeric(met6$rain_binary)
 
-library(data.table)
 #creating cumulative rain value
-setDT(met.hour)[, rain_cum_hours := cumsum(rain_binary), by = rleid(rain_binary == 0)]
-met.hour$rain_cum_hours<-as.numeric(met.hour$rain_cum_hours)
+setDT(met6)[, rain_cum_hours := cumsum(rain_binary), by = rleid(rain_binary == 0)]
+met6$rain_cum_hours<-as.numeric(met6$rain_cum_hours)
 
 ##CHECKING FOR COLINEARITY----
-met1<-met.hour[,c(3:15)]
+met7<-met6[,c(3:14)]
 
-M1 <- cor(met1)#correlation matrix
+M1 <- cor(met7)#correlation matrix
 corrplot(M1, method = "circle")
 corrplot(M1, method = "number")
 #need to choose between rain and wind variables
 #wind avg, cumulative rain
 
-bat.met.hour<-merge(bat.hour.all1, met.hour, by=c("jdate","hour"))
+bat.met.hour<-merge(bat.hour.all1, met6, by=c("jdate","hour"))
 
 #creating nonlinear wind var
 bat.met.hour$wind.avg2 <- (as.numeric(bat.met.hour$Wind_speed_avg_m.s))^2
 
-#transforming delta air
-bat.met.hour$delta.air3<-(bat.met.hour$delta.air2)^(1/3)
-hist(bat.met.hour$delta.air3)
 
 library(MASS)
 #bat.met.hour[is.na(bat.met.hour)]<-0
@@ -494,13 +492,13 @@ d1<-dredge(mod1)
 davg1<-model.avg(d1, subset=delta<2)
 summary(davg1)
 
-exp(-5.144e-01)#intercept
-exp(2.102e-02)#ar term slope
-exp(9.175e-02)#temperature slow
-exp(8.190e-01)#linear wind slope
+exp(-0.4972505)#intercept, 0.61
+exp(0.4972505)#or intercept= -1.64??
+exp(0.0209956)#ar term slope, 1.02
+exp(0.0902396)#temperature slope, 1.09
+exp(0.8317915)#linear wind slope, 2.30
+exp(0.0001986)#delta air slope, 1.00
 
-#Happiness = -0.1012(hours)2 + 6.7444(hours) – 18.2536
-#wind=-1.115(wind)^2 + 2.28 (wind) - 1.683613
 
 #removing zeros from cumulative rain hours data
 rain.bat.hour<-bat.met.hour[bat.met.hour$rain_cum_hours != "0", ]  
@@ -508,7 +506,10 @@ rain.bat.hour<-bat.met.hour[bat.met.hour$rain_cum_hours != "0", ]
 mod2<-glm(activity~rain_cum_hours, dat = rain.bat.hour,
 		  family = Gamma(link=log),na.action = "na.fail")
 summary(mod2)
-Anova(mod2)
+exp(0.01357)#slope=-1.01
+exp(3.49)#intercept=32.8
+Anova(mod2, test.statistic = "F")
+#F=0,34, p=0.56
 
 plot(rain.bat.hour$activity~rain.bat.hour$rain_cum_hours)+
 	abline(glm((rain.bat.hour$activity~rain.bat.hour$rain_cum_hours)))
@@ -537,6 +538,12 @@ predplot3<-ggplot(bat.met.hour)+
 	geom_line(aes(x=Wind_speed_avg_m.s, y=yhat) ,color="red", size=1)
 predplot3
 
+predplot5<-ggplot(bat.met.hour)+
+	geom_point(aes(x=delta.air2, y=activity))+
+	geom_point(aes(x=delta.air2, y=yhat), color="red", size=2)+
+	geom_line(aes(x=delta.air2, y=yhat) ,color="red", size=1)
+predplot5
+
 rain.bat.hour$yhat<-predict(mod2)
 predplot4<-ggplot(rain.bat.hour)+
 	geom_point(aes(x=rain_cum_hours, y=activity))+
@@ -544,45 +551,40 @@ predplot4<-ggplot(rain.bat.hour)+
 	geom_line(aes(x=rain_cum_hours, y=yhat) ,color="red", size=1)
 predplot4
 
-#effect sizes
-exp(8.995e-02)
-#bat activity increases 1.1 with every 1 degC increase in air temp
-exp(8.320e-01)
-#bat activity increases 2.3.1 with every 1 m/s increase in wind speed
 
-summary(lm(bat.met.hour$activity~bat.met.hour$Air_Temperature_C))
-#lm estimate=2.9
-summary(lm(bat.met.hour$activity~bat.met.hour$Wind_speed_avg_m.s))
-#lm estimate=2.8
 
-library(plotrix)
+#calculating means, ranges, and SEs of variables
+
+#temp
 mean(bat.met.hour$Air_Temperature_C)
 std.error(bat.met.hour$Air_Temperature_C)
 range(bat.met.hour$Air_Temperature_C)
 
+#avg wind speed
 mean(bat.met.hour$Wind_speed_avg_m.s)
 std.error(bat.met.hour$Wind_speed_avg_m.s)
 range(bat.met.hour$Wind_speed_avg_m.s)
 
+#rain duration
 mean(bat.met.hour$Rain_Duration_s)
 #rained an average of 7.2 sec 
 std.error(bat.met.hour$Rain_Duration_s)
 
-
+#cumulative rain hours
 mean(bat.met.hour$rain_cum_hours)
 range(bat.met.hour$rain_cum_hours)
 #longest stetch of rain=18 h
 plot(bat.met.hour$activity~bat.met.hour$rain_cum_hours)
 
+#air pressure
 mean(bat.met.hour$Air_Pressure_pascal)
 std.error(bat.met.hour$Air_Pressure_pascal)
 range(bat.met.hour$Air_Pressure_pascal)
 
-mean(bat.met.hour$delta.air)
-std.error(bat.met.hour$delta.air)
+#change in air pressure
+mean(bat.met.hour$delta.air2)
+std.error(bat.met.hour$delta.air2)
 
-mean(bat.met.hour$Relative_Humidity_pct)
-std.error(bat.met.hour$Relative_Humidity_pct)
 
 #PLOTS----
 
@@ -596,11 +598,11 @@ q1.plot<-ggplot(data=dis.all1, aes(x=sp, y=log.act))+
 	geom_boxplot(outlier.shape = NA)+
 	geom_point(position=position_jitter(width = 0.2, height = .05), alpha=0.4, size=3, aes(color=sp))+
 	theme_classic()+
-	labs(x=" ", y="Bat activity (log-transformed)")+
-	theme(text = element_text(size=20), legend.position = "none", 
+	labs(x=" ", y="Bat activity (log)")+
+	theme(text = element_text(size=19), legend.position = "none", 
 		  axis.text.x = element_text(angle = 30, vjust = 0.5, hjust=.9))+
 	stat_summary(geom = 'text', label = c("f","d","d","a","e","b","c"),
-				 fun = max, vjust = -0.8, size=5.5)+
+				 fun = max, vjust = -0.8, size=5, fontface="bold")+
 	scale_y_continuous(limits = c(-0,8.5))+
 	scale_x_discrete(limits=c("EPFU/LANO","LABO/LASE", "LACI","MYLU",
 							  "NYHU", "PESU", "No ID"))+
@@ -608,7 +610,7 @@ q1.plot<-ggplot(data=dis.all1, aes(x=sp, y=log.act))+
 q1.plot
 
 #EXPORT PLOT
-tiff('Q1.tiff', units="in", width=8, height=5, res=400)
+tiff('Q1.tiff', units="in", width=6, height=4, res=400)
 q1.plot
 dev.off()
 
@@ -618,9 +620,11 @@ q1.sp.plot<-ggplot(data=dis.all1, aes(x=jdate, y=log.act))+
 	geom_point(alpha=0.4, size=2.5, aes(color=sp1))+
 	theme_classic()+
 	geom_smooth(method = "gam", color="black")+
-	labs(x="Julian date", y="Bat activity (log-transformed)")+
+	labs(x="Julian date", y="Bat activity (log)")+
 	theme(text = element_text(size=19), 
-		  axis.text.x = element_text(angle = 30, vjust = 0.5, hjust=.9))+
+		  axis.text.x = element_text(angle = 30, vjust = 0.5, hjust=.9),
+		  legend.text = element_text(size = 12),
+		  legend.title = element_text(size = 12,face = "bold"))+
 	scale_color_manual(values = c("#450757", "#443885", "#2d678e","#178f8b", "#2ab977", "#8fd839","#fee800"),
 					   limits=c("EPFU/LANO","LABO/LASE", "LACI","MYLU",
 					   		 "NYHU", "PESU", "No ID"))+
@@ -628,7 +632,7 @@ q1.sp.plot<-ggplot(data=dis.all1, aes(x=jdate, y=log.act))+
 q1.sp.plot
 
 #EXPORT PLOT
-tiff('Q1_time.tiff', units="in", width=8, height=5, res=400)
+tiff('Q1_time.tiff', units="in", width=7, height=4, res=400)
 q1.sp.plot
 dev.off()
 
@@ -646,9 +650,10 @@ plant.plot<-ggplot(data=plant10, aes(x=treatment, y=activity))+
 	geom_point(position=position_jitter(width = 0.1), alpha=0.4, size=3, color="#810f7c")+
 	theme_classic()+
 	labs(x=" ", y="Bat activity (nightly passes)")+
-	theme(text = element_text(size=20), axis.text.x = element_text(size = 20))+
+	theme(text = element_text(size=16), axis.text.x = element_text(size = 15))+
 	scale_x_discrete(limits=c("U", "D"),
-					 labels=c("Undamaged", "Damaged"))
+					 labels=c(expression(atop("Undamaged", paste("plants"))), 
+					 		 expression(atop("Damaged", paste("plants")))))
 plant.plot
 
 #EXPORT PLOT
@@ -664,8 +669,10 @@ indole.plot<-ggplot(data=indole10, aes(x=treatment, y=activity))+
 	geom_boxplot(outlier.shape = NA, width=.5, lwd=1)+
 	geom_point(position=position_jitter(width = 0.1), alpha=0.4, size=3, color="#810f7c")+
 	theme_classic()+
-	labs(x=" ", y="Bat activity (nightly passes)")+
-	theme(text = element_text(size=17), axis.text.x = element_text(size = 18))
+	labs(x=" ", y="")+
+	theme(text = element_text(size=16), axis.text.x = element_text(size = 15))+
+	scale_x_discrete(labels=c(expression(atop("Control", paste("dispenser"))), 
+					 		 expression(atop("Indole", paste("dispenser")))))
 indole.plot
 
 #EXPORT PLOT
@@ -681,7 +688,9 @@ farn.plot<-ggplot(data=farn10, aes(x=treatment, y=activity))+
 	geom_point(position=position_jitter(width = 0.1), alpha=0.4, size=3, color="#810f7c")+
 	theme_classic()+
 	labs(x=" ", y="")+
-	theme(text = element_text(size=18), axis.text.x = element_text(size = 18))
+	theme(text = element_text(size=16), axis.text.x = element_text(size = 15))+
+	scale_x_discrete(labels=c(expression(atop("Control", paste("dispenser"))), 
+							  expression(atop("Farnesene", paste("dispenser")))))
 farn.plot
 
 #EXPORT PLOT
@@ -689,14 +698,27 @@ farn.plot
 #farn.plot
 #dev.off()
 
-library(gridExtra)
-library(ggpubr)
-tiff('Dispersers.tiff', units="in", width=8, height=4, res=300)
-ggarrange(indole.plot, farn.plot, 
-		  labels = c("a", "b"),heights = c(2, 2),
-		  ncol = 2, nrow = 1)
+
+#tiff('Dispersers.tiff', units="in", width=8, height=4, res=300)
+#ggarrange(plant.plot, indole.plot, farn.plot, 
+		  #labels = c("a", "b"),heights = c(2, 2),
+		  #ncol = 2, nrow = 1)
+#dev.off()
+
+tiff('HIPV.tiff', units="in", width=10, height=4, res=300)
+ggarrange(plant.plot, indole.plot, farn.plot, 
+		  labels = c("a", "b", "c"),heights = c(2, 2,2),
+		  ncol = 3, nrow = 1,
+		  vjust=1.2)
 dev.off()
 
+summary(davg1)
+exp(-0.4972505)#intercept, 0.61
+exp(0.4972505)#or intercept= -1.64??
+exp(0.0209956)#ar term slope, 1.02
+exp(0.0902396)#temperature slope, 1.09
+exp(0.8317915)#linear wind slope, 2.30
+exp(0.0001986)#delta air slope, 1.00
 
 #Q3
 #ar term
@@ -709,7 +731,7 @@ bat.met.hour%>%
 		 y="Bat activity (average hourly passes)")+
 	theme(text = element_text(size = 18))+
 	scale_y_continuous(limits = c(0,180))+ 
-	geom_abline(slope=1.021139, intercept=0.5939608, color="black",
+	geom_abline(slope=1.021218, intercept=-1.644194, color="black",
 				size=1.5)
 
 #temperature, linear
@@ -731,14 +753,15 @@ temp.plot<-bat.met.hour%>%
 	theme_classic()+
 	labs(x="Average air temperature (ºC)",
 		 y="Bat activity (avg hourly passes)")+
-	theme(text = element_text(size = 18))+ 
-	geom_abline(slope=1.094393, intercept=0.5939608, color="black",
+	theme(text = element_text(size = 15),
+		  axis.title.y = element_text(size=13))+ 
+	geom_abline(slope=1.09, intercept=-1.644194, color="black",
 				size=1.5)
 temp.plot
 #geom_smooth(method = "glm", color="black")+
 
 #EXPORT PLOT
-tiff('temp.tiff', units="in", width=4.5, height=3, res=400)
+tiff('temp.tiff', units="in", width=5, height=3, res=400)
 temp.plot
 dev.off()
 
@@ -748,31 +771,43 @@ wind2.plot<-bat.met.hour%>%
 			   y=activity))+
 	geom_point(alpha=0.4, size=2.5,color="#810f7c")+
 	geom_smooth(method = "glm", formula = y ~ x + I(x^2), color="black", se=F,
-				fullrange = T)+
+				fullrange = T, size=1.5)+
 	theme_classic()+
-	labs(x="Wind speed average (m/s)",
-		 y="Bat activity (avg hourly passes)")+
-	theme(text = element_text(size = 18))
+	labs(x="Average wind speed (m/s)",
+		 y="")+
+	theme(text = element_text(size = 15))
 wind2.plot
 
 #EXPORT PLOT
-tiff('wind.tiff', units="in", width=4.5, height=3, res=400)
+tiff('wind.tiff', units="in", width=5, height=3, res=400)
 wind2.plot
 dev.off()
 
-#wind, linear
+tiff('Abiotic.tiff', units="in", width=8, height=3.5, res=300)
+ggarrange(temp.plot, wind2.plot, 
+labels = c("a", "b"),heights = c(2, 2),
+ncol = 2, nrow = 1)
+dev.off()
+
+
+#air pressure
 bat.met.hour%>%
-	ggplot(aes(x=Wind_speed_avg_m.s, 
+	ggplot(aes(x=delta.air2, 
 			   y=activity))+
 	geom_point(alpha=0.4, size=2.5,color="#810f7c")+
 	theme_classic()+
-	labs(x="Wind speed average (m/s)",
+	labs(x="Average change in air pressure (Pa)",
 		 y="Bat activity (average hourly passes)")+
 	theme(text = element_text(size = 18))+ 
-	geom_abline(slope=1.021139, intercept=2.280462, color="black",
-				size=1.5)
+	geom_abline(slope=1.0, intercept=0, color="black",
+				size=1.5)+
+	geom_smooth(method = "glm")
 
+
+exp(0.01357)#slope=-1.01
+exp(3.49)#intercept=32.8
 #cumulative rain hours
+
 rain.bat.hour%>%
 	ggplot(aes(x=rain_cum_hours, 
 			   y=activity))+
@@ -781,7 +816,8 @@ rain.bat.hour%>%
 	labs(x="Cumulative rain (hours)",
 		 y="Bat activity (average hourly passes)")+
 	theme(text = element_text(size = 18))+
-	geom_smooth(method = "glm", color="black")+
-	scale_x_continuous(limits = c(0,18))
-
+	scale_x_continuous(limits = c(0,18))+ 
+	geom_abline(slope=-1.01, intercept=32.8, color="black",
+				size=1.5)+
+	geom_smooth(method = "glm")
 
