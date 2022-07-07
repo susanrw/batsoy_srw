@@ -804,6 +804,8 @@ bat.met.hour%>%
 	geom_smooth(method = "glm")
 
 
+
+
 exp(0.01357)#slope=-1.01
 exp(3.49)#intercept=32.8
 #cumulative rain hours
