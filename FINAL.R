@@ -556,6 +556,55 @@ predplot4<-ggplot(rain.bat.hour)+
 predplot4
 
 
+##As an alternative to the above, you could use a GAM
+
+#this thread is a helpful discussion of GAM vs using a polynomial term
+#https://stats.stackexchange.com/questions/166796/how-does-one-perform-multiple-non-linear-regression
+
+m.gam <-gam(activity~Air_Pressure_pascal+ Air_Temperature_C + 
+		   	delta.air2 + act2 + s(Wind_speed_avg_m.s, bs='ts'), dat = bat.met.hour,
+		   family = Gamma(link=log),na.action = "na.fail")
+summary(m.gam)
+
+
+#This also runs if you include cumulative rain hours
+#(I was not sure why you had this in a separate model above??)
+m.gam2 <-gam(activity~Air_Pressure_pascal+ Air_Temperature_C + 
+			delta.air2 + rain_cum_hours + act2 + s(Wind_speed_avg_m.s, bs='ts'), 
+			dat = bat.met.hour, family = Gamma(link=log),na.action = "na.fail")
+summary(m.gam2)
+
+
+#or you can specifically set the number of twists/turns in the spline
+#function with k=X
+m.gam3 <-gam(activity~Air_Pressure_pascal+ Air_Temperature_C + 
+			 	delta.air2 + rain_cum_hours + act2 + 
+			 	s(Wind_speed_avg_m.s, bs='ts', k=3), 
+			 dat = bat.met.hour, family = Gamma(link=log),na.action = "na.fail")
+summary(m.gam3)
+
+#this checks that k is not too small. P is large so that suggests this is good
+gam.check(m.gam3)
+
+#most threads seems to suggest that larger k is better, but with model where
+#k is unconstrained you get a lot of twists and turns that I see no reason to 
+#expect biologically. So I like the lower k, and I think it can be justified
+#https://stats.stackexchange.com/questions/463405/purposely-restricting-k-in-mgcvs-gam
+
+#also the model fit is not significantly better with larger k
+anova(m.gam2, m.gam3, test="Chisq")
+
+#The nice thing here is that you get one overall p-value for wind speed
+#as a non-linear predictor variable, so it removes the complication
+#of interpreting the linear terms and the polynomial term
+
+#also I think the geom_smooth function in ggplot
+#is doing the same thing as the "s" term in this model, so you can just
+#use that for plots and it would be in line with the model results
+
+#if you go with this approach, see plots I would suggest at bottom of code
+
+
 
 #calculating means, ranges, and SEs of variables
 
@@ -826,4 +875,49 @@ rain.bat.hour%>%
 	geom_abline(slope=-1.01, intercept=32.8, color="black",
 				size=1.5)+
 	geom_smooth(method = "glm")
+
+
+
+##These are my suggested plots for Q3, if you go with the GAM
+
+#temperature, linear
+bat.met.hour%>%
+	ggplot(aes(x=Air_Temperature_C, 
+			   y=activity))+
+	geom_point(alpha=0.4, size=2.5,color="#810f7c")+
+	theme_classic()+
+	labs(x="Average air temperature (ºC)",
+		 y="Bat activity (average hourly passes)")+
+	theme(text = element_text(size = 18))+
+	geom_smooth(method = "glm", color="black")
+
+#wind non-linear
+bat.met.hour%>%
+	ggplot(aes(x=Wind_speed_avg_m.s, 
+			   y=activity))+
+	geom_point(alpha=0.4, size=2.5,color="#810f7c")+
+	stat_smooth(method = "gam", formula = y ~ s(x, k = 3), size = 1.5, color="black")+
+	theme_classic()+
+	labs(x="Average wind speed (m/s)",
+		 y="")+
+	theme(text = element_text(size = 15))
+
+
+#OR, if you keep the polynomial, I would use this one for wind, it is the 
+#same as what you have above, but with the SE
+
+#wind non-linear
+bat.met.hour%>%
+	ggplot(aes(x=Wind_speed_avg_m.s, 
+			   y=activity))+
+	geom_point(alpha=0.4, size=2.5,color="#810f7c")+
+	geom_smooth(method = "glm", formula = y ~ x + I(x^2), color="black", se=T,
+				fullrange = T, size=1.5)+
+	theme_classic()+
+	labs(x="Average wind speed (m/s)",
+		 y="")+
+	theme(text = element_text(size = 15))
+
+
+
 
