@@ -652,35 +652,43 @@ q1.plot<-ggplot(data=dis.all1, aes(x=sp, y=log.act))+
 	geom_point(position=position_jitter(width = 0.2, height = .05), alpha=0.4, size=3, aes(color=sp))+
 	theme_classic()+
 	labs(x=" ", y="Bat activity (log)")+
-	theme(text = element_text(size=19), legend.position = "none", 
-		  axis.text.x = element_text(angle = 30, vjust = 0.5, hjust=.9))+
-	stat_summary(geom = 'text', label = c("f","d","d","a","e","b","c"),
+	theme(text = element_text(size=16), legend.position = "none", 
+		  axis.text.x = element_text(angle = 35, vjust = 0.8, hjust=.8, size=12))+
+	stat_summary(geom = 'text', label = c("f","d","b","d","a","e","c"),
 				 fun = max, vjust = -0.8, size=5, fontface="bold")+
-	scale_y_continuous(limits = c(-0,8.5))+
-	scale_x_discrete(limits=c("EPFU/LANO","LABO/LASE", "LACI","MYLU",
-							  "NYHU", "PESU", "No ID"))+
-	scale_color_manual(values = c("#450757", "#443885", "#2d678e","#178f8b", "#fee800", "#2ab977","#8fd839"))
+	scale_y_continuous(limits = c(-0.1,8.5))+
+	scale_x_discrete(limits=c("Big brown/silver-haired bat","Eastern red/Seminole bat", 
+							  "Evening bat","Hoary bat",
+							  "Little brown bat", "Tricolored bat", "No ID"),
+					 labels=c(expression(paste("Big brown/ \n silver-haired bat")), 
+					 		 expression(paste("Eastern red/ \n Seminole bat")),
+					 		 "Evening bat","Hoary bat",
+					 		 "Little brown bat", "Tricolored bat", "No ID"))+
+	scale_color_manual(values = c("#450757", "#443885", "#2d678e","#178f8b", "#2ab977", "#fee800","#8fd839"))
 q1.plot
+
 
 #EXPORT PLOT
 tiff('Q1.tiff', units="in", width=6, height=4, res=400)
 q1.plot
 dev.off()
 
-dis.all1$sp1 = factor(dis.all1$sp, levels=c("EPFU/LANO","LABO/LASE", "LACI","MYLU",
-											"NYHU", "PESU", "No ID"))
+dis.all1$sp1 = factor(dis.all1$sp, levels=c("Big brown/silver-haired bat","Eastern red/Seminole bat", 
+											"Hoary bat","Little brown bat",
+											"Evening bat", "Tricolored bat", "No ID"))
 q1.sp.plot<-ggplot(data=dis.all1, aes(x=jdate, y=log.act))+ 
 	geom_point(alpha=0.4, size=2.5, aes(color=sp1))+
 	theme_classic()+
 	geom_smooth(method = "gam", color="black")+
 	labs(x="Julian date", y="Bat activity (log)")+
-	theme(text = element_text(size=19), 
+	theme(text = element_text(size=18), 
 		  axis.text.x = element_text(angle = 30, vjust = 0.5, hjust=.9),
-		  legend.text = element_text(size = 12),
+		  legend.text = element_text(size = 10),
 		  legend.title = element_text(size = 12,face = "bold"))+
 	scale_color_manual(values = c("#450757", "#443885", "#2d678e","#178f8b", "#2ab977", "#8fd839","#fee800"),
-					   limits=c("EPFU/LANO","LABO/LASE", "LACI","MYLU",
-					   		 "NYHU", "PESU", "No ID"))+
+					   limits=c("Big brown/silver-haired bat","Eastern red/Seminole bat", 
+					   		 "Hoary bat","Little brown bat",
+					   		 "Evening bat", "Tricolored bat", "No ID"))+
 	guides(color=guide_legend(title="Species"))
 q1.sp.plot
 
