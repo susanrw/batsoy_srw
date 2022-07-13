@@ -16,12 +16,13 @@ library(data.table)
 library(plotrix)
 library(gridExtra)
 library(ggpubr)
+library(multcompView)
 
 
 
 #Note: because you need data from Q2 to answer Q1, they are in that order
 #Q2a, Q2b, Q1, Q3
-#all plots and end of script
+#all plots at end of script
 
 ##Q2a: Naturally occurring soybean HIPVS (damaged vs. undamaged plants)----
 
@@ -74,6 +75,7 @@ plant10.tab
 
 indole <- read.csv(file="Maynard_etal_indole_sum.csv",head=TRUE)
 indole[, 3:11][is.na(indole[, 3:11])] <- 0
+colnames(indole)[which(colnames(indole)=="ï..jdate")] <- "jdate"
 
 ##Gathering data — compounds from col to rows
 indole1<-indole %>% gather(sp, activity, EPTFUS:NOID)
@@ -117,6 +119,7 @@ in10.tab
 
 farn <- read.csv(file="Maynard_etal_farnesene_sum.csv",head=TRUE)
 farn[, 3:11][is.na(farn[, 3:11])] <- 0
+colnames(farn)[which(colnames(farn)=="ï..jdate")] <- "jdate"
 
 ##Gathering data — compounds from col to rows
 farn1<-farn %>% gather(sp, activity, EPTFUS:NOID)
@@ -412,6 +415,7 @@ jun <- read.csv(file="SERC_TOWER_june2021.csv",head=TRUE)
 jul <- read.csv(file="SERC_TOWER_july2021.csv",head=TRUE)
 
 met<-rbind(aug,sep,jun,jul)
+colnames(met)[which(colnames(met)=="ï..date")] <- "date"
 
 met$date<-as.Date(met$date,)
 met$jdate<-NA
