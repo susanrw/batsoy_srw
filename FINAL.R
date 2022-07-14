@@ -1,5 +1,5 @@
 #Load libraries
-library(dplyr)
+{library(dplyr)
 library(ggplot2)
 library(tidyr)
 library(lme4)
@@ -17,6 +17,7 @@ library(plotrix)
 library(gridExtra)
 library(ggpubr)
 library(multcompView)
+}
 
 
 
@@ -27,7 +28,7 @@ library(multcompView)
 ##Q2a: Naturally occurring soybean HIPVS (damaged vs. undamaged plants)----
 
 # Data import and cleaning
-plant <- read.csv(file="plant_sum_noTABR.csv",head=TRUE)
+plant <- read.csv(file="Maynard_etal_plant_sum.csv",head=TRUE)
 plant[, 3:11][is.na(plant[, 3:11])] <- 0
 
 ##Gathering data — compounds from col to rows
@@ -561,11 +562,16 @@ predplot4
 #this thread is a helpful discussion of GAM vs using a polynomial term
 #https://stats.stackexchange.com/questions/166796/how-does-one-perform-multiple-non-linear-regression
 
+library(mgcv)
 m.gam <-gam(activity~Air_Pressure_pascal+ Air_Temperature_C + 
-		   	delta.air2 + act2 + s(Wind_speed_avg_m.s, bs='ts'), dat = bat.met.hour,
+		   	delta.air2 + act2 + s(Wind_speed_avg_m.s, bs="ts"), dat = bat.met.hour,
 		   family = Gamma(link=log),na.action = "na.fail")
 summary(m.gam)
 
+#dredging and model averaging
+d5<-dredge(m.gam3)
+davg5<-model.avg(d5, subset=delta<3)
+summary(davg5)
 
 #This also runs if you include cumulative rain hours
 #(I was not sure why you had this in a separate model above??)
@@ -817,7 +823,10 @@ temp.plot<-bat.met.hour%>%
 	theme(text = element_text(size = 15),
 		  axis.title.y = element_text(size=13))+ 
 	geom_abline(slope=1.09, intercept=-1.644194, color="black",
-				size=1.5)
+				size=1.5)+
+	stat_smooth(aes(ymin = after_stat(y - 2 * se), ymax = after_stat(y + 2 * se)), 
+				geom = "ribbon",  fill = "grey60", alpha = .4, method = "glm")
+	
 temp.plot
 #geom_smooth(method = "glm", color="black")+
 
@@ -927,5 +936,7 @@ bat.met.hour%>%
 	theme(text = element_text(size = 15))
 
 
-
+ciVal <- 0.5
+myMax = max(c(bat.met.hour$Air_Temperature_C,bat.met.hour$activity))
+myMin = min(c(bat.met.hour$Air_Temperature_C,bat.met.hour$activity))
 
