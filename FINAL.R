@@ -466,9 +466,9 @@ for(i in 1:length(met6$Rain_Duration_s)){
 }
 met6$rain_binary<-as.numeric(met6$rain_binary)
 
-#creating cumulative rain value
-setDT(met6)[, rain_cum_hours := cumsum(rain_binary), by = rleid(rain_binary == 0)]
-met6$rain_cum_hours<-as.numeric(met6$rain_cum_hours)
+#creating consecutive rain value
+setDT(met6)[, rain_con_hours := cumsum(rain_binary), by = rleid(rain_binary == 0)]
+met6$rain_con_hours<-as.numeric(met6$rain_con_hours)
 
 ##CHECKING FOR COLINEARITY----
 met7<-met6[,c(3:14)]
@@ -477,7 +477,7 @@ M1 <- cor(met7)#correlation matrix
 corrplot(M1, method = "circle")
 corrplot(M1, method = "number")
 #need to choose between rain and wind variables
-#wind avg, cumulative rain
+#wind avg, consecutive rain
 
 bat.met.hour<-merge(bat.hour.all1, met6, by=c("jdate","hour"))
 
@@ -505,10 +505,10 @@ exp(0.8317915)#linear wind slope, 2.30
 exp(0.0001986)#delta air slope, 1.00
 
 
-#removing zeros from cumulative rain hours data
-rain.bat.hour<-bat.met.hour[bat.met.hour$rain_cum_hours != "0", ]  
+#removing zeros from consecutive rain hours data
+rain.bat.hour<-bat.met.hour[bat.met.hour$rain_con_hours != "0", ]  
 
-mod2<-glm(activity~rain_cum_hours, dat = rain.bat.hour,
+mod2<-glm(activity~rain_con_hours, dat = rain.bat.hour,
 		  family = Gamma(link=log),na.action = "na.fail")
 summary(mod2)
 exp(0.01357)#slope=-1.01
@@ -516,9 +516,9 @@ exp(3.49)#intercept=32.8
 Anova(mod2, test.statistic = "F")
 #F=0,34, p=0.56
 
-plot(rain.bat.hour$activity~rain.bat.hour$rain_cum_hours)+
-	abline(glm((rain.bat.hour$activity~rain.bat.hour$rain_cum_hours)))
-summary(glm((rain.bat.hour$activity~rain.bat.hour$rain_cum_hours)))
+plot(rain.bat.hour$activity~rain.bat.hour$rain_con_hours)+
+	abline(glm((rain.bat.hour$activity~rain.bat.hour$rain_con_hours)))
+summary(glm((rain.bat.hour$activity~rain.bat.hour$rain_con_hours)))
 
 #creating model with top variables to make prediction plots
 mod3<-glm(activity~Air_Temperature_C + act2 + Wind_speed_avg_m.s + wind.avg2, dat = bat.met.hour,
@@ -551,9 +551,9 @@ predplot5
 
 rain.bat.hour$yhat<-predict(mod2)
 predplot4<-ggplot(rain.bat.hour)+
-	geom_point(aes(x=rain_cum_hours, y=activity))+
-	geom_point(aes(x=rain_cum_hours, y=yhat), color="red", size=2)+
-	geom_line(aes(x=rain_cum_hours, y=yhat) ,color="red", size=1)
+	geom_point(aes(x=rain_con_hours, y=activity))+
+	geom_point(aes(x=rain_con_hours, y=yhat), color="red", size=2)+
+	geom_line(aes(x=rain_con_hours, y=yhat) ,color="red", size=1)
 predplot4
 
 
@@ -573,10 +573,10 @@ d5<-dredge(m.gam3)
 davg5<-model.avg(d5, subset=delta<3)
 summary(davg5)
 
-#This also runs if you include cumulative rain hours
+#This also runs if you include consecutive rain hours
 #(I was not sure why you had this in a separate model above??)
 m.gam2 <-gam(activity~Air_Pressure_pascal+ Air_Temperature_C + 
-			delta.air2 + rain_cum_hours + act2 + s(Wind_speed_avg_m.s, bs='ts'), 
+			delta.air2 + rain_con_hours + act2 + s(Wind_speed_avg_m.s, bs='ts'), 
 			dat = bat.met.hour, family = Gamma(link=log),na.action = "na.fail")
 summary(m.gam2)
 
@@ -584,7 +584,7 @@ summary(m.gam2)
 #or you can specifically set the number of twists/turns in the spline
 #function with k=X
 m.gam3 <-gam(activity~Air_Pressure_pascal+ Air_Temperature_C + 
-			 	delta.air2 + rain_cum_hours + act2 + 
+			 	delta.air2 + rain_con_hours + act2 + 
 			 	s(Wind_speed_avg_m.s, bs='ts', k=3), 
 			 dat = bat.met.hour, family = Gamma(link=log),na.action = "na.fail")
 summary(m.gam3)
@@ -629,11 +629,12 @@ mean(bat.met.hour$Rain_Duration_s)
 #rained an average of 7.2 sec 
 std.error(bat.met.hour$Rain_Duration_s)
 
-#cumulative rain hours
-mean(bat.met.hour$rain_cum_hours)
-range(bat.met.hour$rain_cum_hours)
+#consecutive rain hours
+mean(bat.met.hour$rain_con_hours)
+range(bat.met.hour$rain_con_hours)
 #longest stetch of rain=18 h
-plot(bat.met.hour$activity~bat.met.hour$rain_cum_hours)
+std.error(bat.met.hour$rain_con_hours)
+plot(bat.met.hour$activity~bat.met.hour$rain_con_hours)
 
 #air pressure
 mean(bat.met.hour$Air_Pressure_pascal)
@@ -789,17 +790,23 @@ exp(0.0001986)#delta air slope, 1.00
 
 #Q3
 #ar term
-bat.met.hour%>%
+ar.plot<-bat.met.hour%>%
 	ggplot(aes(x=act2, 
 			   y=activity))+
-	geom_point(alpha=0.4, size=2.5,color="#810f7c")+
+	geom_point(alpha=0.4, size=2,color="#810f7c")+
 	theme_classic()+
 	labs(x="Autoregressive term",
-		 y="Bat activity (average hourly passes)")+
-	theme(text = element_text(size = 18))+
+		 y="Bat activity (avg hourly passes)")+
+	theme(text = element_text(size = 12))+
 	scale_y_continuous(limits = c(0,180))+ 
 	geom_abline(slope=1.021218, intercept=-1.644194, color="black",
 				size=1.5)
+ar.plot
+
+#EXPORT PLOT
+tiff('autoregressive.tiff', units="in", width=4.25, height=2.9, res=400)
+ar.plot
+dev.off()
 
 #temperature, linear
 bat.met.hour%>%
@@ -861,38 +868,39 @@ dev.off()
 
 
 #air pressure
-bat.met.hour%>%
+delta.air.plot<-bat.met.hour%>%
 	ggplot(aes(x=delta.air2, 
 			   y=activity))+
-	geom_point(alpha=0.4, size=2.5,color="#810f7c")+
+	geom_point(alpha=0.4, size=2,color="#810f7c")+
 	theme_classic()+
 	labs(x="Average change in air pressure (Pa)",
-		 y="Bat activity (average hourly passes)")+
-	theme(text = element_text(size = 18))+ 
-	geom_abline(slope=1.0, intercept=0, color="black",
-				size=1.5)+
-	geom_smooth(method = "glm")
+		 y="Bat activity (avg hourly passes)")+
+	theme(text = element_text(size = 12))
+delta.air.plot
 
-
-
+#EXPORT PLOT
+tiff('delta_air.tiff', units="in", width=4.25, height=2.9, res=400)
+delta.air.plot
+dev.off()
 
 exp(0.01357)#slope=-1.01
 exp(3.49)#intercept=32.8
-#cumulative rain hours
+#consecutive rain hours
 
-rain.bat.hour%>%
-	ggplot(aes(x=rain_cum_hours, 
+rain.plot<-rain.bat.hour%>%
+	ggplot(aes(x=rain_con_hours, 
 			   y=activity))+
-	geom_point(alpha=0.4, size=2.5,color="#810f7c")+
+	geom_point(alpha=0.4, size=2,color="#810f7c")+
 	theme_classic()+
-	labs(x="Cumulative rain (hours)",
-		 y="Bat activity (average hourly passes)")+
-	theme(text = element_text(size = 18))+
-	scale_x_continuous(limits = c(0,18))+ 
-	geom_abline(slope=-1.01, intercept=32.8, color="black",
-				size=1.5)+
-	geom_smooth(method = "glm")
+	labs(x="Consecutive rain (hours)",
+		 y="Bat activity (avg hourly passes)")+
+	theme(text = element_text(size = 12))
+rain.plot
 
+#EXPORT PLOT
+tiff('rain.tiff', units="in", width=4.25, height=2.9, res=400)
+rain.plot
+dev.off()
 
 
 ##These are my suggested plots for Q3, if you go with the GAM
