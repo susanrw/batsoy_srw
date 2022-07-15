@@ -568,6 +568,9 @@ m.gam <-gam(activity~Air_Pressure_pascal+ Air_Temperature_C +
 		   family = Gamma(link=log),na.action = "na.fail")
 summary(m.gam)
 
+library(AUtests)
+anova.gam(m.gam)
+
 #dredging and model averaging
 d5<-dredge(m.gam3)
 davg5<-model.avg(d5, subset=delta<3)
@@ -584,10 +587,11 @@ summary(m.gam2)
 #or you can specifically set the number of twists/turns in the spline
 #function with k=X
 m.gam3 <-gam(activity~Air_Pressure_pascal+ Air_Temperature_C + 
-			 	delta.air2 + rain_con_hours + act2 + 
+			 	delta.air2 + act2 + Wind_speed_avg_m.s+
 			 	s(Wind_speed_avg_m.s, bs='ts', k=3), 
 			 dat = bat.met.hour, family = Gamma(link=log),na.action = "na.fail")
 summary(m.gam3)
+anova.gam(m.gam3)
 
 #this checks that k is not too small. P is large so that suggests this is good
 gam.check(m.gam3)
@@ -936,12 +940,12 @@ bat.met.hour%>%
 	ggplot(aes(x=Wind_speed_avg_m.s, 
 			   y=activity))+
 	geom_point(alpha=0.4, size=2.5,color="#810f7c")+
-	geom_smooth(method = "glm", formula = y ~ x + I(x^2), color="black", se=T,
-				fullrange = T, size=1.5)+
+
 	theme_classic()+
 	labs(x="Average wind speed (m/s)",
 		 y="")+
-	theme(text = element_text(size = 15))
+	theme(text = element_text(size = 15))+
+	geom_smooth(method = "gam", color="black", formula = y ~ s(x, k = 3))
 
 
 ciVal <- 0.5
