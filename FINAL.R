@@ -498,11 +498,12 @@ davg1<-model.avg(d1, subset=delta<2)
 summary(davg1)
 
 exp(-0.4972505)#intercept, 0.61
-exp(0.4972505)#or intercept= -1.64??
 exp(0.0209956)#ar term slope, 1.02
 exp(0.0902396)#temperature slope, 1.09
 exp(0.8317915)#linear wind slope, 2.30
 exp(0.0001986)#delta air slope, 1.00
+
+exp(0.4047806)#SE
 
 
 #removing zeros from consecutive rain hours data
@@ -832,13 +833,21 @@ temp.plot<-bat.met.hour%>%
 	labs(x="Average air temperature (ºC)",
 		 y="Bat activity (avg hourly passes)")+
 	theme(text = element_text(size = 15),
-		  axis.title.y = element_text(size=13))+ 
-	geom_abline(slope=1.09, intercept=-1.644194, color="black",
-				size=1.5)+
-	stat_smooth(aes(ymin = after_stat(y - 2 * se), ymax = after_stat(y + 2 * se)), 
-				geom = "ribbon",  fill = "grey60", alpha = .4, method = "glm")
-	
+		  axis.title.y = element_text(size=13))+
+	geom_abline(slope=1.09, intercept=2.048975, color="grey",
+				size=5, alpha=0.4)+
+	geom_abline(slope=1.09, intercept=1.239413, color="grey",
+				size=5, alpha=0.4)+ 
+	geom_abline(slope=1.09, intercept=1.644194, color="black",
+				size=1)
 temp.plot
+	
+	
+#stat_smooth(aes(ymin = after_stat(y - 2 * se), ymax = after_stat(y + 2 * se)), 
+				#geom = "ribbon",  fill = "grey60", alpha = .4, method = "glm")+
+	
+	
+
 #geom_smooth(method = "glm", color="black")+
 
 #EXPORT PLOT
@@ -851,8 +860,8 @@ wind2.plot<-bat.met.hour%>%
 	ggplot(aes(x=Wind_speed_avg_m.s, 
 			   y=activity))+
 	geom_point(alpha=0.4, size=2.5,color="#810f7c")+
-	geom_smooth(method = "glm", formula = y ~ x + I(x^2), color="black", se=F,
-				fullrange = T, size=1.5)+
+	geom_smooth(method = "glm", formula = y ~ x + I(x^2), color="black", se=T,
+				fullrange = T, size=1)+
 	theme_classic()+
 	labs(x="Average wind speed (m/s)",
 		 y="")+
