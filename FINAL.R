@@ -814,18 +814,19 @@ ar.plot
 dev.off()
 
 #temperature, linear
-bat.met.hour%>%
+temp.plot<-bat.met.hour%>%
 	ggplot(aes(x=Air_Temperature_C, 
 			   y=activity))+
 	geom_point(alpha=0.4, size=2.5,color="#810f7c")+
 	theme_classic()+
 	labs(x="Average air temperature (ºC)",
-		 y="Bat activity (average hourly passes)")+
-	theme(text = element_text(size = 18))+
+		 y="Bat activity (avg hourly passes)")+
+	theme(text = element_text(size = 15), axis.title.y = element_text(size=13))+
 	geom_smooth(method = "glm", color="black")
+temp.plot
 
 #temperature, controlling the slope
-temp.plot<-bat.met.hour%>%
+temp.plot1<-bat.met.hour%>%
 	ggplot(aes(x=Air_Temperature_C, 
 			   y=activity))+
 	geom_point(alpha=0.4, size=2.5,color="#810f7c")+
@@ -840,7 +841,7 @@ temp.plot<-bat.met.hour%>%
 				size=5, alpha=0.4)+ 
 	geom_abline(slope=1.09, intercept=1.644194, color="black",
 				size=1)
-temp.plot
+temp.plot1
 	
 	
 #stat_smooth(aes(ymin = after_stat(y - 2 * se), ymax = after_stat(y + 2 * se)), 
