@@ -708,8 +708,7 @@ ar.plot<-bat.met.hour%>%
 		 y="Bat activity (avg hourly passes)")+
 	theme(text = element_text(size = 12))+
 	scale_y_continuous(limits = c(0,180))+ 
-	geom_abline(slope=1.021218, intercept=-1.644194, color="black",
-				size=1.5)
+	geom_smooth(method = "glm", color="black")
 ar.plot
 
 #EXPORT PLOT
@@ -728,25 +727,6 @@ temp.plot<-bat.met.hour%>%
 	theme(text = element_text(size = 15), axis.title.y = element_text(size=13))+
 	geom_smooth(method = "glm", color="black")
 temp.plot
-
-#temperature, controlling the slope
-temp.plot1<-bat.met.hour%>%
-	ggplot(aes(x=Air_Temperature_C, 
-			   y=activity))+
-	geom_point(alpha=0.4, size=2.5,color="#810f7c")+
-	theme_classic()+
-	labs(x="Average air temperature (ºC)",
-		 y="Bat activity (avg hourly passes)")+
-	theme(text = element_text(size = 15),
-		  axis.title.y = element_text(size=13))+
-	geom_abline(slope=1.09, intercept=2.048975, color="grey",
-				size=5, alpha=0.4)+
-	geom_abline(slope=1.09, intercept=1.239413, color="grey",
-				size=5, alpha=0.4)+ 
-	geom_abline(slope=1.09, intercept=1.644194, color="black",
-				size=1)
-temp.plot1
-	
 	
 #stat_smooth(aes(ymin = after_stat(y - 2 * se), ymax = after_stat(y + 2 * se)), 
 				#geom = "ribbon",  fill = "grey60", alpha = .4, method = "glm")+
@@ -819,50 +799,4 @@ rain.plot
 tiff('rain.tiff', units="in", width=4.25, height=2.9, res=400)
 rain.plot
 dev.off()
-
-
-##These are my suggested plots for Q3, if you go with the GAM
-
-#temperature, linear
-bat.met.hour%>%
-	ggplot(aes(x=Air_Temperature_C, 
-			   y=activity))+
-	geom_point(alpha=0.4, size=2.5,color="#810f7c")+
-	theme_classic()+
-	labs(x="Average air temperature (ºC)",
-		 y="Bat activity (average hourly passes)")+
-	theme(text = element_text(size = 18))+
-	geom_smooth(method = "glm", color="black")
-
-#wind non-linear
-bat.met.hour%>%
-	ggplot(aes(x=Wind_speed_avg_m.s, 
-			   y=activity))+
-	geom_point(alpha=0.4, size=2.5,color="#810f7c")+
-	stat_smooth(method = "gam", formula = y ~ s(x, k = 3), size = 1.5, color="black")+
-	theme_classic()+
-	labs(x="Average wind speed (m/s)",
-		 y="")+
-	theme(text = element_text(size = 15))
-
-
-#OR, if you keep the polynomial, I would use this one for wind, it is the 
-#same as what you have above, but with the SE
-
-#wind non-linear
-bat.met.hour%>%
-	ggplot(aes(x=Wind_speed_avg_m.s, 
-			   y=activity))+
-	geom_point(alpha=0.4, size=2.5,color="#810f7c")+
-
-	theme_classic()+
-	labs(x="Average wind speed (m/s)",
-		 y="")+
-	theme(text = element_text(size = 15))+
-	geom_smooth(method = "gam", color="black", formula = y ~ s(x, k = 3))
-
-
-ciVal <- 0.5
-myMax = max(c(bat.met.hour$Air_Temperature_C,bat.met.hour$activity))
-myMin = min(c(bat.met.hour$Air_Temperature_C,bat.met.hour$activity))
 
