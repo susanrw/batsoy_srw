@@ -477,7 +477,7 @@ M1 <- cor(met7)#correlation matrix
 corrplot(M1, method = "circle")
 corrplot(M1, method = "number")
 #need to choose between rain and wind variables
-#wind avg, consecutive rain
+#chose wind avg, consecutive rain
 
 bat.met.hour<-merge(bat.hour.all1, met6, by=c("jdate","hour"))
 
@@ -488,7 +488,7 @@ bat.met.hour$wind.avg2 <- (as.numeric(bat.met.hour$Wind_speed_avg_m.s))^2
 library(MASS)
 #bat.met.hour[is.na(bat.met.hour)]<-0
 mod1<-glm(activity~Air_Pressure_pascal+ Air_Temperature_C + 
-		  	delta.air2 + act2 + Wind_speed_avg_m.s + wind.avg2, dat = bat.met.hour,
+		  	delta.air2 + act2 + Wind_speed_avg_m.s + wind.avg2 + rain_binary, dat = bat.met.hour,
 		  family = Gamma(link=log),na.action = "na.fail")
 summary(mod1)
 
@@ -585,9 +585,9 @@ q1.plot
 
 
 #EXPORT PLOT
-tiff('Q1.tiff', units="in", width=6, height=4, res=400)
-q1.plot
-dev.off()
+#tiff('Q1.tiff', units="in", width=6, height=4, res=400)
+#q1.plot
+#dev.off()
 
 dis.all1$sp1 = factor(dis.all1$sp, levels=c("Big brown/silver-haired bat","Eastern red/Seminole bat", 
 											"Hoary bat","Little brown bat",
@@ -609,17 +609,17 @@ q1.sp.plot<-ggplot(data=dis.all1, aes(x=jdate, y=log.act))+
 q1.sp.plot
 
 #EXPORT PLOT
-tiff('Q1_time.tiff', units="in", width=7, height=4, res=400)
-q1.sp.plot
-dev.off()
+#tiff('Q1_time.tiff', units="in", width=7, height=4, res=400)
+#q1.sp.plot
+#dev.off()
 
 q1.wrap<-q1.sp.plot+facet_wrap(~sp1, ncol = 2)+theme(legend.position = "none")
 q1.wrap
 
 #EXPORT PLOT
-tiff('Q1_time_sp.tiff', units="in", width=7, height=6, res=400)
-q1.wrap
-dev.off()
+#tiff('Q1_time_sp.tiff', units="in", width=7, height=6, res=400)
+#q1.wrap
+#dev.off()
 
 #Q2a: plants 
 plant.plot<-ggplot(data=plant10, aes(x=treatment, y=activity))+ 
@@ -634,9 +634,9 @@ plant.plot<-ggplot(data=plant10, aes(x=treatment, y=activity))+
 plant.plot
 
 #EXPORT PLOT
-tiff('plant.tiff', units="in", width=5, height=5, res=400)
-plant.plot
-dev.off()
+#tiff('plant.tiff', units="in", width=5, height=5, res=400)
+#plant.plot
+#dev.off()
 
 #Q2b: dispensers 
 #indole
@@ -682,12 +682,12 @@ farn.plot
 		  #ncol = 2, nrow = 1)
 #dev.off()
 
-tiff('HIPV.tiff', units="in", width=10, height=4, res=300)
-ggarrange(plant.plot, indole.plot, farn.plot, 
-		  labels = c("a", "b", "c"),heights = c(2, 2,2),
-		  ncol = 3, nrow = 1,
-		  vjust=1.2)
-dev.off()
+#tiff('HIPV.tiff', units="in", width=10, height=4, res=300)
+#ggarrange(plant.plot, indole.plot, farn.plot, 
+		  #labels = c("a", "b", "c"),heights = c(2, 2,2),
+		  #ncol = 3, nrow = 1,
+		  #vjust=1.2)
+#dev.off()
 
 summary(davg1)
 exp(-0.4972505)#intercept, 0.61
@@ -712,9 +712,9 @@ ar.plot<-bat.met.hour%>%
 ar.plot
 
 #EXPORT PLOT
-tiff('autoregressive.tiff', units="in", width=4.25, height=2.9, res=400)
-ar.plot
-dev.off()
+#tiff('autoregressive.tiff', units="in", width=4.25, height=2.9, res=400)
+#ar.plot
+#dev.off()
 
 #temperature, linear
 temp.plot<-bat.met.hour%>%
@@ -736,9 +736,9 @@ temp.plot
 #geom_smooth(method = "glm", color="black")+
 
 #EXPORT PLOT
-tiff('temp.tiff', units="in", width=5, height=3, res=400)
-temp.plot
-dev.off()
+#tiff('temp.tiff', units="in", width=5, height=3, res=400)
+#temp.plot
+#dev.off()
 
 #wind non-linear
 wind2.plot<-bat.met.hour%>%
@@ -754,15 +754,15 @@ wind2.plot<-bat.met.hour%>%
 wind2.plot
 
 #EXPORT PLOT
-tiff('wind.tiff', units="in", width=5, height=3, res=400)
-wind2.plot
-dev.off()
+#tiff('wind.tiff', units="in", width=5, height=3, res=400)
+#wind2.plot
+#dev.off()
 
-tiff('Abiotic.tiff', units="in", width=8, height=3.5, res=300)
-ggarrange(temp.plot, wind2.plot, 
-labels = c("a", "b"),heights = c(2, 2),
-ncol = 2, nrow = 1)
-dev.off()
+#tiff('Abiotic.tiff', units="in", width=8, height=3.5, res=300)
+#ggarrange(temp.plot, wind2.plot, 
+#labels = c("a", "b"),heights = c(2, 2),
+#ncol = 2, nrow = 1)
+#dev.off()
 
 
 #air pressure
@@ -777,9 +777,9 @@ delta.air.plot<-bat.met.hour%>%
 delta.air.plot
 
 #EXPORT PLOT
-tiff('delta_air.tiff', units="in", width=4.25, height=2.9, res=400)
-delta.air.plot
-dev.off()
+#tiff('delta_air.tiff', units="in", width=4.25, height=2.9, res=400)
+#delta.air.plot
+#dev.off()
 
 exp(0.01357)#slope=-1.01
 exp(3.49)#intercept=32.8
@@ -796,7 +796,63 @@ rain.plot<-rain.bat.hour%>%
 rain.plot
 
 #EXPORT PLOT
-tiff('rain.tiff', units="in", width=4.25, height=2.9, res=400)
-rain.plot
-dev.off()
+#tiff('rain.tiff', units="in", width=4.25, height=2.9, res=400)
+#rain.plot
+#dev.off()
+
+##interactive models----
+#aggregate data so it's daily
+#most variables averaged
+met.day.avg<-aggregate(cbind(Wind_speed_max_m.s,Wind_speed_avg_m.s,
+							  delta.air,Air_Pressure_pascal,
+							  Air_Temperature_C)~jdate, dat=met, FUN=mean)
+#rain variables summed
+met.day.sum<-aggregate(cbind(Rain_Accumulation_mm)~jdate, dat=met, FUN=sum)
+
+#combine the two
+met.day<-cbind(met.day.avg,met.day.sum)
+#remove duplicate column for date 
+met.day<-met.day[,-c(7)]
+
+
+#creating binary rain variable by the hour
+met.day$rain_binary<-NA
+for(i in 1:length(met.day$Rain_Accumulation_mm)){
+	if(met.day$Rain_Accumulation_mm[i]==0){met.day$rain_binary[i]="0"}
+	if(met.day$Rain_Accumulation_mm[i]>0){met.day$rain_binary[i]="1"}
+}
+met.day$rain_binary<-as.numeric(met.day$rain_binary)
+
+#plant trials
+bat.met.day.plant<-merge(plant10, met.day, by='jdate')
+
+mod.plant.inter<-glmer.nb(activity~(treatment*Air_Temperature_C)+(treatment*Wind_speed_avg_m.s)+(1|trial), dat = bat.met.day.plant)
+Anova(mod.plant)
+
+#indole trials
+bat.met.day.indole<-merge(indole10, met.day, by='jdate')
+
+mod.plant.inter<-glmer.nb(activity~(treatment*Air_Temperature_C)+(treatment*Wind_speed_avg_m.s)+(1|jdate), 
+						  dat = bat.met.day.indole)
+Anova(mod.plant.inter)
+
+#farnesene trials
+bat.met.day.farn<-merge(farn10, met.day, by='jdate')
+
+mod.plant.farn<-glmer.nb(activity~(treatment*Air_Temperature_C)+(treatment*Wind_speed_avg_m.s)+(1|jdate), 
+						  dat = bat.met.day.farn)
+Anova(mod.plant.farn)
+
+#temperature, linear
+bat.met.day.farn%>%
+	ggplot(aes(x=Air_Temperature_C, 
+			   y=activity,
+			   group=treatment, 
+			   color=treatment))+
+	geom_point(alpha=0.4, size=2.5)+
+	theme_classic()+
+	labs(x="Average air temperature (ºC)",
+		 y="Bat activity (avg hourly passes)")+
+	theme(text = element_text(size = 15), axis.title.y = element_text(size=13))+
+	geom_smooth(method = "glm")
 
