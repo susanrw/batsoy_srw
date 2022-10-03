@@ -832,16 +832,26 @@ Anova(mod.plant)
 #indole trials
 bat.met.day.indole<-merge(indole10, met.day, by='jdate')
 
-mod.plant.inter<-glmer.nb(activity~(treatment*Air_Temperature_C)+(treatment*Wind_speed_avg_m.s)+(1|jdate), 
+mod.plant.inter<-glmer.nb(activity~(treatment*Air_Temperature_C)+(treatment*Wind_speed_avg_m.s)+
+						  	+(treatment*Air_Pressure_pascal) + (1|jdate), 
 						  dat = bat.met.day.indole)
+
 Anova(mod.plant.inter)
 
 #farnesene trials
 bat.met.day.farn<-merge(farn10, met.day, by='jdate')
 
-mod.plant.farn<-glmer.nb(activity~(treatment*Air_Temperature_C)+(treatment*Wind_speed_avg_m.s)+(1|jdate), 
-						  dat = bat.met.day.farn)
+mod.plant.farn<-glmer.nb(activity~(treatment*Air_Temperature_C)+(treatment*Wind_speed_avg_m.s)+
+						 	(treatment*Air_Pressure_pascal)+(1|jdate), 
+						  dat = bat.met.day.farn, na.action=na.omit)
 Anova(mod.plant.farn)
+
+summary(mod1)
+
+#dredging and model averaging
+d5<-dredge(mod.plant.farn)
+davg5<-model.avg(d5, subset=delta<2)
+summary(davg5)
 
 #temperature, linear
 bat.met.day.farn%>%
