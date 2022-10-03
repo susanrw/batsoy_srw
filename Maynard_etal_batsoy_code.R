@@ -826,43 +826,33 @@ met.day$rain_binary<-as.numeric(met.day$rain_binary)
 #plant trials
 bat.met.day.plant<-merge(plant10, met.day, by='jdate')
 
-mod.plant.inter<-glmer.nb(activity~(treatment*Air_Temperature_C)+(treatment*Wind_speed_avg_m.s)+(1|trial), dat = bat.met.day.plant)
+mod.plant.inter<-glmer.nb(activity~(treatment*Air_Temperature_C)+(treatment*Wind_speed_avg_m.s)+(1|jdate), dat = bat.met.day.plant)
 Anova(mod.plant)
 
 #indole trials
-bat.met.day.indole<-merge(indole10, met.day, by='jdate')
+indole.avg<-aggregate(activity ~ treatment + jdate, dat=indole10, FUN=mean)
+bat.met.day.indole<-merge(indole.avg, met.day, by='jdate')
 
-mod.plant.inter<-glmer.nb(activity~(treatment*Air_Temperature_C)+(treatment*Wind_speed_avg_m.s)+
-						  	+(treatment*Air_Pressure_pascal) + (1|jdate), 
-						  dat = bat.met.day.indole)
+mod.indole.inter<-glm(activity~(treatment*Air_Temperature_C)+(treatment*Wind_speed_avg_m.s)+
+						  	+(treatment*Air_Pressure_pascal), 
+						  dat = bat.met.day.indole, family = Gamma(link=log),na.action = "na.fail")
 
-Anova(mod.plant.inter)
+Anova(mod.indole.inter)
 
 #farnesene trials
-bat.met.day.farn<-merge(farn10, met.day, by='jdate')
+farn.avg<-aggregate(activity ~ treatment + jdate, dat=farn10, FUN=mean)
+bat.met.day.farn<-merge(farn.avg, met.day, by='jdate')
 
-mod.plant.farn<-glmer.nb(activity~(treatment*Air_Temperature_C)+(treatment*Wind_speed_avg_m.s)+
-						 	(treatment*Air_Pressure_pascal)+(1|jdate), 
-						  dat = bat.met.day.farn, na.action=na.omit)
-Anova(mod.plant.farn)
+mod.farn.inter<-glm(activity~(treatment*Air_Temperature_C)+(treatment*Wind_speed_avg_m.s)+
+					  	+(treatment*Air_Pressure_pascal), 
+					  dat = bat.met.day.farn, family = Gamma(link=log),na.action = "na.fail")
 
-summary(mod1)
+Anova(mod.farn.inter)
+
+summary(mod.farn.inter)
 
 #dredging and model averaging
-d5<-dredge(mod.plant.farn)
+d5<-dredge(mod.farn.inter)
 davg5<-model.avg(d5, subset=delta<2)
 summary(davg5)
-
-#temperature, linear
-bat.met.day.farn%>%
-	ggplot(aes(x=Air_Temperature_C, 
-			   y=activity,
-			   group=treatment, 
-			   color=treatment))+
-	geom_point(alpha=0.4, size=2.5)+
-	theme_classic()+
-	labs(x="Average air temperature (ºC)",
-		 y="Bat activity (avg hourly passes)")+
-	theme(text = element_text(size = 15), axis.title.y = element_text(size=13))+
-	geom_smooth(method = "glm")
 
