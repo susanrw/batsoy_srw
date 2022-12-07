@@ -64,6 +64,12 @@ mod.plant<-glmer.nb(activity~treatment+(1|trial), dat = plant10)
 Anova(mod.plant)
 #chisq=2.4452, p=0.1179; Wald chisquare tests
 
+#creating tabular output
+library(AICcmodavg)
+aictab(cand.set=list(test, mod.plant),
+	   modnames=c("poisson", "neg binom"))#AIC table
+#top model is neg binom
+
 plant10.tab <- ddply(plant10, c("treatment"), summarise,
 					 N    = length(activity),
 					 mean = mean(activity),
@@ -103,6 +109,10 @@ mod.in<-glmer.nb(activity~treatment+(1|site), dat = indole10)
 summary(mod.in)
 Anova(mod.in)
 #treatment chi=2.2635 p=0.1325, wald chisquared test
+
+aictab(cand.set=list(test.in, mod.in),
+	   modnames=c("poisson", "neg binom"))#AIC table
+#top model is neg binom
 
 #table
 in10.tab <- ddply(indole10, c("treatment"), summarise,
@@ -145,6 +155,9 @@ overdisp_fun(test.farn)#overdispersed
 mod.farn<-glmer.nb(activity~treatment+(1|site), dat = farn10)
 Anova(mod.farn)
 #treatment chi=0.398 p=0.5281
+
+aictab(cand.set=list(test.farn, mod.farn), modnames=c("poisson", "neg binom"))#AIC table
+#neg binmo is top model
 
 #table
 farn10.tab <- ddply(farn10, c("treatment"), summarise,
