@@ -10,53 +10,76 @@ Data from "Biotic and abiotic factors shaping bat activity in Maryland
 soybean fields" by L.D. Maynard, W.M Ford, J.D. Parker, and S.R.
 Whitehead
 
+Code written by L.D. Maynard & S.R. Whitehead
+
 Published in TBD 202X
 
 All data were collected at Smithsonian Environmental Research Center,
 Edgewater, MD, USA
 
-## Maynard_etal_plant_sum
+## Maynard_etal_plant_sum.csv
 
-##Bat activity data for naturally occuring soybean HIPV trials
+### Bat activity data for naturally occurring soybean HIPV trials
 
 #jdate = Julian date
 
 #date = date
 
-#EPTFUS = number of big brown bat call files #LASBOR = number of eastern
-red bat call files #LASCIN = number of hoary bat call files #LASNOC =
-number of silver-haired bat call files #LASSEM = number of Seminole bat
-call files #MYOLUC = number of little brown bat call files #NYCHUM =
-number of evening bat call files #PERSUB = number of tricolored bat call
-files #NOID = number of unidentified bat call files #side = side of site
-(E=east, W=west) #treatment = HIPV treatment (D=damaged plants,
-U=undamaged plants) #trial = trial number (1-5)
+#EPTFUS = number of big brown bat call files
 
-## Maynard_etal_indole_sum
+#LASBOR = number of eastern red bat call files
 
-##Bat activity data for synthetic soybean HIPV trials, indole
+#LASCIN = number of hoary bat call files
 
-#jdate = Julian date #date = date #EPTFUS = number of big brown bat call
-files #LASBOR = number of eastern red bat call files #LASCIN = number of
-hoary bat call files #LASNOC = number of silver-haired bat call files
-#LASSEM = number of Seminole bat call files #MYOLUC = number of little
-brown bat call files #NYCHUM = number of evening bat call files #PERSUB
-= number of tricolored bat call files #NOID = number of unidentified bat
-call files #site = individual identifier for site #treatment = HIPV
-treatment (Dispenser, Control) #trial = trial number (1-15)
+#LASNOC = number of silver-haired bat call files
 
-## Maynard_etal_farnesene_sum
+#LASSEM = number of Seminole bat call files
 
-##Bat activity data for synthetic soybean HIPV trials, farnesene
+#MYOLUC = number of little brown bat call files
 
-#jdate = Julian date #date = date #EPTFUS = number of big brown bat call
-files #LASBOR = number of eastern red bat call files #LASCIN = number of
-hoary bat call files #LASNOC = number of silver-haired bat call files
-#LASSEM = number of Seminole bat call files #MYOLUC = number of little
-brown bat call files #NYCHUM = number of evening bat call files #PERSUB
-= number of tricolored bat call files #NOID = number of unidentified bat
-call files #site = individual identifier for site #treatment = HIPV
-treatment (Dispenser, Control) #trial = trial number (1-8)
+#NYCHUM = number of evening bat call files
+
+#PERSUB = number of tricolored bat call files
+
+#NOID = number of unidentified bat call files
+
+#side = side of site (E=east, W=west)
+
+#treatment = HIPV treatment (D=damaged plants, U=undamaged plants)
+
+#trial = trial number (1-5)
+
+## Maynard_etal_indole_sum.csv & Maynard_etal_farnesene_sum.csv
+
+### Bat activity data for synthetic soybean HIPV trials, indole & farnesene
+
+#jdate = Julian date
+
+#date = date
+
+#EPTFUS = number of big brown bat call files
+
+#LASBOR = number of eastern red bat call files
+
+#LASCIN = number of hoary bat call files
+
+#LASNOC = number of silver-haired bat call files
+
+#LASSEM = number of Seminole bat call files
+
+#MYOLUC = number of little brown bat call files
+
+#NYCHUM = number of evening bat call files
+
+#PERSUB = number of tricolored bat call files
+
+#NOID = number of unidentified bat call files
+
+#site = individual identifier for site
+
+#treatment = HIPV treatment (Dispenser, Control)
+
+#trial = trial number (1-15)
 
 ## Maynard_etal_indole2_all.csv
 
@@ -70,8 +93,9 @@ brown bat call files #NYCHUM = number of evening bat call files #PERSUB
 = number of tricolored bat call files #NOID = number of unidentified bat
 call files #site = individual identifier for site
 
-##SERC_TOWER\_[jun-sep]2021.csv ##weather data from SERC meterological
-tower Jun-Sep 2021
+## SERC_TOWER\_[jun-sep]2021.csv 
+
+### Weather data from SERC meterological tower Jun-Sep 2021
 
 #date #hour #TIMESTAMP #RECORD #Wind_direction_min_degrees
 #Wind_direction_avg_degrees #Wind_direction_max_degrees
@@ -81,3 +105,9 @@ tower Jun-Sep 2021
 #Rain_Intensity_mm #Hail_Accumulation_hits #Hail_Duration_s
 #Hail_Intensity_hits.cm2 #Heating_Temperature_C #Heating_Voltage_V
 #Supply_Voltage_V #Reference_Voltage_V #delta.air
+
+## ./call_files
+
+### Individual files from detectors to analyze hourly bat activity
+
+date =
