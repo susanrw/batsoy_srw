@@ -1,22 +1,21 @@
 #Load libraries
-{library(dplyr)
-library(ggplot2)
-library(tidyr)
-library(lme4)
-library(car)
-library(emmeans)
-library(plyr)
-library(multcomp)
-library(lubridate)
-library(stats)
-library(corrplot)
-library(MuMIn)
-library(stats)
-library(data.table)
-library(plotrix)
-library(gridExtra)
-library(ggpubr)
-library(multcompView)
+{library(dplyr) #v1.0.10, data manipulation
+library(ggplot2) #3.3.6, data visualization
+library(tidyr) #v1.2.1, data manipulation
+library(lme4) #v1.1-30, mixed models
+library(car) #v3.1-0, hypothesis testing
+library(emmeans) #v1.8.1-1, compute estimated marginal means
+library(plyr) #v1.8.7, data manipulation
+library(multcomp) #v1.4-20, display pairwise comparisons
+library(lubridate) #v1.8.0, date manipulation
+library(stats) #v4.2.1, statistical functions
+library(corrplot)#v0.92, correlation matrices
+library(MuMIn)#v1.47.1, multi-model inference
+library(data.table) #v1.14.2, data manipulation
+library(plotrix) #v3.8-1, data visualization
+library(gridExtra) #v2.3, data visualization
+library(ggpubr) #v0.4.0, data visualization
+library(multcompView) #v0.1-8, data visualization
 }
 
 
@@ -224,58 +223,59 @@ q1.tab
 
 ###Q3: weather----
 
+
 #I didn't write a forloop, so there are just a lot of lines
 
 #read in all data
-{ind1 <- read.csv(file="indole1_id_1708_c.csv",head=TRUE)
-ind2 <- read.csv(file="indole1_id_2198_c.csv",head=TRUE)
-ind3 <- read.csv(file="indole1_id_2207_c.csv",head=TRUE)
-ind4 <- read.csv(file="indole1_id_4655_c.csv",head=TRUE)
-ind5 <- read.csv(file="indole1_id_4608_c.csv",head=TRUE)
-ind6 <- read.csv(file="indole2_id_c_0505.csv",head=TRUE)
-ind7 <- read.csv(file="indole3_id_0505_c.csv",head=TRUE)
-ind8 <- read.csv(file="indole2_id_c_1676.csv",head=TRUE)
-ind9 <- read.csv(file="indole3_id_1676_c.csv",head=TRUE)
-ind10 <- read.csv(file="indole2_id_c_4604.csv",head=TRUE)
-ind11 <- read.csv(file="indole3_id_4604_c.csv",head=TRUE)
-ind12 <- read.csv(file="indole2_id_c_4614.csv",head=TRUE)
-ind13 <- read.csv(file="indole3_id_4614_c.csv",head=TRUE)
-ind14 <- read.csv(file="indole2_id_c_4672.csv",head=TRUE)
-ind15 <- read.csv(file="indole3_id_4672_c.csv",head=TRUE)
-far1 <- read.csv(file="farn1_id_0505_c.csv",head=TRUE)
-far2 <- read.csv(file="farn1_id_1676_c.csv",head=TRUE)
-far3 <- read.csv(file="farn1_id_2207_c.csv",head=TRUE)
-far4 <- read.csv(file="farn1_id_4604_c.csv",head=TRUE)
-far5 <- read.csv(file="farn1_id_4655_c.csv",head=TRUE)
-far6 <- read.csv(file="farn2_id_1708_c.csv",head=TRUE)
-far7 <- read.csv(file="farn2_id_2198_c.csv",head=TRUE)
-far8 <- read.csv(file="farn2_id_4608_c.csv",head=TRUE)
-far9 <- read.csv(file="farn2_id_4614_c.csv",head=TRUE)
-far10 <- read.csv(file="farn2_id_4672_c.csv",head=TRUE)
-f1_1708d <- read.csv(file="farn1_id_1708_d.csv",head=TRUE)
-f1_2198d <- read.csv(file="farn1_id_2198_d.csv",head=TRUE)
-f1_4608d <- read.csv(file="farn1_id_4608_d.csv",head=TRUE)
-f1_4614d <- read.csv(file="farn1_id_4614_d.csv",head=TRUE)
-f1_4672d <- read.csv(file="farn1_id_4672_d.csv",head=TRUE)
-f2_0505d <- read.csv(file="farn2_id_0505_d.csv",head=TRUE)
-f2_1676d <- read.csv(file="farn2_id_1676_d.csv",head=TRUE)
-f2_2207d <- read.csv(file="farn2_id_2207_d.csv",head=TRUE)
-f2_4604d <- read.csv(file="farn2_id_4604_d.csv",head=TRUE)
-f2_4655d <- read.csv(file="farn2_id_4655_d.csv",head=TRUE)
-i1_0505d <- read.csv(file="indole1_id_0505_d.csv",head=TRUE)
-i1_1676d <- read.csv(file="indole1_id_1676_d.csv",head=TRUE)
-i1_4604d <- read.csv(file="indole1_id_4604_d.csv",head=TRUE)
-i1_4614d <- read.csv(file="indole1_id_4614_d.csv",head=TRUE)
-i1_4672d <- read.csv(file="indole1_id_4672_d.csv",head=TRUE)
-i2_1708d <- read.csv(file="indole2_id_d_1708.csv",head=TRUE)
-i2_2198d <- read.csv(file="indole2_id_d_2198.csv",head=TRUE)
-i2_2207d <- read.csv(file="indole2_id_d_2207.csv",head=TRUE)
-i2_4608d <- read.csv(file="indole2_id_d_4608.csv",head=TRUE)
-i3_1708d <- read.csv(file="indole3_id_1708_d.csv",head=TRUE)
-i3_2198d <- read.csv(file="indole3_id_2198_d.csv",head=TRUE)
-i3_2207d <- read.csv(file="indole3_id_2207_d.csv",head=TRUE)
-i3_4608d <- read.csv(file="indole3_id_4608_d.csv",head=TRUE)
-i3_4655d <- read.csv(file="indole3_id_4655_d.csv",head=TRUE)
+{ind1 <- read.csv(file="./call_files/indole1_id_1708_c.csv",head=TRUE)
+ind2 <- read.csv(file="./call_files/indole1_id_2198_c.csv",head=TRUE)
+ind3 <- read.csv(file="./call_files/indole1_id_2207_c.csv",head=TRUE)
+ind4 <- read.csv(file="./call_files/indole1_id_4655_c.csv",head=TRUE)
+ind5 <- read.csv(file="./call_files/indole1_id_4608_c.csv",head=TRUE)
+ind6 <- read.csv(file="./call_files/indole2_id_c_0505.csv",head=TRUE)
+ind7 <- read.csv(file="./call_files/indole3_id_0505_c.csv",head=TRUE)
+ind8 <- read.csv(file="./call_files/indole2_id_c_1676.csv",head=TRUE)
+ind9 <- read.csv(file="./call_files/indole3_id_1676_c.csv",head=TRUE)
+ind10 <- read.csv(file="./call_files/indole2_id_c_4604.csv",head=TRUE)
+ind11 <- read.csv(file="./call_files/indole3_id_4604_c.csv",head=TRUE)
+ind12 <- read.csv(file="./call_files/indole2_id_c_4614.csv",head=TRUE)
+ind13 <- read.csv(file="./call_files/indole3_id_4614_c.csv",head=TRUE)
+ind14 <- read.csv(file="./call_files/indole2_id_c_4672.csv",head=TRUE)
+ind15 <- read.csv(file="./call_files/indole3_id_4672_c.csv",head=TRUE)
+far1 <- read.csv(file="./call_files/farn1_id_0505_c.csv",head=TRUE)
+far2 <- read.csv(file="./call_files/farn1_id_1676_c.csv",head=TRUE)
+far3 <- read.csv(file="./call_files/farn1_id_2207_c.csv",head=TRUE)
+far4 <- read.csv(file="./call_files/farn1_id_4604_c.csv",head=TRUE)
+far5 <- read.csv(file="./call_files/farn1_id_4655_c.csv",head=TRUE)
+far6 <- read.csv(file="./call_files/farn2_id_1708_c.csv",head=TRUE)
+far7 <- read.csv(file="./call_files/farn2_id_2198_c.csv",head=TRUE)
+far8 <- read.csv(file="./call_files/farn2_id_4608_c.csv",head=TRUE)
+far9 <- read.csv(file="./call_files/farn2_id_4614_c.csv",head=TRUE)
+far10 <- read.csv(file="./call_files/farn2_id_4672_c.csv",head=TRUE)
+f1_1708d <- read.csv(file="./call_files/farn1_id_1708_d.csv",head=TRUE)
+f1_2198d <- read.csv(file="./call_files/farn1_id_2198_d.csv",head=TRUE)
+f1_4608d <- read.csv(file="./call_files/farn1_id_4608_d.csv",head=TRUE)
+f1_4614d <- read.csv(file="./call_files/farn1_id_4614_d.csv",head=TRUE)
+f1_4672d <- read.csv(file="./call_files/farn1_id_4672_d.csv",head=TRUE)
+f2_0505d <- read.csv(file="./call_files/farn2_id_0505_d.csv",head=TRUE)
+f2_1676d <- read.csv(file="./call_files/farn2_id_1676_d.csv",head=TRUE)
+f2_2207d <- read.csv(file="./call_files/farn2_id_2207_d.csv",head=TRUE)
+f2_4604d <- read.csv(file="./call_files/farn2_id_4604_d.csv",head=TRUE)
+f2_4655d <- read.csv(file="./call_files/farn2_id_4655_d.csv",head=TRUE)
+i1_0505d <- read.csv(file="./call_files/indole1_id_0505_d.csv",head=TRUE)
+i1_1676d <- read.csv(file="./call_files/indole1_id_1676_d.csv",head=TRUE)
+i1_4604d <- read.csv(file="./call_files/indole1_id_4604_d.csv",head=TRUE)
+i1_4614d <- read.csv(file="./call_files/indole1_id_4614_d.csv",head=TRUE)
+i1_4672d <- read.csv(file="./call_files/indole1_id_4672_d.csv",head=TRUE)
+i2_1708d <- read.csv(file="./call_files/indole2_id_d_1708.csv",head=TRUE)
+i2_2198d <- read.csv(file="./call_files/indole2_id_d_2198.csv",head=TRUE)
+i2_2207d <- read.csv(file="./call_files/indole2_id_d_2207.csv",head=TRUE)
+i2_4608d <- read.csv(file="./call_files/indole2_id_d_4608.csv",head=TRUE)
+i3_1708d <- read.csv(file="./call_files/indole3_id_1708_d.csv",head=TRUE)
+i3_2198d <- read.csv(file="./call_files/indole3_id_2198_d.csv",head=TRUE)
+i3_2207d <- read.csv(file="./call_files/indole3_id_2207_d.csv",head=TRUE)
+i3_4608d <- read.csv(file="./call_files/indole3_id_4608_d.csv",head=TRUE)
+i3_4655d <- read.csv(file="./call_files/indole3_id_4655_d.csv",head=TRUE)
 }
 
 #creating plot columns
@@ -598,9 +598,9 @@ q1.plot
 
 
 #EXPORT PLOT
-#tiff('Q1.tiff', units="in", width=6, height=4, res=400)
-#q1.plot
-#dev.off()
+tiff('Q1.tiff', units="in", width=6, height=4, res=400)
+Figure_1
+dev.off()
 
 dis.all1$sp1 = factor(dis.all1$sp, levels=c("Big brown/silver-haired bat","Eastern red/Seminole bat", 
 											"Hoary bat","Little brown bat",
