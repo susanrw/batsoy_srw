@@ -83,6 +83,8 @@ trial: trial number (1-8)
 
 This is raw output from Kaleidoscope Pro (idsummary.csv) for additional days of bat activity data that were not part of HIPV trials.
 
+Variables include:
+
 jdate: Julian date\
 date: date (YYYMMDD)\
 EPTFUS: number of big brown bat call files \
@@ -132,9 +134,9 @@ delta.air: Change in air pressure (Pascal)
 
 This raw output from Kaleidoscope Pro (id.csv), including 49 call files. The id.csv output has a row for each detected signal, and the following columns:\
 
-• INDIR: Absolute path to input directory.
-• OUTDIR: Absolute path to output directory.
-• FOLDER: Directory path to the input file relative to the input root.
+INDIR: Absolute path to input directory.\
+OUTDIR: Absolute path to output directory.\
+FOLDER: Directory path to the input file relative to the input root.
 • IN FILE: Input file name.
 • CHANNEL: Channel number from the input file (0=left, 1=right).
 • OFFSET: Offset in seconds into the input file where output begins.
