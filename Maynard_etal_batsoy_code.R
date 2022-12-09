@@ -19,7 +19,6 @@ library(multcompView) #v0.1-8, data visualization
 }
 
 
-
 #Note: because you need data from Q2 to answer Q1, they are in that order
 #Q2a, Q2b, Q1, Q3
 #all plots at end of script
@@ -40,7 +39,6 @@ plant1<-aggregate(activity ~ treatment + sp + trial + jdate, dat=plant1, FUN=sum
 
 #nightly data for all species
 plant10<-aggregate(activity ~ treatment + trial + jdate, dat=plant1, FUN=sum)
-
 
 #Test for overdispersion function
 overdisp_fun <- function(model) {
@@ -96,7 +94,6 @@ indole10<-aggregate(activity ~ treatment + jdate + site, dat=indole1, FUN=sum)
 
 #creating log-transformed value for graphs
 indole10$log.act<-log(indole10$activity)
-#indole10$log.act[which(!is.finite(indole10$log.act))] <- 0 #no zeros, so unnecessary
 
 test.in<-glmer(activity~treatment+(1|site), dat = indole10,family=poisson)
 summary(test.in)
@@ -125,8 +122,6 @@ in10.tab
 
 
 # Farnesene data import and cleaning----
-
-
 farn <- read.csv(file="Maynard_etal_farnesene_sum.csv",head=TRUE)
 farn[, 3:11][is.na(farn[, 3:11])] <- 0
 colnames(farn)[which(colnames(farn)=="ï..jdate")] <- "jdate"
@@ -189,18 +184,18 @@ dis.all <- rbind(indole001, farn01, indole01)
 ##grouping and renaming species
 {dis.all<-dis.all
 dis.all$sp=as.character(dis.all$sp)
-dis.all$sp[dis.all$sp=="EPTFUS"]="EPFU/LANO"
-dis.all$sp[dis.all$sp=="LASNOC"]="EPFU/LANO"
-dis.all$sp[dis.all$sp=="LASBOR"]="LABO/LASE"
-dis.all$sp[dis.all$sp=="LASSEM"]="LABO/LASE"
+dis.all$sp[dis.all$sp=="EPTFUS"]="Big brown/silver-haired bat"
+dis.all$sp[dis.all$sp=="LASNOC"]="Big brown/silver-haired bat"
+dis.all$sp[dis.all$sp=="LASBOR"]="Eastern red/Seminole bat"
+dis.all$sp[dis.all$sp=="LASSEM"]="Eastern red/Seminole bat"
 dis.all$sp[dis.all$sp=="NOID"]="No ID"
-dis.all$sp[dis.all$sp=="MYOLUC"]="MYLU"
-dis.all$sp[dis.all$sp=="LASCIN"]="LACI"
-dis.all$sp[dis.all$sp=="NYCHUM"]="NYHU"
-dis.all$sp[dis.all$sp=="PERSUB"]="PESU"
-dis.all$sp[dis.all$sp=="MYOSOD"]="No ID"
+dis.all$sp[dis.all$sp=="MYOLUC"]="Little brown bat"
+dis.all$sp[dis.all$sp=="LASCIN"]="Hoary bat"
+dis.all$sp[dis.all$sp=="NYCHUM"]="Evening bat"
+dis.all$sp[dis.all$sp=="PERSUB"]="Tricolored bat"
+dis.all$sp[dis.all$sp=="MYOSOD"]="Little brown bat"
 }
-#only one MYSO, so grouping with No ID. Could do Myotis spp?
+#only one MYSO, so grouping with MYLU
 
 dis.all1<-aggregate(activity ~  sp + jdate + site, dat=dis.all, FUN=sum)
 
@@ -498,7 +493,7 @@ bat.met.hour<-merge(bat.hour.all1, met6, by=c("jdate","hour"))
 bat.met.hour$wind.avg2 <- (as.numeric(bat.met.hour$Wind_speed_avg_m.s))^2
 
 
-library(MASS)
+require(MASS)
 #bat.met.hour[is.na(bat.met.hour)]<-0
 mod1<-glm(activity~Air_Pressure_pascal+ Air_Temperature_C + 
 		  	delta.air2 + act2 + Wind_speed_avg_m.s + wind.avg2 + rain_binary, dat = bat.met.hour,
@@ -515,9 +510,7 @@ exp(0.0209956)#ar term slope, 1.02
 exp(0.0902396)#temperature slope, 1.09
 exp(0.8317915)#linear wind slope, 2.30
 exp(0.0001986)#delta air slope, 1.00
-
 exp(0.4047806)#SE
-
 
 #removing zeros from consecutive rain hours data
 rain.bat.hour<-bat.met.hour[bat.met.hour$rain_con_hours != "0", ]  
@@ -587,8 +580,8 @@ q1.plot<-ggplot(data=dis.all1, aes(x=sp, y=log.act))+
 				 fun = max, vjust = -0.8, size=5, fontface="bold")+
 	scale_y_continuous(limits = c(-0.1,8.5))+
 	scale_x_discrete(limits=c("Big brown/silver-haired bat","Eastern red/Seminole bat", 
-							  "Evening bat","Hoary bat",
-							  "Little brown bat", "Tricolored bat", "No ID"),
+							 "Evening bat","Hoary bat",
+							 "Little brown bat", "Tricolored bat", "No ID"),
 					 labels=c(expression(paste("Big brown/ \n silver-haired bat")), 
 					 		 expression(paste("Eastern red/ \n Seminole bat")),
 					 		 "Evening bat","Hoary bat",
@@ -598,8 +591,8 @@ q1.plot
 
 
 #EXPORT PLOT
-tiff('Q1.tiff', units="in", width=6, height=4, res=400)
-Figure_1
+tiff('Figure 2.tiff', units="in", width=6, height=4, res=400)
+q1.plot
 dev.off()
 
 dis.all1$sp1 = factor(dis.all1$sp, levels=c("Big brown/silver-haired bat","Eastern red/Seminole bat", 
@@ -622,17 +615,17 @@ q1.sp.plot<-ggplot(data=dis.all1, aes(x=jdate, y=log.act))+
 q1.sp.plot
 
 #EXPORT PLOT
-#tiff('Q1_time.tiff', units="in", width=7, height=4, res=400)
-#q1.sp.plot
-#dev.off()
+tiff('Figure 1.tiff', units="in", width=7, height=4, res=400)
+q1.sp.plot
+dev.off()
 
 q1.wrap<-q1.sp.plot+facet_wrap(~sp1, ncol = 2)+theme(legend.position = "none")
 q1.wrap
 
 #EXPORT PLOT
-#tiff('Q1_time_sp.tiff', units="in", width=7, height=6, res=400)
-#q1.wrap
-#dev.off()
+tiff('Appendix S2: Figure S1.tiff', units="in", width=7, height=6, res=400)
+q1.wrap
+dev.off()
 
 #Q2a: plants 
 plant.plot<-ggplot(data=plant10, aes(x=treatment, y=activity))+ 
@@ -688,19 +681,13 @@ farn.plot
 #farn.plot
 #dev.off()
 
-
-#tiff('Dispersers.tiff', units="in", width=8, height=4, res=300)
-#ggarrange(plant.plot, indole.plot, farn.plot, 
-		  #labels = c("a", "b"),heights = c(2, 2),
-		  #ncol = 2, nrow = 1)
-#dev.off()
-
-#tiff('HIPV.tiff', units="in", width=10, height=4, res=300)
-#ggarrange(plant.plot, indole.plot, farn.plot, 
-		  #labels = c("a", "b", "c"),heights = c(2, 2,2),
-		  #ncol = 3, nrow = 1,
-		  #vjust=1.2)
-#dev.off()
+#EXPORT PLOT
+tiff('Figure 3.tiff', units="in", width=10, height=4, res=300)
+ggarrange(plant.plot, indole.plot, farn.plot, 
+		  labels = c("a", "b", "c"),heights = c(2, 2,2),
+		  ncol = 3, nrow = 1,
+		  vjust=1.2)
+dev.off()
 
 summary(davg1)
 exp(-0.4972505)#intercept, 0.61
@@ -725,9 +712,9 @@ ar.plot<-bat.met.hour%>%
 ar.plot
 
 #EXPORT PLOT
-#tiff('autoregressive.tiff', units="in", width=4.25, height=2.9, res=400)
-#ar.plot
-#dev.off()
+tiff('Appendix S2: Figure S2.tiff', units="in", width=4.25, height=2.9, res=400)
+ar.plot
+dev.off()
 
 #temperature, linear
 temp.plot<-bat.met.hour%>%
@@ -771,11 +758,12 @@ wind2.plot
 #wind2.plot
 #dev.off()
 
-#tiff('Abiotic.tiff', units="in", width=8, height=3.5, res=300)
-#ggarrange(temp.plot, wind2.plot, 
-#labels = c("a", "b"),heights = c(2, 2),
-#ncol = 2, nrow = 1)
-#dev.off()
+#EXPORT PLOT
+tiff('Figure 4.tiff', units="in", width=8, height=3.5, res=300)
+ggarrange(temp.plot, wind2.plot, 
+labels = c("a", "b"),heights = c(2, 2),
+ncol = 2, nrow = 1)
+dev.off()
 
 
 #air pressure
@@ -790,9 +778,9 @@ delta.air.plot<-bat.met.hour%>%
 delta.air.plot
 
 #EXPORT PLOT
-#tiff('delta_air.tiff', units="in", width=4.25, height=2.9, res=400)
-#delta.air.plot
-#dev.off()
+tiff('Appendix S2: Figure S3.tiff', units="in", width=4.25, height=2.9, res=400)
+delta.air.plot
+dev.off()
 
 exp(0.01357)#slope=-1.01
 exp(3.49)#intercept=32.8
@@ -809,63 +797,6 @@ rain.plot<-rain.bat.hour%>%
 rain.plot
 
 #EXPORT PLOT
-#tiff('rain.tiff', units="in", width=4.25, height=2.9, res=400)
-#rain.plot
-#dev.off()
-
-##interactive models----
-#aggregate data so it's daily
-#most variables averaged
-met.day.avg<-aggregate(cbind(Wind_speed_max_m.s,Wind_speed_avg_m.s,
-							  delta.air,Air_Pressure_pascal,
-							  Air_Temperature_C)~jdate, dat=met, FUN=mean)
-#rain variables summed
-met.day.sum<-aggregate(cbind(Rain_Accumulation_mm)~jdate, dat=met, FUN=sum)
-
-#combine the two
-met.day<-cbind(met.day.avg,met.day.sum)
-#remove duplicate column for date 
-met.day<-met.day[,-c(7)]
-
-
-#creating binary rain variable by the hour
-met.day$rain_binary<-NA
-for(i in 1:length(met.day$Rain_Accumulation_mm)){
-	if(met.day$Rain_Accumulation_mm[i]==0){met.day$rain_binary[i]="0"}
-	if(met.day$Rain_Accumulation_mm[i]>0){met.day$rain_binary[i]="1"}
-}
-met.day$rain_binary<-as.numeric(met.day$rain_binary)
-
-#plant trials
-bat.met.day.plant<-merge(plant10, met.day, by='jdate')
-
-mod.plant.inter<-glmer.nb(activity~(treatment*Air_Temperature_C)+(treatment*Wind_speed_avg_m.s)+(1|jdate), dat = bat.met.day.plant)
-Anova(mod.plant)
-
-#indole trials
-indole.avg<-aggregate(activity ~ treatment + jdate, dat=indole10, FUN=mean)
-bat.met.day.indole<-merge(indole.avg, met.day, by='jdate')
-
-mod.indole.inter<-glm(activity~(treatment*Air_Temperature_C)+(treatment*Wind_speed_avg_m.s)+
-						  	+(treatment*Air_Pressure_pascal), 
-						  dat = bat.met.day.indole, family = Gamma(link=log),na.action = "na.fail")
-
-Anova(mod.indole.inter)
-
-#farnesene trials
-farn.avg<-aggregate(activity ~ treatment + jdate, dat=farn10, FUN=mean)
-bat.met.day.farn<-merge(farn.avg, met.day, by='jdate')
-
-mod.farn.inter<-glm(activity~(treatment*Air_Temperature_C)+(treatment*Wind_speed_avg_m.s)+
-					  	+(treatment*Air_Pressure_pascal), 
-					  dat = bat.met.day.farn, family = Gamma(link=log),na.action = "na.fail")
-
-Anova(mod.farn.inter)
-
-summary(mod.farn.inter)
-
-#dredging and model averaging
-d5<-dredge(mod.farn.inter)
-davg5<-model.avg(d5, subset=delta<2)
-summary(davg5)
-
+tiff('Appendix S2: Figure S4.tiff', units="in", width=4.25, height=2.9, res=400)
+rain.plot
+dev.off()
