@@ -26,7 +26,7 @@ library(multcompView) #v0.1-8, data visualization
 ##Q2a: Naturally occurring soybean HIPVS (damaged vs. undamaged plants)----
 
 # Data import and cleaning
-plant <- read.csv(file="Maynard_etal_plant_sum.csv",head=TRUE)
+plant <- read.csv(file="Data_Plant_Summary.csv",head=TRUE)
 plant[, 3:11][is.na(plant[, 3:11])] <- 0
 
 ##Gathering data — compounds from col to rows
@@ -77,7 +77,7 @@ plant10.tab
 ##Q2b: sythentic soybean HIPVs (indole and farnesene)----
 # Indole data import and cleaning
 
-indole <- read.csv(file="Maynard_etal_indole_sum.csv",head=TRUE)
+indole <- read.csv(file="Data_Indole_Summary.csv",head=TRUE)
 indole[, 3:11][is.na(indole[, 3:11])] <- 0
 colnames(indole)[which(colnames(indole)=="ï..jdate")] <- "jdate"
 
@@ -122,7 +122,7 @@ in10.tab
 
 
 # Farnesene data import and cleaning----
-farn <- read.csv(file="Maynard_etal_farnesene_sum.csv",head=TRUE)
+farn <- read.csv(file="Data_Farnesene_Summary.csv",head=TRUE)
 farn[, 3:11][is.na(farn[, 3:11])] <- 0
 colnames(farn)[which(colnames(farn)=="ï..jdate")] <- "jdate"
 
@@ -166,7 +166,7 @@ farn10.tab
 ###Q1: bat species----
 #COMBINING INDOLE AND FARNESENE TRIALS-
 #importing extra/non-trial data
-indole0 <- read.csv(file="Maynard_indole2_all.csv",head=TRUE)
+indole0 <- read.csv(file="Data_other_bat_activity.csv",head=TRUE)
 indole0[, 3:11][is.na(indole0[, 3:11])] <- 0
 
 ##Gathering data — compounds from col to rows
@@ -418,10 +418,10 @@ bat.hour.all1<-bat.hour.all1[order(bat.hour.all1$hour, bat.hour.all1$jdate),]
 bat.hour.all1$act2[c(232,245, 249:254,256:259)]<-0
 
 ##SERC met data----
-aug <- read.csv(file="SERC_TOWER_aug2021.csv",head=TRUE)
-sep <- read.csv(file="SERC_TOWER_sep2021.csv",head=TRUE)
-jun <- read.csv(file="SERC_TOWER_june2021.csv",head=TRUE)
-jul <- read.csv(file="SERC_TOWER_july2021.csv",head=TRUE)
+aug <- read.csv(file="./SERC_Weather/SERC_TOWER_aug2021.csv",head=TRUE)
+sep <- read.csv(file="./SERC_Weather/SERC_TOWER_sep2021.csv",head=TRUE)
+jun <- read.csv(file="./SERC_Weather/SERC_TOWER_june2021.csv",head=TRUE)
+jul <- read.csv(file="./SERC_Weather/SERC_TOWER_july2021.csv",head=TRUE)
 
 met<-rbind(aug,sep,jun,jul)
 colnames(met)[which(colnames(met)=="ï..date")] <- "date"
