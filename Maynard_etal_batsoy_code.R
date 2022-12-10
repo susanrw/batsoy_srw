@@ -450,11 +450,6 @@ met.hour<-met.hour[order(met.hour$jdate, met.hour$hour),]
 met.hour$air2<-lag(met.hour$Air_Pressure_pascal, k=1)
 met.hour$delta.air2=(met.hour$Air_Pressure_pascal)-(met.hour$air2)
 
-#jdate 238-252, 255-270 (no detectors out nights of 253&254)
-#met1 <- met.hour%>% filter( between(jdate, 238, 252))
-#met2 <- met.hour%>% filter( between(jdate, 255, 270))
-#met3<-rbind(met1,met2)
-
 #filtering for hours bats were active, recorders active (6p-7a)
 met4<-met.hour%>%filter(between(hour, 0,6))
 met5<-met.hour%>%filter(between(hour, 19,23))
