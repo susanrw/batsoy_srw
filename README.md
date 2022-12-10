@@ -136,54 +136,54 @@ This raw output from Kaleidoscope Pro (id.csv), including 49 call files. The id.
 
 INDIR: Absolute path to input directory.\
 OUTDIR: Absolute path to output directory.\
-FOLDER: Directory path to the input file relative to the input root.
-• IN FILE: Input file name.
-• CHANNEL: Channel number from the input file (0=left, 1=right).
-• OFFSET: Offset in seconds into the input file where output begins.
-• DURATION: Duration in seconds of the output file.
-• OUT FILE FS: Name of the output file (full-spectrum).
-• OUT FILE ZC: Name of output file (zero-crossing).
-• DATE: Date in form YYYY-MM-DD of the recording.
-• TIME: Time in form of hh:mm:ss of the recording.
-• HOUR: Hour of the recording (0-23) for convenient pivot tables by hour.
-• DATE-12: Date 12 hours prior to date of recording (e.g. for night vs. day) in the form YYYY-MM- DD.
-• TIME-12: Time 12 hours prior to time of recording (e.g. for night vs. day) in the form hh:mm:ss.
-• HOUR-12: Hour 12 hours prior to time of recording (e.g. for night vs. day).
-• AUTO ID: Automatic classification result.
-• PULSES: Number of pulses detected in the file that were identified to species.
-• MATCHING: Number of pulses matching the auto classification result.
-• MATCH RATIO: The ratio of MATCHING over PULSES.
-• MARGIN: Classification margin
-• ALTERNATE 1: First alternate.
-• ALTERNATE 2: Second alternate.
-• N: Total number of pulses detected. This is used to derive average values for the following 12
-parameters:
-o Fc: Average characteristic frequency (kHz) - the body of the call is the portion of the call consisting of
+FOLDER: Directory path to the input file relative to the input root.\
+IN FILE: Input file name.\
+CHANNEL: Channel number from the input file (0=left, 1=right).\
+OFFSET: Offset in seconds into the input file where output begins.\
+DURATION: Duration in seconds of the output file.\
+OUT FILE FS: Name of the output file (full-spectrum).\
+OUT FILE ZC: Name of output file (zero-crossing).\
+DATE: Date in form YYYY-MM-DD of the recording.\
+TIME: Time in form of hh:mm:ss of the recording.\
+HOUR: Hour of the recording (0-23) for convenient pivot tables by hour.\
+DATE-12: Date 12 hours prior to date of recording (e.g. for night vs. day) in the form YYYY-MM- DD.\
+TIME-12: Time 12 hours prior to time of recording (e.g. for night vs. day) in the form hh:mm:ss.\
+HOUR-12: Hour 12 hours prior to time of recording (e.g. for night vs. day).\
+AUTO ID: Automatic classification result.\
+PULSES: Number of pulses detected in the file that were identified to species.\
+MATCHING: Number of pulses matching the auto classification result.\
+MATCH RATIO: The ratio of MATCHING over PULSES.\
+MARGIN: Classification margin\
+ALTERNATE 1: First alternate.\
+ALTERNATE 2: Second alternate.\
+N: Total number of pulses detected. This is used to derive average values for the following 12
+parameters:\
+Fc: Average characteristic frequency (kHz) - the body of the call is the portion of the call consisting of
 the flattest slope where the characteristic frequency is typically the frequency at the latest part of the call
-body.
-o Sc: Average characteristic slope (Octaves per Second) - this is the slope of the body of the call. Positive
-values correspond to decreasing frequency while negative values correspond to increasing frequency.
-o Dur: Average duration (ms) - this is the duration of the call.
-o Fmax Average maximum frequency (kHz) - the maximum frequency detected in the call.
-o Fmin: Average minimum frequency (kHz) - the minimum frequency detected in the call.
-o Fmean: Average mean frequency (kHz) - the time-weighted mean frequency of the call.
-o TBC: Average time between calls (ms) - if N above is greater than one, this is the average period of the
-calls from the start of one call to the start of the next.
-o Fk: Average frequency of the knee (kHz) - the frequency at the beginning of the call body.
-o Tk: Average time to the knee (ms) - the time from the beginning of the call to the beginning of the call
-body.
-o S1: Average initial slope (octaves per second) - the initial slope of the call.
-o Tc: Average time to the characteristic (ms) - the time from the beginning of the call to the end of the
-call body.
-o Qual: Average call quality (%) - a measure of the smoothness of the call where smaller values indicate a
-smoother call.
-• FILES: The number 1, indicating one file, as a convenience for pivot tables by file count.
-• MANUAL ID: Manual identification (this field populated during review with Viewer).
-• USERID: Nickname or email address of Managed Cloud Account who has run this batch process.
-• REVIEW ORIGID: If manual ID is present, this is the UUID of the organization corresponding to the manual ID.
-• REVIEW USERID: If manual ID present, this is the nickname or email address of the user who created the manual ID
-• INFILEMD5: Unique identification used internally by Kaleidoscope Pro corresponding to the input file.
-• OUTFILEMD5FS: Unique identification used internally by Kaleidoscope Pro corresponding to a full-spectrum output
-file.
-• OUTFILEMD5ZC Unique identification used internally by Kaleidoscope Pro corresponding to a zero-crossing output
+body.\
+Sc: Average characteristic slope (Octaves per Second) - this is the slope of the body of the call. Positive
+values correspond to decreasing frequency while negative values correspond to increasing frequency.\
+Dur: Average duration (ms) - this is the duration of the call.\
+Fmax Average maximum frequency (kHz) - the maximum frequency detected in the call.\
+Fmin: Average minimum frequency (kHz) - the minimum frequency detected in the call.\
+Fmean: Average mean frequency (kHz) - the time-weighted mean frequency of the call.\
+TBC: Average time between calls (ms) - if N above is greater than one, this is the average period of the
+calls from the start of one call to the start of the next.\
+Fk: Average frequency of the knee (kHz) - the frequency at the beginning of the call body.\
+Tk: Average time to the knee (ms) - the time from the beginning of the call to the beginning of the call
+body.\
+S1: Average initial slope (octaves per second) - the initial slope of the call.\
+Tc: Average time to the characteristic (ms) - the time from the beginning of the call to the end of the
+call body.\
+Qual: Average call quality (%) - a measure of the smoothness of the call where smaller values indicate a
+smoother call.\
+FILES: The number 1, indicating one file, as a convenience for pivot tables by file count.\
+MANUAL ID: Manual identification (this field populated during review with Viewer).\
+USERID: Nickname or email address of Managed Cloud Account who has run this batch process.\
+REVIEW ORIGID: If manual ID is present, this is the UUID of the organization corresponding to the manual ID.\
+REVIEW USERID: If manual ID present, this is the nickname or email address of the user who created the manual ID\
+INFILEMD5: Unique identification used internally by Kaleidoscope Pro corresponding to the input file.\
+OUTFILEMD5FS: Unique identification used internally by Kaleidoscope Pro corresponding to a full-spectrum output
+file.\
+OUTFILEMD5ZC Unique identification used internally by Kaleidoscope Pro corresponding to a zero-crossing output
 file.
