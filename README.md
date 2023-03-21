@@ -1,6 +1,6 @@
----
+------------------------------------------------------------------------
 
----
+------------------------------------------------------------------------
 
 # batsoy
 
@@ -24,68 +24,68 @@ This script contains all code for statistical analyses and figures.
 
 ### File 1) Data_Plant_Summary.csv
 
-This is raw output from Kaleidoscope Pro (idsummary.csv) for the naturally occurring soybean HIPV trials. \
+This is raw output from Kaleidoscope Pro (idsummary.csv) for the naturally occurring soybean HIPV trials.\
 \
 Variables include:
 
 jdate: Julian date\
 date: date (YYYMMDD)\
-EPTFUS: number of big brown bat call files \
-LASBOR: number of eastern red bat call files \
-LASCIN: number of hoary bat call files \
-LASNOC: number of silver-haired bat call files \
-LASSEM: number of Seminole bat call files \
-MYOLUC: number of little brown bat call files \
-NYCHUM: number of evening bat call files \
-PERSUB: number of tricolored bat call files \
-NOID: number of unidentified bat call files \
-side: side of site (E=east, W=west) \
-treatment: HIPV treatment (D=damaged plants, U=undamaged plants) \
+EPTFUS: number of big brown bat call files\
+LASBOR: number of eastern red bat call files\
+LASCIN: number of hoary bat call files\
+LASNOC: number of silver-haired bat call files\
+LASSEM: number of Seminole bat call files\
+MYOLUC: number of little brown bat call files\
+NYCHUM: number of evening bat call files\
+PERSUB: number of tricolored bat call files\
+NOID: number of unidentified bat call files\
+side: side of site (E=east, W=west)\
+treatment: HIPV treatment (D=damaged plants, U=undamaged plants)\
 trial: trial number (1-5)
 
 ### File 2) Data_Indole_Summary.csv
 
-This is raw output from Kaleidoscope Pro (idsummary.csv) for the synthetic soybean HIPV trials (indole). \
+This is raw output from Kaleidoscope Pro (idsummary.csv) for the synthetic soybean HIPV trials (indole).\
 \
 Variables include:
 
 jdate: Julian date\
 date: date (YYYMMDD)\
-EPTFUS: number of big brown bat call files \
-LASBOR: number of eastern red bat call files \
-LASCIN: number of hoary bat call files \
-LASNOC: number of silver-haired bat call files \
-LASSEM: number of Seminole bat call files \
-MYOLUC: number of little brown bat call files \
-NYCHUM: number of evening bat call files \
-PERSUB: number of tricolored bat call files \
-NOID: number of unidentified bat call files \
+EPTFUS: number of big brown bat call files\
+LASBOR: number of eastern red bat call files\
+LASCIN: number of hoary bat call files\
+LASNOC: number of silver-haired bat call files\
+LASSEM: number of Seminole bat call files\
+MYOLUC: number of little brown bat call files\
+NYCHUM: number of evening bat call files\
+PERSUB: number of tricolored bat call files\
+NOID: number of unidentified bat call files\
 site: individual identifier for site\
-treatment: HIPV treatment (Dispenser, Control) \
+treatment: HIPV treatment (Dispenser, Control)\
 trial: trial number (1-15)
 
 ### File 3) Data_Farnesene_Summary.csv
 
-This is raw output from Kaleidoscope Pro (idsummary.csv) for the synthetic soybean HIPV trials (farnesene). \
+This is raw output from Kaleidoscope Pro (idsummary.csv) for the synthetic soybean HIPV trials (farnesene).\
 \
 Variables include:
 
 jdate: Julian date\
 date: date (YYYMMDD)\
-EPTFUS: number of big brown bat call files \
-LASBOR: number of eastern red bat call files \
-LASCIN: number of hoary bat call files \
-LASNOC: number of silver-haired bat call files \
-LASSEM: number of Seminole bat call files \
-MYOLUC: number of little brown bat call files \
-NYCHUM: number of evening bat call files \
-PERSUB: number of tricolored bat call files \
-NOID: number of unidentified bat call files \
+EPTFUS: number of big brown bat call files\
+LASBOR: number of eastern red bat call files\
+LASCIN: number of hoary bat call files\
+LASNOC: number of silver-haired bat call files\
+LASSEM: number of Seminole bat call files\
+MYOLUC: number of little brown bat call files\
+NYCHUM: number of evening bat call files\
+PERSUB: number of tricolored bat call files\
+NOID: number of unidentified bat call files\
 site: individual identifier for site\
-treatment: HIPV treatment (Dispenser, Control) \
+treatment: HIPV treatment (Dispenser, Control)\
 trial: trial number (1-8)
 
-###  File 4) Data_other_bat_activity.csv
+### File 4) Data_other_bat_activity.csv
 
 This is raw output from Kaleidoscope Pro (idsummary.csv) for additional days of bat activity data that were not part of HIPV trials.
 
@@ -93,15 +93,15 @@ Variables include:
 
 jdate: Julian date\
 date: date (YYYMMDD)\
-EPTFUS: number of big brown bat call files \
-LASBOR: number of eastern red bat call files \
-LASCIN: number of hoary bat call files \
-LASNOC: number of silver-haired bat call files \
-LASSEM: number of Seminole bat call files \
-MYOLUC: number of little brown bat call files \
-NYCHUM: number of evening bat call files \
-PERSUB: number of tricolored bat call files \
-NOID: number of unidentified bat call files \
+EPTFUS: number of big brown bat call files\
+LASBOR: number of eastern red bat call files\
+LASCIN: number of hoary bat call files\
+LASNOC: number of silver-haired bat call files\
+LASSEM: number of Seminole bat call files\
+MYOLUC: number of little brown bat call files\
+NYCHUM: number of evening bat call files\
+PERSUB: number of tricolored bat call files\
+NOID: number of unidentified bat call files\
 site: individual identifier for site
 
 ### Folder 1) SERC_Weather
@@ -162,39 +162,29 @@ MATCH RATIO: The ratio of MATCHING over PULSES.\
 MARGIN: Classification margin\
 ALTERNATE 1: First alternate.\
 ALTERNATE 2: Second alternate.\
-N: Total number of pulses detected. This is used to derive average values for the following 12
-parameters:\
-Fc: Average characteristic frequency (kHz) - the body of the call is the portion of the call consisting of
-the flattest slope where the characteristic frequency is typically the frequency at the latest part of the call
-body.\
-Sc: Average characteristic slope (Octaves per Second) - this is the slope of the body of the call. Positive
-values correspond to decreasing frequency while negative values correspond to increasing frequency.\
+N: Total number of pulses detected. This is used to derive average values for the following 12 parameters:\
+Fc: Average characteristic frequency (kHz) - the body of the call is the portion of the call consisting of the flattest slope where the characteristic frequency is typically the frequency at the latest part of the call body.\
+Sc: Average characteristic slope (Octaves per Second) - this is the slope of the body of the call. Positive values correspond to decreasing frequency while negative values correspond to increasing frequency.\
 Dur: Average duration (ms) - this is the duration of the call.\
 Fmax Average maximum frequency (kHz) - the maximum frequency detected in the call.\
 Fmin: Average minimum frequency (kHz) - the minimum frequency detected in the call.\
 Fmean: Average mean frequency (kHz) - the time-weighted mean frequency of the call.\
-TBC: Average time between calls (ms) - if N above is greater than one, this is the average period of the
-calls from the start of one call to the start of the next.\
+TBC: Average time between calls (ms) - if N above is greater than one, this is the average period of the calls from the start of one call to the start of the next.\
 Fk: Average frequency of the knee (kHz) - the frequency at the beginning of the call body.\
-Tk: Average time to the knee (ms) - the time from the beginning of the call to the beginning of the call
-body.\
+Tk: Average time to the knee (ms) - the time from the beginning of the call to the beginning of the call body.\
 S1: Average initial slope (octaves per second) - the initial slope of the call.\
-Tc: Average time to the characteristic (ms) - the time from the beginning of the call to the end of the
-call body.\
-Qual: Average call quality (%) - a measure of the smoothness of the call where smaller values indicate a
-smoother call.\
+Tc: Average time to the characteristic (ms) - the time from the beginning of the call to the end of the call body.\
+Qual: Average call quality (%) - a measure of the smoothness of the call where smaller values indicate a smoother call.\
 FILES: The number 1, indicating one file, as a convenience for pivot tables by file count.\
 MANUAL ID: Manual identification (this field populated during review with Viewer).\
 USERID: Nickname or email address of Managed Cloud Account who has run this batch process.\
 REVIEW ORIGID: If manual ID is present, this is the UUID of the organization corresponding to the manual ID.\
 REVIEW USERID: If manual ID present, this is the nickname or email address of the user who created the manual ID\
 INFILEMD5: Unique identification used internally by Kaleidoscope Pro corresponding to the input file.\
-OUTFILEMD5FS: Unique identification used internally by Kaleidoscope Pro corresponding to a full-spectrum output
-file.\
-OUTFILEMD5ZC Unique identification used internally by Kaleidoscope Pro corresponding to a zero-crossing output
-file.
+OUTFILEMD5FS: Unique identification used internally by Kaleidoscope Pro corresponding to a full-spectrum output file.\
+OUTFILEMD5ZC Unique identification used internally by Kaleidoscope Pro corresponding to a zero-crossing output file.
 
-## Figures 
+## Figures
 
 This repository includes eight figures produced by the code in Maynard_etal_batsoy_code.R
 
