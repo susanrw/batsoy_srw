@@ -29,7 +29,7 @@ library(multcompView) #v0.1-8, data visualization
 plant <- read.csv(file="Data_Plant_Summary.csv",head=TRUE)
 plant[, 3:11][is.na(plant[, 3:11])] <- 0
 
-##Gathering data — compounds from col to rows
+##Gathering data — bat species from col to rows
 plant1<-plant %>% gather(sp, activity, EPTFUS:NOID)
 plant1$sp<-as.factor(plant1$sp)
 levels(plant1$sp)
@@ -81,7 +81,7 @@ indole <- read.csv(file="Data_Indole_Summary.csv",head=TRUE)
 indole[, 3:11][is.na(indole[, 3:11])] <- 0
 colnames(indole)[which(colnames(indole)=="ï..jdate")] <- "jdate"
 
-##Gathering data — compounds from col to rows
+##Gathering data — species from col to rows
 indole1<-indole %>% gather(sp, activity, EPTFUS:NOID)
 indole1$sp<-as.factor(indole1$sp)
 levels(indole1$sp)
@@ -126,7 +126,7 @@ farn <- read.csv(file="Data_Farnesene_Summary.csv",head=TRUE)
 farn[, 3:11][is.na(farn[, 3:11])] <- 0
 colnames(farn)[which(colnames(farn)=="ï..jdate")] <- "jdate"
 
-##Gathering data — compounds from col to rows
+##Gathering data — species from col to rows
 farn1<-farn %>% gather(sp, activity, EPTFUS:NOID)
 farn1$sp<-as.factor(farn1$sp)
 levels(farn1$sp)
@@ -169,7 +169,7 @@ farn10.tab
 indole0 <- read.csv(file="Data_other_bat_activity.csv",head=TRUE)
 indole0[, 3:11][is.na(indole0[, 3:11])] <- 0
 
-##Gathering data — compounds from col to rows
+##Gathering data — species from col to rows
 indole01<-indole0 %>% gather(sp, activity, EPTFUS:NOID)
 indole01$sp<-as.factor(indole01$sp)
 levels(indole01$sp)
@@ -409,7 +409,7 @@ bat.hour.all1<-aggregate(activity ~ jdate + hour, dat=bat.hour.all, FUN=mean)
 #creating autoregressive term
 bat.hour.all1<-bat.hour.all1[order(bat.hour.all1$jdate, bat.hour.all1$hour),]
 acf(bat.hour.all1$activity, type = "correlation")
-bat.hour.all1$act2<-lag(bat.hour.all1$activity, k=1)
+bat.hour.all1$act2<-dplyr::lag(bat.hour.all1$activity)
 
 #add 0s to the beginning of each night to rep no activity and not pre-sunrise data
 bat.hour.all1<-bat.hour.all1[order(bat.hour.all1$hour, bat.hour.all1$jdate),]
@@ -447,7 +447,7 @@ met.hour<-met.hour[,-c(8,9)]
 #ordering data
 met.hour<-met.hour[order(met.hour$jdate, met.hour$hour),]
 #creating hourly change in air pressure var
-met.hour$air2<-lag(met.hour$Air_Pressure_pascal, k=1)
+met.hour$air2<-dplyr::lag(met.hour$Air_Pressure_pascal)
 met.hour$delta.air2=(met.hour$Air_Pressure_pascal)-(met.hour$air2)
 
 #filtering for hours bats were active, recorders active (6p-7a)
@@ -618,7 +618,7 @@ q1.wrap<-q1.sp.plot+facet_wrap(~sp1, ncol = 2)+theme(legend.position = "none")
 q1.wrap
 
 #EXPORT PLOT
-tiff('Appendix S2: Figure S1.tiff', units="in", width=7, height=6, res=400)
+tiff('Appendix S2_Figure S1.tiff', units="in", width=7, height=6, res=400)
 q1.wrap
 dev.off()
 
@@ -707,7 +707,7 @@ ar.plot<-bat.met.hour%>%
 ar.plot
 
 #EXPORT PLOT
-tiff('Appendix S2: Figure S2.tiff', units="in", width=4.25, height=2.9, res=400)
+tiff('Appendix S2_Figure S2.tiff', units="in", width=4.25, height=2.9, res=400)
 ar.plot
 dev.off()
 
@@ -773,7 +773,7 @@ delta.air.plot<-bat.met.hour%>%
 delta.air.plot
 
 #EXPORT PLOT
-tiff('Appendix S2: Figure S3.tiff', units="in", width=4.25, height=2.9, res=400)
+tiff('Appendix S2_Figure S3.tiff', units="in", width=4.25, height=2.9, res=400)
 delta.air.plot
 dev.off()
 
@@ -792,6 +792,6 @@ rain.plot<-rain.bat.hour%>%
 rain.plot
 
 #EXPORT PLOT
-tiff('Appendix S2: Figure S4.tiff', units="in", width=4.25, height=2.9, res=400)
+tiff('Appendix S2_Figure S4.tiff', units="in", width=4.25, height=2.9, res=400)
 rain.plot
 dev.off()
